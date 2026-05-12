@@ -218,6 +218,7 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
     game.tutorialActive = true; game.tutorialStep = 0; game.tutorialTime = 0;
   } else { game.tutorialActive = false; }
   game.trauma = 0; game.timeScale = 1; game.hitStopTime = 0; game.dying = false;
+  game.manualEndRequested = false;
   const startEpoch = (resumeSnapshot && Number.isInteger(resumeSnapshot.epochIndex) && resumeSnapshot.epochIndex < EPOCHS.length) ? resumeSnapshot.epochIndex : 0;
   funLab.startRun({
     epochIndex: startEpoch,
@@ -266,11 +267,13 @@ function finalizeDeath() {
 export function endRun() {
   const reachedIdx = game.epochIndex;
   const e = EPOCHS[Math.min(reachedIdx, EPOCHS.length - 1)];
-  funLab.finishRun('death', {
+  const manualEnd = !!game.manualEndRequested;
+  const endCause = manualEnd ? 'manual end run' : absorptionLineFor(e);
+  funLab.finishRun(manualEnd ? 'quit' : 'death', {
     epochIndex: reachedIdx,
     epochName: e.name,
     distance: game.runDistance,
-    cause: absorptionLineFor(e),
+    cause: endCause,
     value: game.runEnergy,
   });
   game.lastRunWasPerfect = !!game.perfectEpochThisRun;
@@ -280,7 +283,9 @@ export function endRun() {
   meta.totalEnergy += Math.floor(game.runEnergy);
   saveMeta(meta);
   document.getElementById('death-where')!.textContent = `${e.name} — ${e.subtitle}`;
-  document.getElementById('death-line')!.textContent = absorptionLineFor(e);
+  document.getElementById('death-line')!.textContent = manualEnd
+    ? 'You release this run before the universe spends the rest of you.'
+    : absorptionLineFor(e);
   const stats = document.getElementById('death-stats')!;
   stats.innerHTML = '';
   const fmt = (n: number) => Math.floor(n).toLocaleString();
@@ -375,19 +380,19 @@ function setLineEvent(text: string, time = 1.0) {
 }
 
 function activateSpeedPad(pos: THREE.Vector3) {
-  const duration = 1.45;
+  const duration = 1.65;
   game.padBoostTime = duration;
   game.padBoostTotal = duration;
-  photon.boost = Math.min(BOOST_MAX, photon.boost + 18);
-  photon.energy = Math.min(photon.maxEnergy(), photon.energy + 5);
-  game.runEnergy += 8;
+  photon.boost = Math.min(BOOST_MAX, photon.boost + 24);
+  photon.energy = Math.min(photon.maxEnergy(), photon.energy + 6);
+  game.runEnergy += 10;
   funLab.record('speed-pad-hit', { epochIndex: game.epochIndex, epochName: EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)].name, distance: game.runDistance, value: game.padBoostTime });
   meta.speedPadsHit = (meta.speedPadsHit || 0) + 1;
   saveMeta(meta);
   checkMemoryTriggers();
-  setLineEvent('SPEED PAD', 1.0);
+  setLineEvent('SPEED PAD', 1.15);
   audio.speedPad();
-  particleManager.emitBurst(pos, 'pickup', 28, new THREE.Color(0xff7ad9));
+  particleManager.emitBurst(pos, 'pickup', 34, new THREE.Color(0xff7ad9));
 }
 
 function threadRacingGate(pos: THREE.Vector3) {
@@ -399,17 +404,20 @@ function threadRacingGate(pos: THREE.Vector3) {
   saveMeta(meta);
   checkMemoryTriggers();
 
-  const reward = Math.min(18, 5 + game.lineStreak * 1.5);
+  const reward = Math.min(20, 6 + game.lineStreak * 1.6);
   photon.boost = Math.min(BOOST_MAX, photon.boost + reward);
-  photon.energy = Math.min(photon.maxEnergy(), photon.energy + 3);
+  photon.energy = Math.min(photon.maxEnergy(), photon.energy + 4);
   game.runEnergy += reward;
-  setLineEvent(`LINE ×${game.lineStreak}`, 1.1);
+  setLineEvent(`LINE ×${game.lineStreak}`, 1.2);
   audio.lineGate(game.lineStreak);
-  particleManager.emitBurst(pos, 'phase', 22, new THREE.Color(game.lineStreak >= 5 ? 0xff7ad9 : 0x88e0ff));
+  particleManager.emitBurst(pos, 'phase', 26, new THREE.Color(game.lineStreak >= 5 ? 0xff7ad9 : 0x88e0ff));
 }
 
 function missRacingGate() {
-  if ((game.lineStreak || 0) > 0) setLineEvent('LINE LOST', 0.85);
+  if ((game.lineStreak || 0) > 0) {
+    setLineEvent('LINE LOST', 0.85);
+    audio.gateMiss();
+  }
   funLab.record('gate-miss', { epochIndex: game.epochIndex, epochName: EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)].name, distance: game.runDistance, streak: game.lineStreak });
   if ((game.lineStreak || 0) > 0) funLab.record('line-break', { epochIndex: game.epochIndex, epochName: EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)].name, distance: game.runDistance, streak: game.lineStreak });
   game.lineStreak = 0;

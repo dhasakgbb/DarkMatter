@@ -53,6 +53,24 @@ describe('Fun Lab model', () => {
     expect(recommendations.map((r) => r.id)).toContain('cheap-damage');
   });
 
+  it('does not double-count paired damage and hazard-hit telemetry', () => {
+    const events = [
+      ev('run-start', 0, { epochIndex: 2, epochName: 'Recombination' }),
+      ev('damage', 8, { damage: 22, cause: 'gluon' }),
+      ev('hazard-hit', 8.01, { damage: 22, cause: 'gluon' }),
+      ev('damage', 13, { damage: 18, cause: 'plasma' }),
+      ev('hazard-hit', 13.01, { damage: 18, cause: 'plasma' }),
+      ev('death', 20, { cause: 'test death', epochIndex: 2, epochName: 'Recombination' }),
+    ];
+
+    const summary = summarizeRun(events);
+
+    expect(summary.damageEvents).toBe(2);
+    expect(summary.hazardHits).toBe(2);
+    expect(summary.clusteredDamageEvents).toBe(0);
+    expect(summary.damageTotal).toBe(40);
+  });
+
   it('detects boredom gaps and recommends excitement density', () => {
     const events = [
       ev('run-start', 0, { epochIndex: 3, epochName: 'Dark Ages' }),
@@ -67,6 +85,25 @@ describe('Fun Lab model', () => {
     expect(summary.boredomGapCount).toBeGreaterThan(0);
     expect(summary.longestBoredomGap).toBeGreaterThanOrEqual(12);
     expect(recommendations.map((r) => r.id)).toContain('boredom-gap');
+  });
+
+  it('does not treat upgrade deliberation as gameplay boredom', () => {
+    const events = [
+      ev('run-start', 0, { epochIndex: 0, epochName: 'Inflationary' }),
+      ev('gate-hit', 4, { streak: 1 }),
+      ev('speed-pad-hit', 8),
+      ev('upgrade-options', 10, { epochIndex: 0, epochName: 'Inflationary' }),
+      ev('upgrade-selected', 42, { epochIndex: 0, epochName: 'Inflationary', note: 'speed' }),
+      ev('epoch-enter', 43, { epochIndex: 1, epochName: 'Quark Plasma' }),
+      ev('speed-pad-hit', 45),
+      ev('gate-hit', 47, { streak: 2 }),
+      ev('quit', 50, { distance: 2000, epochIndex: 1, epochName: 'Quark Plasma' }),
+    ];
+
+    const { summary, recommendations } = analyzeRun(events, { fun: 4, flow: 4, frustration: 2, oneMoreRun: 4, at: 50_000 });
+
+    expect(summary.boredomGapCount).toBe(0);
+    expect(recommendations.map((r) => r.id)).not.toContain('boredom-gap');
   });
 
   it('lowers trust when telemetry and ratings disagree', () => {
@@ -85,5 +122,22 @@ describe('Fun Lab model', () => {
 
     expect(happy.trust).toBeGreaterThan(contradictory.trust);
     expect(contradictory.uncertainty.length).toBeGreaterThan(0);
+  });
+
+  it('keeps manual quits in context instead of over-reading difficulty', () => {
+    const events = [
+      ev('run-start', 0, { epochIndex: 2, epochName: 'Recombination' }),
+      ev('gate-hit', 4, { streak: 1 }),
+      ev('gate-hit', 7, { streak: 2 }),
+      ev('speed-pad-hit', 9),
+      ev('hazard-near-miss', 12),
+      ev('quit', 18, { distance: 1200, epochIndex: 2, epochName: 'Recombination', cause: 'manual end run' }),
+    ];
+
+    const { recommendations } = analyzeRun(events, { fun: 3, flow: 3, frustration: 2, oneMoreRun: 3, at: 18_000 });
+    const ids = recommendations.map((r) => r.id);
+
+    expect(ids).toContain('manual-quit-context');
+    expect(ids).not.toContain('route-readability');
   });
 });

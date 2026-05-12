@@ -183,7 +183,7 @@ export function bindUI() {
     renderFunLabDashboard();
     setState('funlab');
   });
-  document.getElementById('btn-end-run')!.addEventListener('click', () => { funLab.record('quit', { distance: game.runDistance, epochIndex: game.epochIndex }); resume(); beginDeath(); });
+  document.getElementById('btn-end-run')!.addEventListener('click', () => { game.manualEndRequested = true; resume(); beginDeath(); });
   document.getElementById('btn-reset-meta')!.addEventListener('click', () => {
     if (!confirm('Reset ALL progress (upgrades, codex, runs, best distance)? This cannot be undone.')) return;
     try { localStorage.removeItem('photon-meta-v1'); } catch (e) {}

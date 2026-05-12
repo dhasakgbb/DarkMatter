@@ -1,0 +1,218 @@
+{
+  "schema": "photon-audio-manifest.v1",
+  "version": 1,
+  "notes": "Runtime audio contract for studio music and SFX. Keep entries disabled until files exist and licensing is verified.",
+  "music": {
+    "Inflationary": {
+      "enabled": false,
+      "intent": "Explosive spacetime pressure with unstable fast motion.",
+      "stems": [
+        { "stem": "pulse", "path": "music/inflationary/pulse.ogg", "gain": 0.55, "loop": true },
+        { "stem": "texture", "path": "music/inflationary/texture.ogg", "gain": 0.45, "loop": true }
+      ]
+    },
+    "Quark Plasma": {
+      "enabled": false,
+      "intent": "Dense heat, granular impacts, charged collisions.",
+      "stems": [
+        { "stem": "pulse", "path": "music/quark-plasma/pulse.ogg", "gain": 0.52, "loop": true },
+        { "stem": "texture", "path": "music/quark-plasma/texture.ogg", "gain": 0.48, "loop": true }
+      ]
+    },
+    "Recombination": {
+      "enabled": false,
+      "intent": "The fog opens and the mix widens.",
+      "stems": [
+        { "stem": "motion", "path": "music/recombination/motion.ogg", "gain": 0.48, "loop": true },
+        { "stem": "texture", "path": "music/recombination/texture.ogg", "gain": 0.42, "loop": true }
+      ]
+    },
+    "First Stars": {
+      "enabled": false,
+      "intent": "Blue-hot ignition with danger under the bloom.",
+      "stems": [
+        { "stem": "pulse", "path": "music/first-stars/pulse.ogg", "gain": 0.52, "loop": true },
+        { "stem": "reward", "path": "music/first-stars/reward.ogg", "gain": 0.36, "loop": true }
+      ]
+    },
+    "Galactic": {
+      "enabled": false,
+      "intent": "Curved racing-line confidence and magnetic sweep.",
+      "stems": [
+        { "stem": "pulse", "path": "music/galactic/pulse.ogg", "gain": 0.52, "loop": true },
+        { "stem": "motion", "path": "music/galactic/motion.ogg", "gain": 0.44, "loop": true }
+      ]
+    },
+    "Stellar": {
+      "enabled": false,
+      "intent": "Main high-speed dopamine layer, brightest and busiest.",
+      "stems": [
+        { "stem": "pulse", "path": "music/stellar/pulse.ogg", "gain": 0.58, "loop": true },
+        { "stem": "bass", "path": "music/stellar/bass.ogg", "gain": 0.48, "loop": true },
+        { "stem": "motion", "path": "music/stellar/motion.ogg", "gain": 0.44, "loop": true },
+        { "stem": "danger", "path": "music/stellar/danger.ogg", "gain": 0.32, "loop": true }
+      ]
+    },
+    "Degenerate": {
+      "enabled": false,
+      "intent": "Cooler, heavier, rarer movement.",
+      "stems": [
+        { "stem": "bass", "path": "music/degenerate/bass.ogg", "gain": 0.42, "loop": true },
+        { "stem": "texture", "path": "music/degenerate/texture.ogg", "gain": 0.38, "loop": true }
+      ]
+    },
+    "Black Hole": {
+      "enabled": false,
+      "intent": "Sparse gravity pressure and long low-frequency bends.",
+      "stems": [
+        { "stem": "bass", "path": "music/black-hole/bass.ogg", "gain": 0.46, "loop": true },
+        { "stem": "texture", "path": "music/black-hole/texture.ogg", "gain": 0.30, "loop": true }
+      ]
+    },
+    "Heat Death": {
+      "enabled": false,
+      "intent": "A single low tone, vanishing texture, and authored silence.",
+      "stems": [
+        { "stem": "low-tone", "path": "music/heat-death/low-tone.ogg", "gain": 0.35, "loop": true },
+        { "stem": "vanishing-texture", "path": "music/heat-death/vanishing-texture.ogg", "gain": 0.24, "loop": false }
+      ]
+    }
+  },
+  "sfx": {
+    "pickup": {
+      "enabled": false,
+      "gain": 0.85,
+      "variants": [
+        { "path": "sfx/pickup/pickup-01.ogg" },
+        { "path": "sfx/pickup/pickup-02.ogg" },
+        { "path": "sfx/pickup/pickup-03.ogg" }
+      ]
+    },
+    "speedPad": {
+      "enabled": false,
+      "gain": 0.9,
+      "variants": [
+        { "path": "sfx/speed-pad/speed-pad-01.ogg" },
+        { "path": "sfx/speed-pad/speed-pad-02.ogg" },
+        { "path": "sfx/speed-pad/speed-pad-03.ogg" },
+        { "path": "sfx/speed-pad/speed-pad-04.ogg" }
+      ]
+    },
+    "lineGate": {
+      "enabled": false,
+      "gain": 0.75,
+      "variants": [
+        { "path": "sfx/line-gate/line-gate-01.ogg" },
+        { "path": "sfx/line-gate/line-gate-02.ogg" },
+        { "path": "sfx/line-gate/line-gate-03.ogg" },
+        { "path": "sfx/line-gate/line-gate-04.ogg" }
+      ]
+    },
+    "gateMiss": {
+      "enabled": false,
+      "gain": 0.75,
+      "variants": [
+        { "path": "sfx/gate-miss/gate-miss-01.ogg" },
+        { "path": "sfx/gate-miss/gate-miss-02.ogg" },
+        { "path": "sfx/gate-miss/gate-miss-03.ogg" }
+      ]
+    },
+    "railScrape": {
+      "enabled": false,
+      "gain": 0.8,
+      "variants": [
+        { "path": "sfx/rail-scrape/rail-scrape-01.ogg" },
+        { "path": "sfx/rail-scrape/rail-scrape-02.ogg" },
+        { "path": "sfx/rail-scrape/rail-scrape-03.ogg" }
+      ]
+    },
+    "wavelengthShift": {
+      "enabled": false,
+      "gain": 0.85,
+      "variants": [
+        { "path": "sfx/wavelength-shift/gamma.ogg", "rate": 1.12 },
+        { "path": "sfx/wavelength-shift/visible.ogg", "rate": 1.0 },
+        { "path": "sfx/wavelength-shift/radio.ogg", "rate": 0.88 }
+      ]
+    },
+    "damageHit": {
+      "enabled": false,
+      "gain": 0.9,
+      "variants": [
+        { "path": "sfx/damage-hit/damage-hit-01.ogg" },
+        { "path": "sfx/damage-hit/damage-hit-02.ogg" },
+        { "path": "sfx/damage-hit/damage-hit-03.ogg" }
+      ]
+    },
+    "death": {
+      "enabled": false,
+      "gain": 0.9,
+      "variants": [
+        { "path": "sfx/death/death-absorbed-01.ogg" },
+        { "path": "sfx/death/death-absorbed-02.ogg" }
+      ]
+    },
+    "witnessChime": {
+      "enabled": false,
+      "gain": 0.85,
+      "variants": [
+        { "path": "sfx/witness/witness-chime-01.ogg" }
+      ]
+    },
+    "hazardWhoosh": {
+      "enabled": false,
+      "gain": 0.8,
+      "spatial": true,
+      "variants": [
+        { "path": "sfx/hazard-whoosh/hazard-whoosh-01.ogg" },
+        { "path": "sfx/hazard-whoosh/hazard-whoosh-02.ogg" },
+        { "path": "sfx/hazard-whoosh/hazard-whoosh-03.ogg" }
+      ]
+    },
+    "gravityWellWhoosh": {
+      "enabled": false,
+      "gain": 0.82,
+      "spatial": true,
+      "variants": [
+        { "path": "sfx/gravity-well-whoosh/gravity-well-whoosh-01.ogg" },
+        { "path": "sfx/gravity-well-whoosh/gravity-well-whoosh-02.ogg" }
+      ]
+    },
+    "uiTick": {
+      "enabled": false,
+      "gain": 0.55,
+      "variants": [
+        { "path": "sfx/ui/ui-tick.ogg" }
+      ]
+    },
+    "uiClick": {
+      "enabled": false,
+      "gain": 0.7,
+      "variants": [
+        { "path": "sfx/ui/ui-click.ogg" }
+      ]
+    },
+    "uiSwoosh": {
+      "enabled": false,
+      "gain": 0.7,
+      "variants": [
+        { "path": "sfx/ui/ui-swoosh.ogg" }
+      ]
+    },
+    "epochRiser": {
+      "enabled": false,
+      "gain": 0.85,
+      "variants": [
+        { "path": "sfx/epoch-riser/epoch-riser-01.ogg" },
+        { "path": "sfx/epoch-riser/epoch-riser-02.ogg" }
+      ]
+    },
+    "memoryUnlock": {
+      "enabled": false,
+      "gain": 0.85,
+      "variants": [
+        { "path": "sfx/memory-unlock/memory-unlock-01.ogg" }
+      ]
+    }
+  }
+}

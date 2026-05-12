@@ -9,7 +9,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "qa:fast": "npm test && npm run typecheck && npm run build",
+    "precommit": "npm test && npm run typecheck && npm run build"
   },
   "devDependencies": {
     "typescript": "^5.4.5",

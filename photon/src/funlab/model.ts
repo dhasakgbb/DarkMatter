@@ -12,6 +12,8 @@ const MEANINGFUL_EVENTS = new Set<FunRunEvent['type']>([
   'boost-start',
   'field-strain-peak',
   'recovery',
+  'upgrade-options',
+  'upgrade-selected',
 ]);
 
 function clamp(n: number, min = 0, max = 100) {
@@ -50,24 +52,28 @@ export function summarizeRun(events: FunRunEvent[], fallbackRunId = `run-${Date.
   const gateHits = count(ordered, 'gate-hit');
   const gateMisses = count(ordered, 'gate-miss');
   const gateTotal = gateHits + gateMisses;
-  const damageEvents = ordered.filter((e) => e.type === 'damage' || e.type === 'hazard-hit');
+  const explicitDamageEvents = ordered.filter((e) => e.type === 'damage');
+  const damageEvents = explicitDamageEvents.length ? explicitDamageEvents : ordered.filter((e) => e.type === 'hazard-hit');
   const damageTotal = damageEvents.reduce((sum, e) => sum + (e.damage || e.value || 0), 0);
   let clusteredDamageEvents = 0;
   for (let i = 1; i < damageEvents.length; i++) {
     if (eventTime(damageEvents[i], startedAt) - eventTime(damageEvents[i - 1], startedAt) <= 2.2) clusteredDamageEvents += 1;
   }
-  const meaningfulTimes = ordered
+  const meaningfulEvents = ordered
     .filter((e) => MEANINGFUL_EVENTS.has(e.type))
-    .map((e) => eventTime(e, startedAt))
-    .sort((a, b) => a - b);
+    .map((e) => ({ type: e.type, time: eventTime(e, startedAt) }))
+    .sort((a, b) => a.time - b.time);
   let boredomGapCount = 0;
   let longestBoredomGap = 0;
-  for (let i = 1; i < meaningfulTimes.length; i++) {
-    const gap = meaningfulTimes[i] - meaningfulTimes[i - 1];
+  for (let i = 1; i < meaningfulEvents.length; i++) {
+    const prev = meaningfulEvents[i - 1];
+    const current = meaningfulEvents[i];
+    if (prev.type === 'upgrade-options' && current.type === 'upgrade-selected') continue;
+    const gap = current.time - prev.time;
     longestBoredomGap = Math.max(longestBoredomGap, gap);
     if (gap >= 12) boredomGapCount += 1;
   }
-  if (meaningfulTimes.length === 0 && durationSec >= 12) {
+  if (meaningfulEvents.length === 0 && durationSec >= 12) {
     boredomGapCount = 1;
     longestBoredomGap = durationSec;
   }
@@ -215,7 +221,18 @@ export function recommend(summary: FunRunSummary, fingerprint: FunFingerprint): 
   const recs: TuningRecommendation[] = [];
   const add = (rec: TuningRecommendation) => recs.push(rec);
 
-  if (fingerprint.readability < 52 || summary.gateMisses >= 3) {
+  if (summary.quit) {
+    add({
+      id: 'manual-quit-context',
+      finding: 'The player ended this run manually.',
+      evidence: [`Stopped in ${summary.epochName}`, `Fun Index ${fingerprint.funIndex}/100`, `Trust ${fingerprint.trust}/100`],
+      suggestion: 'Use this run for route readability and reward feel, but avoid making difficulty harder from this sample alone.',
+      confidence,
+      risk: 'low',
+      axes: ['oneMoreRun', 'frustration'],
+    });
+  }
+  if (fingerprint.readability < 52 || (summary.gateMisses >= 3 && summary.gateHitRate < 0.55) || summary.lineBreaks >= 2) {
     add({
       id: 'route-readability',
       finding: `${summary.epochName} is hard to read.`,

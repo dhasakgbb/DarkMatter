@@ -33,7 +33,7 @@ function recommendationCard(record: FunRunRecord) {
 function renderTimeline(record: FunRunRecord) {
   return record.events
     .filter((event) => ['epoch-enter', 'gate-hit', 'gate-miss', 'speed-pad-hit', 'hazard-near-miss', 'hazard-hit', 'damage', 'phase-through', 'field-strain-peak', 'death', 'run-end', 'quit'].includes(event.type))
-    .slice(-18)
+    .slice(-12)
     .map((event) => {
       const t = typeof event.t === 'number' ? `${event.t.toFixed(1)}s` : '';
       const detail = event.cause || event.epochName || (event.streak ? `x${event.streak}` : '');
@@ -131,10 +131,10 @@ export function renderFunLabDashboard(selectedId?: string) {
     </div>
     ${vibe}
     ${selected.fingerprint.uncertainty.length ? `<div class="funlab-uncertain">${selected.fingerprint.uncertainty.join(' ')}</div>` : ''}
-    <h3>Evidence timeline</h3>
-    <div class="funlab-timeline">${renderTimeline(selected)}</div>
     <h3>Tuning queue</h3>
     ${recommendationCard(selected)}
+    <h3>Evidence timeline</h3>
+    <div class="funlab-timeline">${renderTimeline(selected)}</div>
   `;
 }
 

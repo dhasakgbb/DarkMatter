@@ -123,8 +123,8 @@ button.primary { background: linear-gradient(90deg, rgba(136,224,255,0.18), rgba
   .row { gap: 10px; }
   .key { padding: 1px 6px; font-size: 10px; }
   .funlab-summary { grid-template-columns: 1fr 1fr; }
-  .funlab-grid { grid-template-columns: 1fr; height: auto; max-height: none; }
-  .funlab-list { max-height: 160px; }
+  .funlab-grid { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: clamp(360px, calc(100dvh - 260px), 560px); max-height: none; }
+  .funlab-list { max-height: 140px; }
   .funlab-axis { grid-template-columns: 96px 1fr 30px; }
   .funlab-timeline div { grid-template-columns: 42px 1fr; }
   .funlab-timeline em { grid-column: 2; text-align: left; }

@@ -22,6 +22,7 @@ export interface RunState {
   dying: boolean;
   dyingTime: number;
   dyingTotal: number;
+  manualEndRequested: boolean;
   // Tutorial
   tutorialActive: boolean;
   tutorialStep: number;
@@ -84,6 +85,7 @@ export const game: RunState = {
   dying: false,
   dyingTime: 0,
   dyingTotal: 1.6,
+  manualEndRequested: false,
   tutorialActive: false,
   tutorialStep: 0,
   tutorialTime: 0,

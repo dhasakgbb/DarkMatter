@@ -26,9 +26,9 @@ export interface RacingEntity {
 class RacingLineManager {
   list: RacingEntity[] = [];
   group = new THREE.Group();
-  private lastSpawnDist = 70;
-  private gateGeo = new THREE.TorusGeometry(5.4, 0.14, 8, 56);
-  private gateInnerGeo = new THREE.TorusGeometry(2.1, 0.06, 6, 32);
+  private lastSpawnDist = 42;
+  private gateGeo = new THREE.TorusGeometry(6.3, 0.18, 8, 64);
+  private gateInnerGeo = new THREE.TorusGeometry(2.55, 0.07, 6, 36);
   private padGeo = new THREE.TorusGeometry(3.4, 0.16, 8, 36);
   private padStripeGeo = new THREE.TorusGeometry(1.75, 0.07, 6, 28);
 
@@ -39,20 +39,20 @@ class RacingLineManager {
   reset() {
     for (const e of this.list) this.group.remove(e.object);
     this.list.length = 0;
-    this.lastSpawnDist = 70;
+    this.lastSpawnDist = 42;
   }
 
   ensureAhead(epoch: Epoch, photonDist: number) {
     const horizon = photonDist + SEGMENT_LEN * SEGMENTS_AHEAD - 42;
     if (!epoch.isHeatDeath) {
       while (this.lastSpawnDist < horizon) {
-        const gap = 72 + runRng() * 46;
+        const gap = 62 + runRng() * 38;
         this.lastSpawnDist += gap / Math.max(0.75, epoch.speedMul);
         const line = this.racingLineAt(this.lastSpawnDist);
         this.spawnGate(this.lastSpawnDist, line.lateral, line.vertical);
 
-        if (runRng() < 0.78) {
-          const padDist = this.lastSpawnDist + 18 + runRng() * 22;
+        if (runRng() < 0.86) {
+          const padDist = this.lastSpawnDist + 16 + runRng() * 20;
           const padLine = this.racingLineAt(padDist);
           const lateral = THREE.MathUtils.lerp(line.lateral, padLine.lateral, 0.65) + (runRng() - 0.5) * 3;
           const vertical = THREE.MathUtils.lerp(line.vertical, padLine.vertical, 0.65) + (runRng() - 0.5) * 2;
@@ -79,20 +79,20 @@ class RacingLineManager {
     onGate: (pos: THREE.Vector3) => void,
     onMiss: () => void,
   ) {
-    const HIT_WINDOW = 3.2;
+    const HIT_WINDOW = 4.1;
     const t = performance.now() * 0.001;
     for (const e of this.list) {
       this.place(e);
       const dz = e.dist - photonDist;
       const nearFade = e.kind === 'pad' ? THREE.MathUtils.smoothstep(dz, -2, 18) : 1;
-      const materialOpacity = (e.kind === 'gate' ? 0.78 : 0.68) * nearFade;
+      const materialOpacity = (e.kind === 'gate' ? 0.9 : 0.74) * nearFade;
       e.object.traverse(obj => {
         const mat = (obj as THREE.Mesh).material as THREE.MeshBasicMaterial | undefined;
         if (mat && mat.opacity != null) mat.opacity = e.hit || e.missed ? 0.12 : materialOpacity;
       });
       const pulse = 1 + Math.sin(t * (e.kind === 'gate' ? 5.6 : 9.2) + e.dist * 0.07) * (e.kind === 'gate' ? 0.025 : 0.045);
       e.object.scale.setScalar(pulse);
-      e.object.visible = e.kind === 'pad' ? dz > -4 : dz > -24;
+      e.object.visible = e.kind === 'pad' ? dz > -4 : dz > -34;
       if (e.hit || e.missed) continue;
 
       const dx = e.lateral - photonLat;
@@ -152,7 +152,7 @@ class RacingLineManager {
     );
     group.add(ring, inner);
     this.group.add(group);
-    const e: RacingEntity = { kind: 'gate', dist, lateral, vertical, radius: 5.8, object: group, hit: false, missed: false };
+    const e: RacingEntity = { kind: 'gate', dist, lateral, vertical, radius: 7.0, object: group, hit: false, missed: false };
     this.place(e);
     this.list.push(e);
   }

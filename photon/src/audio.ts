@@ -1,5 +1,6 @@
 import type { Epoch } from './cosmology';
 import type * as THREE from 'three';
+import audioManifest from './audio-manifest.json';
 
 // Per-epoch melody scales for the slow generative arpeggio above the drone.
 const MELODIES: Record<string, { freqs: number[]; gap: number; vol: number }> = {
@@ -13,11 +14,67 @@ const MELODIES: Record<string, { freqs: number[]; gap: number; vol: number }> = 
   'Black Hole':    { freqs: [110.00, 138.59, 174.61],                   gap: 6.0, vol: 0.04 },
 };
 
+interface RuntimeAsset {
+  path: string;
+  gain?: number;
+  rate?: number;
+  loop?: boolean;
+  enabled?: boolean;
+  stem?: string;
+}
+
+interface RuntimeMusicEntry {
+  enabled?: boolean;
+  stems?: RuntimeAsset[];
+}
+
+interface RuntimeSfxEntry {
+  enabled?: boolean;
+  gain?: number;
+  rate?: number;
+  spatial?: boolean;
+  variants?: RuntimeAsset[];
+}
+
+interface RuntimeAudioManifest {
+  music?: Record<string, RuntimeMusicEntry>;
+  sfx?: Record<string, RuntimeSfxEntry>;
+}
+
+interface DecodedSfx {
+  buffer: AudioBuffer;
+  gain: number;
+  rate: number;
+  spatial: boolean;
+}
+
+interface DecodedStem {
+  buffer: AudioBuffer;
+  gain: number;
+  loop: boolean;
+  stem: string;
+}
+
+interface StudioMusicNodes {
+  sources: AudioBufferSourceNode[];
+  out: GainNode;
+}
+
+interface PlaySfxOptions {
+  gain?: number;
+  rate?: number;
+  position?: THREE.Vector3;
+}
+
 class AudioEngine {
   ctx: AudioContext | null = null;
   master: GainNode | null = null;
   droneNodes: any = null;
   engineNodes: any = null;
+  studioMusicNodes: StudioMusicNodes | null = null;
+  manifestPromise: Promise<void> | null = null;
+  sfxBuffers = new Map<string, DecodedSfx[]>();
+  musicBuffers = new Map<string, DecodedStem[]>();
   melodyTimeout: number | null = null;
   melodyKey: string | null = null;
   _boostCurrent = 0;
@@ -30,12 +87,143 @@ class AudioEngine {
     this.master = this.ctx!.createGain();
     this.master.gain.value = 0.7;
     this.master.connect(this.ctx!.destination);
+    this.manifestPromise = this.loadStudioAssets();
   }
   resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+
+  async loadStudioAssets() {
+    if (!this.ctx) return;
+    const manifest = audioManifest as RuntimeAudioManifest;
+    const assetBaseUrl = new URL('audio/', document.baseURI).href;
+
+    const tasks: Promise<void>[] = [];
+    for (const [epochName, entry] of Object.entries(manifest.music || {})) {
+      if (entry.enabled === false) continue;
+      for (const stem of entry.stems || []) {
+        if (stem.enabled === false) continue;
+        tasks.push(this.decodeAsset(stem.path, assetBaseUrl).then((buffer) => {
+          const stems = this.musicBuffers.get(epochName) || [];
+          stems.push({
+            buffer,
+            gain: stem.gain ?? 1,
+            loop: stem.loop !== false,
+            stem: stem.stem || 'stem',
+          });
+          this.musicBuffers.set(epochName, stems);
+        }).catch(() => {}));
+      }
+    }
+
+    for (const [cue, entry] of Object.entries(manifest.sfx || {})) {
+      if (entry.enabled === false) continue;
+      for (const asset of entry.variants || []) {
+        if (asset.enabled === false) continue;
+        tasks.push(this.decodeAsset(asset.path, assetBaseUrl).then((buffer) => {
+          const variants = this.sfxBuffers.get(cue) || [];
+          variants.push({
+            buffer,
+            gain: (entry.gain ?? 1) * (asset.gain ?? 1),
+            rate: (entry.rate ?? 1) * (asset.rate ?? 1),
+            spatial: entry.spatial === true,
+          });
+          this.sfxBuffers.set(cue, variants);
+        }).catch(() => {}));
+      }
+    }
+
+    await Promise.all(tasks);
+  }
+
+  async decodeAsset(path: string, assetBaseUrl: string) {
+    const url = new URL(path, assetBaseUrl).href;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Audio asset not found: ${path}`);
+    const bytes = await res.arrayBuffer();
+    return this.ctx!.decodeAudioData(bytes);
+  }
+
+  playSfx(cue: string, options: PlaySfxOptions = {}) {
+    this.ensure(); if (!this.ctx) return false;
+    const variants = this.sfxBuffers.get(cue);
+    if (!variants || variants.length === 0) return false;
+
+    const ctx = this.ctx;
+    const asset = variants[Math.floor(Math.random() * variants.length)];
+    const source = ctx.createBufferSource();
+    source.buffer = asset.buffer;
+    source.playbackRate.value = asset.rate * (options.rate ?? 1);
+
+    const gain = ctx.createGain();
+    gain.gain.value = asset.gain * (options.gain ?? 1);
+    source.connect(gain);
+
+    if (asset.spatial && options.position) {
+      const pan = ctx.createPanner();
+      pan.panningModel = 'HRTF';
+      pan.distanceModel = 'inverse';
+      pan.refDistance = 5;
+      pan.maxDistance = 80;
+      pan.rolloffFactor = 1.4;
+      pan.positionX.value = options.position.x;
+      pan.positionY.value = options.position.y;
+      pan.positionZ.value = options.position.z;
+      gain.connect(pan).connect(this.master!);
+    } else {
+      gain.connect(this.master!);
+    }
+
+    source.start(ctx.currentTime);
+    return true;
+  }
+
+  startStudioMusic(epochName: string, fadeIn = 2.5) {
+    if (!this.ctx) return false;
+    const stems = this.musicBuffers.get(epochName);
+    if (!stems || stems.length === 0) return false;
+
+    const ctx = this.ctx;
+    const out = ctx.createGain();
+    out.gain.value = 0;
+    out.connect(this.master!);
+
+    const startAt = ctx.currentTime + 0.04;
+    const sources = stems.map((stem) => {
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      source.buffer = stem.buffer;
+      source.loop = stem.loop;
+      gain.gain.value = stem.gain;
+      source.connect(gain).connect(out);
+      source.start(startAt);
+      return source;
+    });
+
+    out.gain.setValueAtTime(0, ctx.currentTime);
+    out.gain.linearRampToValueAtTime(1, ctx.currentTime + fadeIn);
+    this.studioMusicNodes = { sources, out };
+    return true;
+  }
+
+  stopStudioMusic(fadeOut = 1.4) {
+    if (!this.studioMusicNodes || !this.ctx) return;
+    const nodes = this.studioMusicNodes;
+    const t = this.ctx.currentTime;
+    nodes.out.gain.cancelScheduledValues(t);
+    nodes.out.gain.setValueAtTime(nodes.out.gain.value, t);
+    nodes.out.gain.linearRampToValueAtTime(0, t + fadeOut);
+    setTimeout(() => {
+      for (const source of nodes.sources) {
+        try { source.stop(); } catch (e) {}
+      }
+      try { nodes.out.disconnect(); } catch (e) {}
+    }, Math.ceil((fadeOut + 0.1) * 1000));
+    this.studioMusicNodes = null;
+  }
 
   startDrone(epoch: Epoch) {
     this.ensure(); if (!this.ctx) return;
     this.stopDrone();
+    if (this.startStudioMusic(epoch.name)) return;
     this.startMelody(epoch);
     const ctx = this.ctx;
     const out = ctx.createGain(); out.gain.value = 0; out.connect(this.master!);
@@ -69,6 +257,7 @@ class AudioEngine {
   }
   stopDrone() {
     this.stopMelody();
+    this.stopStudioMusic();
     if (!this.droneNodes || !this.ctx) return;
     const t = this.ctx.currentTime;
     this.droneNodes.out.gain.cancelScheduledValues(t);
@@ -110,6 +299,7 @@ class AudioEngine {
   }
   pickup() {
     this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('pickup')) return;
     const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator(); o.type = 'sine';
     const g = this.ctx.createGain(); g.gain.value = 0;
@@ -122,6 +312,7 @@ class AudioEngine {
   }
   speedPad() {
     this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('speedPad')) return;
     const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator(); o.type = 'sawtooth';
     const g = this.ctx.createGain(); g.gain.value = 0;
@@ -135,6 +326,8 @@ class AudioEngine {
   }
   lineGate(streak: number) {
     this.ensure(); if (!this.ctx) return;
+    const streakLift = Math.min(9, Math.max(0, streak));
+    if (this.playSfx('lineGate', { rate: 1 + streakLift * 0.025, gain: 0.78 + streakLift * 0.035 })) return;
     const t = this.ctx.currentTime;
     const root = 440 * Math.pow(2, Math.min(9, streak) / 24);
     [root, root * 1.5].forEach((freq, i) => {
@@ -147,8 +340,23 @@ class AudioEngine {
       o.start(start); o.stop(start + 0.18);
     });
   }
+  gateMiss() {
+    this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('gateMiss')) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(); o.type = 'sawtooth';
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 720; lp.Q.value = 3.2;
+    o.connect(lp).connect(g).connect(this.master!);
+    o.frequency.setValueAtTime(420, t);
+    o.frequency.exponentialRampToValueAtTime(180, t + 0.16);
+    g.gain.linearRampToValueAtTime(0.045, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.20);
+    o.start(t); o.stop(t + 0.22);
+  }
   railScrape() {
     this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('railScrape')) return;
     const t = this.ctx.currentTime;
     const buf = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * 0.18), this.ctx.sampleRate);
     const d = buf.getChannelData(0);
@@ -161,6 +369,7 @@ class AudioEngine {
   }
   hit() {
     this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('damageHit')) return;
     const t = this.ctx.currentTime;
     const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.4, this.ctx.sampleRate);
     const d = buf.getChannelData(0);
@@ -175,6 +384,8 @@ class AudioEngine {
   }
   shift(idx: number) {
     this.ensure(); if (!this.ctx) return;
+    const shiftRates = [1.12, 1.0, 0.88];
+    if (this.playSfx('wavelengthShift', { rate: shiftRates[idx] || 1 })) return;
     const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator(); o.type = 'triangle';
     const g = this.ctx.createGain(); g.gain.value = 0;
@@ -188,6 +399,7 @@ class AudioEngine {
   }
   death() {
     this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('death')) return;
     const t = this.ctx.currentTime;
     const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 1.6, this.ctx.sampleRate);
     const d = buf.getChannelData(0);
@@ -199,6 +411,7 @@ class AudioEngine {
   startHeatDeath() {
     this.ensure(); if (!this.ctx) return;
     this.stopDrone();
+    if (this.startStudioMusic('Heat Death', 8)) return;
     const ctx = this.ctx;
     const out = ctx.createGain(); out.gain.value = 0; out.connect(this.master!);
     const sub = ctx.createOscillator(); sub.type = 'sine'; sub.frequency.value = 40;
@@ -215,6 +428,7 @@ class AudioEngine {
   }
   witnessChime() {
     this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('witnessChime')) return;
     const t = this.ctx.currentTime;
     [261.63, 392.00, 523.25, 783.99].forEach((freq, i) => {
       const o = this.ctx!.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
@@ -288,6 +502,8 @@ class AudioEngine {
   // Used by hazards as they pass the photon. Cheap one-shot — no ambient loops.
   whoosh(pos: THREE.Vector3, intensity = 1, kind = 'generic') {
     this.ensure(); if (!this.ctx) return;
+    const cue = kind === 'well' ? 'gravityWellWhoosh' : 'hazardWhoosh';
+    if (this.playSfx(cue, { position: pos, gain: intensity })) return;
     const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator();
     o.type = kind === 'well' ? 'sawtooth' : 'sine';
@@ -317,6 +533,7 @@ class AudioEngine {
   // UI: very subtle hover tick (under-30ms blip)
   uiTick() {
     this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('uiTick')) return;
     const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 1400;
     const g = this.ctx.createGain();
@@ -329,6 +546,7 @@ class AudioEngine {
   // UI: stronger button press
   uiClick() {
     this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('uiClick')) return;
     const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator(); o.type = 'triangle';
     o.frequency.setValueAtTime(900, t);
@@ -343,6 +561,7 @@ class AudioEngine {
   // UI: panel open swoosh
   uiSwoosh() {
     this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('uiSwoosh')) return;
     const t = this.ctx.currentTime;
     const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.5, this.ctx.sampleRate);
     const d = buf.getChannelData(0);
@@ -361,6 +580,7 @@ class AudioEngine {
   // UI: 1.2-second rising stinger when crossing into a new epoch.
   epochRiser() {
     this.ensure(); if (!this.ctx) return;
+    if (this.playSfx('epochRiser')) return;
     const t = this.ctx.currentTime;
     const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 1.5, this.ctx.sampleRate);
     const d = buf.getChannelData(0);

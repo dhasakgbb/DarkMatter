@@ -198,7 +198,7 @@ class Photon {
     // MULTIVERSE: this universe's effective speed-of-light multiplier
     const cosmicSpeed = game.cosmicConstants.speedMul;
     const padBoost = game.padBoostTime > 0
-      ? 1 + 0.36 * Math.min(1, game.padBoostTime / Math.max(0.1, game.padBoostTotal || 1.35))
+      ? 1 + 0.42 * Math.min(1, game.padBoostTime / Math.max(0.1, game.padBoostTotal || 1.35))
       : 1;
     const speed = BASE_SPEED * this.speedBonus * currentEpoch.speedMul * (variant.mods.speedMul || 1) * (this.boosting ? BOOST_MUL : 1) * endlessMul * cosmicSpeed * padBoost;
     this.distance += speed * dt;
