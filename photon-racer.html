@@ -1,0 +1,3144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#000000" />
+<title>PHOTON — A Cosmic Roguelike</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  #stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #ui { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  #ui .layer { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  #ui .layer.on { display: flex; pointer-events: auto; }
+  .panel { background: rgba(8, 10, 22, 0.78); border: 1px solid rgba(180, 200, 255, 0.18); padding: 28px 32px; max-width: 640px; width: calc(100% - 48px); border-radius: 4px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 0 80px rgba(120, 200, 255, 0.08); }
+  h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 200; letter-spacing: 0.32em; margin-bottom: 8px; text-transform: uppercase; }
+  h1 .accent { background: linear-gradient(90deg, #88e0ff, #ff7ad9); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  h2 { font-size: 12px; font-weight: 400; letter-spacing: 0.4em; opacity: 0.55; text-transform: uppercase; margin-bottom: 24px; }
+  p { line-height: 1.65; opacity: 0.85; margin-bottom: 14px; font-size: 13px; }
+  .key { display: inline-block; padding: 1px 7px; border: 1px solid rgba(255,255,255,0.28); border-radius: 3px; font-size: 11px; margin: 0 1px; font-family: inherit; }
+  button { background: transparent; color: #fff; border: 1px solid rgba(180, 200, 255, 0.4); padding: 11px 22px; font-family: inherit; font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase; cursor: pointer; transition: all 0.18s; border-radius: 2px; pointer-events: auto; }
+  button:hover, button:focus { background: rgba(120, 200, 255, 0.12); border-color: #88e0ff; outline: none; }
+  button.primary { background: linear-gradient(90deg, rgba(136,224,255,0.18), rgba(255,122,217,0.18)); border-color: #88e0ff; }
+  .row { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; justify-content: center; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 20px; font-size: 12px; opacity: 0.85; margin: 14px 0; }
+  .stats div { display: flex; justify-content: space-between; border-bottom: 1px dotted rgba(255,255,255,0.10); padding: 4px 0; }
+  .stats div span:last-child { color: #88e0ff; }
+  .upgrade-card { padding: 16px; border: 1px solid rgba(180,200,255,0.22); cursor: pointer; transition: all 0.2s; flex: 1 1 160px; max-width: 200px; border-radius: 3px; pointer-events: auto; }
+  .upgrade-card:hover { border-color: #88e0ff; background: rgba(120,200,255,0.08); transform: translateY(-2px); }
+  .upgrade-card .name { font-size: 12px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 6px; color: #88e0ff; }
+  .upgrade-card .desc { font-size: 11px; opacity: 0.75; line-height: 1.55; }
+  .upgrade-card .lvl { font-size: 10px; opacity: 0.5; margin-top: 8px; letter-spacing: 0.2em; }
+  .codex-list { max-height: 50vh; overflow-y: auto; margin: 12px 0 18px; padding-right: 8px; }
+  .codex-list::-webkit-scrollbar { width: 4px; }
+  .codex-list::-webkit-scrollbar-thumb { background: rgba(180,200,255,0.2); }
+  .codex-entry { padding: 10px 0; border-bottom: 1px dotted rgba(255,255,255,0.08); }
+  .codex-entry .title { font-size: 12px; letter-spacing: 0.25em; text-transform: uppercase; color: #88e0ff; margin-bottom: 5px; }
+  .codex-entry .body { font-size: 12px; opacity: 0.82; line-height: 1.6; }
+  .codex-entry.locked .title { opacity: 0.3; color: #888; }
+  .codex-entry.locked .body { font-style: italic; opacity: 0.4; }
+  #hud-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 4; }
+  #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; z-index: 100; transition: opacity 0.6s; font-size: 11px; letter-spacing: 0.4em; opacity: 0.55; text-transform: uppercase; }
+  #boot.gone { opacity: 0; pointer-events: none; }
+  .epoch-toast { position: fixed; left: 50%; top: 38%; transform: translateX(-50%); text-align: center; z-index: 6; pointer-events: none; opacity: 0; transition: opacity 0.6s; }
+  .epoch-toast.on { opacity: 1; }
+  .epoch-toast .num { font-size: 11px; letter-spacing: 0.5em; opacity: 0.5; margin-bottom: 6px; }
+  .epoch-toast .name { font-size: clamp(28px, 6vw, 56px); font-weight: 200; letter-spacing: 0.18em; text-transform: uppercase; background: linear-gradient(90deg, #88e0ff, #ff7ad9); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .epoch-toast .sub { font-size: 11px; letter-spacing: 0.35em; opacity: 0.6; margin-top: 6px; text-transform: uppercase; }
+  .epoch-toast .chapter { margin-top: 22px; font-size: clamp(14px, 1.6vw, 18px); opacity: 0; max-width: 560px; line-height: 1.55; font-style: italic; letter-spacing: 0.04em; transition: opacity 1.4s; }
+  .epoch-toast.on .chapter { opacity: 0.78; transition-delay: 0.6s; }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 6px 0; font-size: 12px; }
+  .settings-row label { opacity: 0.85; letter-spacing: 0.15em; text-transform: uppercase; flex: 0 0 auto; }
+  .settings-row .control { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+  .settings-row input[type=range] { -webkit-appearance: none; appearance: none; width: 160px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; outline: none; }
+  .settings-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; background: #88e0ff; border-radius: 50%; cursor: pointer; box-shadow: 0 0 8px rgba(136,224,255,0.5); }
+  .settings-row input[type=range]::-moz-range-thumb { width: 14px; height: 14px; background: #88e0ff; border-radius: 50%; cursor: pointer; border: none; }
+  .settings-row .val { font-size: 11px; opacity: 0.6; min-width: 32px; text-align: right; }
+  .toggle { width: 38px; height: 20px; background: rgba(255,255,255,0.12); border-radius: 10px; position: relative; cursor: pointer; transition: background 0.18s; }
+  .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.18s; }
+  .toggle.on { background: #88e0ff; }
+  .toggle.on::after { transform: translateX(18px); }
+  .danger { color: #ff7a8a; border-color: rgba(255,122,138,0.4); }
+  .danger:hover { background: rgba(255,122,138,0.15); border-color: #ff7a8a; }
+  .pause-hint { margin-top: 18px; font-size: 11px; opacity: 0.5; text-align: center; }
+  /* PHASE D: cinematic transition flash — quick white-to-clear bloom between epochs */
+  #epoch-flash { position: fixed; inset: 0; background: #fff; z-index: 25; opacity: 0; pointer-events: none; transition: opacity 0.2s ease-out; }
+  #epoch-flash.flash { opacity: 0.7; transition: opacity 1.2s ease-out; }
+  /* PHASE A: witness ending — fade-to-white sequence shown after Heat Death's final pickup */
+  #witness { position: fixed; inset: 0; background: #000; z-index: 30; opacity: 0; transition: background 6s cubic-bezier(0.6, 0, 0.4, 1), opacity 1.6s; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 24px; text-align: center; }
+  #witness.on { opacity: 1; pointer-events: auto; }
+  #witness.bright { background: #fafaff; color: #0a0a18; }
+  #witness h1 { font-size: clamp(22px, 4vw, 36px); font-weight: 200; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0; transition: opacity 3s; max-width: 720px; line-height: 1.5; }
+  #witness h1.show { opacity: 1; }
+  #witness .small { margin-top: 24px; font-size: 11px; letter-spacing: 0.32em; opacity: 0; transition: opacity 2s; text-transform: uppercase; }
+  #witness .small.show { opacity: 0.6; }
+  #witness .hint { margin-top: 60px; font-size: 11px; opacity: 0; transition: opacity 1.5s; letter-spacing: 0.25em; text-transform: uppercase; }
+  #witness .hint.show { opacity: 0.4; }
+</style>
+</head>
+<body>
+<div id="boot">Initializing spacetime…</div>
+<div id="stage"><canvas id="game"></canvas></div>
+<div id="epoch-flash"></div>
+<canvas id="hud-canvas"></canvas>
+<div class="epoch-toast" id="epoch-toast">
+  <div class="num" id="epoch-num"></div>
+  <div class="name" id="epoch-name"></div>
+  <div class="sub" id="epoch-sub"></div>
+  <div class="chapter" id="epoch-chapter"></div>
+</div>
+<div id="witness">
+  <h1 id="witness-line">You have witnessed the universe.</h1>
+  <div class="small" id="witness-count"></div>
+  <div class="hint" id="witness-hint">Press any key to begin again</div>
+</div>
+<div id="ui">
+  <div class="layer" id="title">
+    <div class="panel">
+      <h1><span class="accent">P H O T O N</span></h1>
+      <h2>Survive the universe</h2>
+      <p><strong style="color:#88e0ff">You are a single packet of light.</strong> One run is the entire history of physical reality, from the first microsecond after the Big Bang to the heat death itself. <strong>Steer to dodge</strong> the colored hazards. <strong>Match their color</strong> with keys 1, 2, or 3 to phase through. <strong>Collect yellow orbs</strong> to keep your energy up. Reach the end and you will witness something almost no one ever has.</p>
+      <div class="stats" id="title-stats"></div>
+      <div class="row">
+        <button class="primary" id="btn-start">▶ Begin run</button>
+        <button id="btn-resume" style="display:none">↶ Resume</button>
+        <button id="btn-form">Form</button>
+        <button id="btn-codex">Codex</button>
+        <button id="btn-memories">Memories</button>
+      </div>
+      <p style="margin-top:18px;font-size:11px;opacity:0.5;text-align:center;line-height:2">
+        <span class="key">A</span><span class="key">D</span> steer · <span class="key">W</span><span class="key">S</span> climb · <span class="key">SPACE</span> boost · <span class="key">1</span> γ · <span class="key">2</span> visible · <span class="key">3</span> radio
+      </p>
+    </div>
+  </div>
+  <div class="layer" id="death">
+    <div class="panel">
+      <h1>A B S O R B E D</h1>
+      <h2 id="death-where">Era unknown</h2>
+      <p style="font-size:12px;opacity:0.55;margin:-6px 0 14px;letter-spacing:0.2em;text-align:center;text-transform:uppercase">You forget. But the universe remembers.</p>
+      <div class="stats" id="death-stats"></div>
+      <div id="death-memories" style="margin-top:14px"></div>
+      <p id="death-codex" style="display:none;border-left:2px solid #88e0ff;padding-left:12px;font-size:12px"></p>
+      <div class="row">
+        <button class="primary" id="btn-again">↻ Run again</button>
+        <button id="btn-menu">Menu</button>
+      </div>
+    </div>
+  </div>
+  <div class="layer" id="upgrade">
+    <div class="panel">
+      <h1 style="font-size:24px">YOU PERSIST</h1>
+      <h2 id="upgrade-where"></h2>
+      <p>Something about this era changed you. Choose what. The change holds for this run and every future one.</p>
+      <div class="row" id="upgrade-cards"></div>
+    </div>
+  </div>
+  <div class="layer" id="codex">
+    <div class="panel">
+      <h1 style="font-size:24px">C O D E X</h1>
+      <h2>Discovered phenomena</h2>
+      <div class="codex-list" id="codex-list"></div>
+      <div class="row"><button id="btn-codex-back">Back</button></div>
+    </div>
+  </div>
+  <div class="layer" id="memories">
+    <div class="panel">
+      <h1 style="font-size:24px">M E M O R I E S</h1>
+      <h2 id="mem-count">What the universe remembers of you</h2>
+      <div class="codex-list" id="memories-list"></div>
+      <div class="row"><button id="btn-memories-back">Back</button></div>
+    </div>
+  </div>
+  <div class="layer" id="form">
+    <div class="panel">
+      <h1 style="font-size:24px">C H O O S E   F O R M</h1>
+      <h2>What kind of light are you this time?</h2>
+      <div id="form-list"></div>
+      <div class="row"><button id="btn-form-back">Back</button></div>
+    </div>
+  </div>
+  <div class="layer" id="pause">
+    <div class="panel">
+      <h1 style="font-size:24px">P A U S E D</h1>
+      <h2>Settings</h2>
+      <div class="settings-row"><label>Master volume</label><div class="control"><input type="range" id="set-master" min="0" max="1" step="0.01"><span class="val" id="set-master-val">70</span></div></div>
+      <div class="settings-row"><label>Mute audio</label><div class="control"><div class="toggle" id="set-mute"></div></div></div>
+      <div class="settings-row"><label>Field of view</label><div class="control"><input type="range" id="set-fov" min="50" max="100" step="1"><span class="val" id="set-fov-val">72</span></div></div>
+      <div class="settings-row"><label>Steering sensitivity</label><div class="control"><input type="range" id="set-sens" min="0.5" max="1.8" step="0.05"><span class="val" id="set-sens-val">1.0</span></div></div>
+      <div class="settings-row"><label>High-contrast hazards</label><div class="control"><div class="toggle" id="set-contrast"></div></div></div>
+      <div class="settings-row"><label>Reduced motion</label><div class="control"><div class="toggle" id="set-reduced"></div></div></div>
+      <div class="row" style="margin-top:18px">
+        <button class="primary" id="btn-resume">▶ Resume</button>
+        <button id="btn-end-run">End run</button>
+        <button class="danger" id="btn-reset-meta">Reset all progress</button>
+      </div>
+      <p class="pause-hint">Press <span class="key">P</span> or <span class="key">ESC</span> to resume</p>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+// ============================================================================
+// CONFIG
+// ============================================================================
+const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && window.innerWidth < 900);
+const PIXEL_RATIO = Math.min(IS_MOBILE ? 1.5 : 2.0, window.devicePixelRatio || 1);
+const TUBE_RADIUS = 22;            // half-width of the playable channel
+const SEGMENT_LEN = 6;             // distance between curve control points
+const SEGMENTS_AHEAD = 80;         // how far ahead we generate
+const SEGMENTS_BEHIND = 8;         // how far behind we keep
+const RING_SPACING = 12;           // distance between visible tunnel rings
+const BASE_SPEED = 60;             // units / second baseline forward velocity
+const BOOST_MUL = 2.1;
+const BOOST_DRAIN = 28;            // boost units per second while boosting
+const BOOST_RECHARGE = 14;         // boost units per second while not boosting
+const BOOST_MAX = 100;
+const ENERGY_MAX = 100;
+
+// ============================================================================
+// COSMOLOGY
+// ============================================================================
+const EPOCHS = [
+  {
+    name: 'Inflationary',
+    subtitle: '10⁻³⁶ → 10⁻³² seconds',
+    duration: 35,
+    paletteA: new THREE.Color(0xff2a55),
+    paletteB: new THREE.Color(0x6b00b3),
+    palettePoint: new THREE.Color(0xfff7d0),
+    fogColor: new THREE.Color(0x1a0418),
+    fogNear: 60, fogFar: 480,
+    speedMul: 1.00, hazardDensity: 0.7, pickupDensity: 1.4,
+    twistFreq: 0.012, twistAmp: 8,
+    description: 'Spacetime expanding faster than light. The vacuum boils with quantum fluctuations that seed every galaxy yet to come.',
+    chapter: 'You begin. The vacuum boils.',
+    hazardKinds: ['fluctuation','gravityWell'],
+    codexKey: 'INFLATION',
+  },
+  {
+    name: 'Quark Plasma',
+    subtitle: '10⁻⁶ seconds',
+    duration: 40,
+    paletteA: new THREE.Color(0xff8a3c),
+    paletteB: new THREE.Color(0x8a1a78),
+    palettePoint: new THREE.Color(0xfff3a8),
+    fogColor: new THREE.Color(0x2a0820),
+    fogNear: 60, fogFar: 460,
+    speedMul: 1.06, hazardDensity: 1.1, pickupDensity: 1.0,
+    twistFreq: 0.018, twistAmp: 12,
+    description: 'A soup of quarks and gluons too hot for protons to form. Color charge tangles every photon path.',
+    chapter: 'You burn. The soup is everything.',
+    hazardKinds: ['gluon','fluctuation','gravityWell'],
+    codexKey: 'QGP',
+  },
+  {
+    name: 'Recombination',
+    subtitle: '380,000 years',
+    duration: 50,
+    paletteA: new THREE.Color(0xffd980),
+    paletteB: new THREE.Color(0xff5e9c),
+    palettePoint: new THREE.Color(0xf2f7ff),
+    fogColor: new THREE.Color(0x1c1a30),
+    fogNear: 80, fogFar: 520,
+    speedMul: 1.00, hazardDensity: 1.0, pickupDensity: 1.0,
+    twistFreq: 0.010, twistAmp: 14,
+    description: 'Electrons bind to nuclei. The plasma fog clears. The light you carry now will become the cosmic microwave background.',
+    chapter: 'The fog parts. You can see, finally, for the first time.',
+    hazardKinds: ['plasma','fluctuation','gravityWell'],
+    codexKey: 'CMB',
+  },
+  // PHASE C: First Stars — universe ignites. Hot, fast, violent.
+  {
+    name: 'First Stars',
+    subtitle: 'T + 200 million years',
+    duration: 190,
+    paletteA: new THREE.Color(0xff8a3c),
+    paletteB: new THREE.Color(0x1a3a8a),
+    palettePoint: new THREE.Color(0xfff2c8),
+    fogColor: new THREE.Color(0x180a18),
+    fogNear: 70, fogFar: 500,
+    speedMul: 1.10, hazardDensity: 1.2, pickupDensity: 0.9,
+    twistFreq: 0.014, twistAmp: 16,
+    description: 'Hydrogen and helium collapse into the first stars. They burn brilliant, brief, and they explode. Most of what you fly through tonight was forged here.',
+    chapter: 'Stars ignite around you. You watch them burn.',
+    hazardKinds: ['plasma','gravityWell','supernova','fluctuation'],
+    codexKey: 'FIRSTSTARS',
+  },
+  // PHASE C: Galactic Era — spirals form. Tighter twist, magnetic eddies.
+  {
+    name: 'Galactic',
+    subtitle: 'T + 1 billion years',
+    duration: 230,
+    paletteA: new THREE.Color(0x6e3aff),
+    paletteB: new THREE.Color(0x2a78b0),
+    palettePoint: new THREE.Color(0xb0d4ff),
+    fogColor: new THREE.Color(0x100820),
+    fogNear: 80, fogFar: 540,
+    speedMul: 1.08, hazardDensity: 1.1, pickupDensity: 1.0,
+    twistFreq: 0.020, twistAmp: 22,
+    description: 'Galaxies form. Spiral arms whip past in long curves. Magnetic fields tug at every photon they touch.',
+    chapter: 'The galaxies form. You pass through their arms.',
+    hazardKinds: ['plasma','gluon','gravityWell','fluctuation'],
+    codexKey: 'GALACTIC',
+  },
+  // PHASE C: Stellar Era — peak complexity, longest epoch. Where most runs will die.
+  {
+    name: 'Stellar',
+    subtitle: 'T + 5 billion years',
+    duration: 360,
+    paletteA: new THREE.Color(0xffb04a),
+    paletteB: new THREE.Color(0xb01a4a),
+    palettePoint: new THREE.Color(0xfff8d4),
+    fogColor: new THREE.Color(0x18080a),
+    fogNear: 80, fogFar: 520,
+    speedMul: 1.12, hazardDensity: 1.4, pickupDensity: 1.2,
+    twistFreq: 0.012, twistAmp: 14,
+    description: 'The heyday of stars. Light, dense, complex. Most photons that ever existed were born now. Most of them are still going.',
+    chapter: 'Most light that ever existed is here. You are here too.',
+    hazardKinds: ['plasma','gluon','gravityWell','fluctuation','supernova'],
+    codexKey: 'STELLAR',
+  },
+  // PHASE C: Degenerate Era — stars die. Slower, dimmer, rarer hazards.
+  {
+    name: 'Degenerate',
+    subtitle: 'T + 100 trillion years',
+    duration: 200,
+    paletteA: new THREE.Color(0x4a4a90),
+    paletteB: new THREE.Color(0x1a1a3a),
+    palettePoint: new THREE.Color(0xc4c8ff),
+    fogColor: new THREE.Color(0x080814),
+    fogNear: 60, fogFar: 420,
+    speedMul: 0.95, hazardDensity: 0.9, pickupDensity: 0.7,
+    twistFreq: 0.010, twistAmp: 10,
+    description: 'Stars die. White dwarfs, neutron stars, brown dwarfs. The universe cools, but slowly. Hazards are rarer but heavier.',
+    chapter: 'The stars die. The universe cools.',
+    hazardKinds: ['gravityWell','plasma','fluctuation'],
+    codexKey: 'DEGENERATE',
+  },
+  // PHASE C: Black Hole Era — only black holes remain. Sparse and ominous.
+  {
+    name: 'Black Hole',
+    subtitle: 'T + 10⁴⁰ years',
+    duration: 240,
+    paletteA: new THREE.Color(0x180828),
+    paletteB: new THREE.Color(0x000000),
+    palettePoint: new THREE.Color(0x4a3a8a),
+    fogColor: new THREE.Color(0x040408),
+    fogNear: 40, fogFar: 280,
+    speedMul: 0.85, hazardDensity: 0.5, pickupDensity: 0.4,
+    twistFreq: 0.006, twistAmp: 6,
+    description: 'The matter era ends. Only black holes remain, slowly evaporating. Space is mostly empty, and you can hear it.',
+    chapter: 'Only the black holes are left. They are patient.',
+    hazardKinds: ['gravityWell','eventHorizon','fluctuation'],
+    codexKey: 'BLACKHOLE',
+  },
+  // PHASE A: Heat Death — the signature scene. Six minutes of sparse fading. The whole
+  // game is engineered toward this moment. Difficulty drops to near-zero on purpose.
+  {
+    name: 'Heat Death',
+    subtitle: 'T + 10¹⁰⁰ years',
+    duration: 360,
+    paletteA: new THREE.Color(0x0a0a18),
+    paletteB: new THREE.Color(0x05050a),
+    palettePoint: new THREE.Color(0x222244),
+    fogColor: new THREE.Color(0x000000),
+    fogNear: 30, fogFar: 200,
+    speedMul: 0.55, hazardDensity: 0.06, pickupDensity: 0,
+    twistFreq: 0.005, twistAmp: 4,
+    description: 'The universe runs out of usable energy. Stars burn out. Black holes evaporate. Space stretches. You are still here.',
+    chapter: 'Almost nothing is left. You keep going.',
+    hazardKinds: ['fluctuation'],
+    codexKey: 'HEATDEATH',
+    isHeatDeath: true,
+  },
+];
+
+// Wavelength states. Color-matched hazards let the photon phase through.
+const WAVELENGTHS = [
+  { key: 'gamma',   name: 'γ Gamma',  color: new THREE.Color(0xb888ff), hex: 0xb888ff },
+  { key: 'visible', name: 'Visible',  color: new THREE.Color(0xffffff), hex: 0xffffff },
+  { key: 'radio',   name: 'Radio',    color: new THREE.Color(0xff5566), hex: 0xff5566 },
+];
+
+const CODEX_ENTRIES = {
+  PHOTON:     { title: 'You',                     body: 'A photon is a quantum of the electromagnetic field. Massless, chargeless, eternal so long as nothing absorbs you.' },
+  INFLATION:  { title: 'Cosmic inflation',        body: 'In 10⁻³² seconds the universe grew by a factor of 10²⁶. Faster than light? No — space itself expanded. You rode that wave.' },
+  QGP:        { title: 'Quark-gluon plasma',      body: 'For one millionth of a second the universe was hotter than two trillion Kelvin. No protons, no atoms — only quarks and the gluons that bind them.' },
+  CMB:        { title: 'The microwave background',body: 'When the universe cooled to 3000 K, electrons fell into nuclei and photons stopped scattering. Those photons still arrive at every detector on Earth, redshifted to 2.7 K.' },
+  GRAVWELL:   { title: 'Gravitational well',      body: 'A region where spacetime curves enough to bend your path. Even light cannot travel a straight line through one.' },
+  GAMMA:      { title: 'Gamma wavelength',        body: 'Photons with wavelengths shorter than 10⁻¹¹ m. Energetic enough to ionize matter. Most cosmic gamma rays are born from violent events.' },
+  RADIO:      { title: 'Radio wavelength',        body: 'Wavelengths above 1 mm. Photons of this energy slip through dust clouds the visible spectrum cannot.' },
+  GLUON:      { title: 'Gluon strand',            body: 'Gluons mediate the strong force. In the early universe they bound quarks into chains that briefly trapped passing light.' },
+  REDSHIFT:   { title: 'Cosmological redshift',   body: 'Expanding space stretches every photon you encounter. The further it has traveled, the redder it gets.' },
+  HEATDEATH:  { title: 'The heat death',          body: 'The far future. Entropy reaches its maximum. No usable energy remains anywhere in the cosmos. Space is dark, cold, and almost empty. You are one of the last photons still in flight.' },
+  WITNESS:    { title: 'You witnessed it',        body: 'The full life of the universe took thirty minutes from your point of view. From the universe\'s point of view it took 10¹⁰⁰ years. Both numbers are true.' },
+  FIRSTSTARS: { title: 'The first stars',         body: 'Several hundred million years after the Big Bang, gravity collapsed gas clouds into the first stars. They were enormous, blue-hot, and lived only millions of years before exploding as supernovae. Their corpses seeded the universe with metals.' },
+  GALACTIC:   { title: 'Galaxy formation',        body: 'Stars clustered. Dark matter halos pulled gas into rotating disks. The first spiral galaxies took shape around 1 billion years after the Big Bang. The light you carry has been bent through hundreds of them.' },
+  STELLAR:    { title: 'The stellar era',         body: 'The current era. Most stars in the universe are still burning. This is the brightest the universe will ever be. From here on, things slowly go dark.' },
+  DEGENERATE: { title: 'The degenerate era',      body: 'Hundreds of trillions of years from now, all main-sequence stars will have burned out. Only white dwarfs, neutron stars, and brown dwarfs remain. The universe cools to nearly nothing.' },
+  BLACKHOLE:  { title: 'The black hole era',      body: 'After 10⁴⁰ years, even degenerate stars are gone. Only black holes remain, slowly evaporating via Hawking radiation. The largest take 10¹⁰⁰ years to dissipate.' },
+  SUPERNOVA:  { title: 'Supernova shockwave',     body: 'A massive star\'s collapse releases more energy in seconds than the sun produces in 10 billion years. The shockwave outruns even photons for the first few hours.' },
+  HORIZON:    { title: 'Event horizon',           body: 'The boundary of a black hole. Inside, all paths lead inward. Light cannot climb out. Only photons of the right wavelength, at exactly the right angle, escape via Hawking emission.' },
+};
+
+// ============================================================================
+// MEMORIES (Phase B) — qualia, not facts. Codex stores facts. Memories store
+// experiences, in second person, with the universe as narrator. Three kinds:
+//   narrative  — flavor only, the most common
+//   resonance  — passive bonus when unlocked (applied via applyMemoryResonances)
+//   threshold  — unlocks a variant / mode / secret
+// Each memory has an unlock condition; checkMemoryTriggers() evaluates them.
+// ============================================================================
+const MEMORIES = [
+  // === Reaching epochs ===
+  { id: 'first-spark',     type: 'narrative', when: { reachedEpoch: 0 },
+    body: 'You remember the first time something happened. The vacuum boiled. You were boiled with it. You did not know to be afraid because there was not yet a thing to be afraid of.',
+    evolved: { afterWitnesses: 1, body: 'You remember the first time something happened. The vacuum boiled. You were boiled with it. You know now what came after. You went anyway.' } },
+  { id: 'the-soup',        type: 'narrative', when: { reachedEpoch: 1 },
+    body: 'You remember the heat. Hot in a way no metaphor will ever match. Quarks all around you, free and tangled. You bounced off something every microsecond and called it nothing.' },
+  { id: 'the-fog-clears',  type: 'narrative', when: { reachedEpoch: 2 },
+    body: 'You remember the moment you could fly straight. For 380,000 years you had been scattered every fraction of a second. Then the electrons fell into atoms and you kept going. You are still going.',
+    evolved: { afterWitnesses: 1, body: 'You remember the moment you could fly straight. The fog parts and you keep going, every time. There is something almost funny about it now.' } },
+  { id: 'first-fire',      type: 'narrative', when: { reachedEpoch: 3 },
+    body: 'You remember the first stars. They were enormous. They burned blue and they did not last. You watched one collapse into iron and then become everything heavier than iron in the time it took you to look away.' },
+  { id: 'spiral-arm',      type: 'narrative', when: { reachedEpoch: 4 },
+    body: 'You remember being inside a spiral arm. It was beautiful from outside and it was loud from inside. The magnetic field tugged at you constantly, asking you to turn slightly, which you did.' },
+  { id: 'the-stellar-era', type: 'narrative', when: { reachedEpoch: 5 },
+    body: 'You remember the brightest the universe ever was. Trillions of stars. You were one of countless photons born then. You suspect you have met some of the others by now, in some run or other.' },
+  { id: 'the-cooling',     type: 'narrative', when: { reachedEpoch: 6 },
+    body: 'You remember the universe cooling. Not in any one moment. Just a slow understanding that fewer things were happening. The neutron stars hummed. Nothing else did.' },
+  { id: 'the-quiet',       type: 'narrative', when: { reachedEpoch: 7 },
+    body: 'You remember the black hole era. Most of the matter you had ever known was inside a black hole now. The horizons were silent. The horizons were also patient.' },
+  { id: 'the-dark-after',  type: 'narrative', when: { reachedEpoch: 8 },
+    body: 'You remember the dark. It was not empty. It was just dark. The other photons were there too, somewhere, no longer reaching anyone.',
+    evolved: { afterWitnesses: 1, body: 'You remember the dark. It was not empty. You can see the others now. They are with you. They are all of them you.' } },
+  // === First-time gameplay events ===
+  { id: 'first-tune',      type: 'resonance', when: { phasesLifetime: 5 },
+    body: 'You remember tuning yourself. The way one wavelength fits one obstacle exactly. The wall lets you through and you feel it as a small kindness.',
+    resonance: { startEnergyBonus: 8 } },
+  { id: 'chained',         type: 'resonance', when: { firstChainPhased: true },
+    body: 'You remember being held by three at once. You remember the moment one of them let go and the rest had to as well. You learned that grip is plural.',
+    resonance: { firstChainFreePerRun: true } },
+  { id: 'the-shortcut',    type: 'narrative', when: { firstWormhole: true },
+    body: 'You remember a shortcut. You did not take it. The shortcut took you. You came out the other side already there.' },
+  { id: 'untouched',       type: 'resonance', when: { perfectEpoch: true },
+    body: 'You remember moving through everything without touching anything. Brief. The universe asked nothing of you and you gave it back.',
+    resonance: { perfectStartBoost: 25 } },
+  { id: 'first-end',       type: 'narrative', when: { runs: 1 },
+    body: 'You remember being absorbed. It did not hurt. You stopped. Something else continued.',
+    evolved: { afterWitnesses: 1, body: 'You remember being absorbed. You remember being absorbed many times. The continuing was always the part that mattered.' } },
+  // === Witnessing the heat death ===
+  { id: 'last-photon',     type: 'threshold', when: { witnessed: 1 },
+    body: 'You remember being one of the last. You did not know you were one of the last. The universe was already empty when you got there.',
+    evolved: { afterWitnesses: 2, body: 'You remember being one of the last. You were not the last. You are still not the last. You wonder if there is a last.' },
+    threshold: { unlockVariant: 'gamma' } },
+  { id: 'second-witness',  type: 'narrative', when: { witnessed: 2 },
+    body: 'You remember the second time it ended. You expected it this time. It was not less.' },
+  { id: 'fifth-witness',   type: 'narrative', when: { witnessed: 5 },
+    body: 'You remember the fifth time. The universe was patient. You were beginning to suspect you were not the photon. You were the watching.' },
+  // === Boost and color use ===
+  { id: 'first-boost',     type: 'narrative', when: { boostedOnce: true },
+    body: 'You remember pushing. You did not have a body but you remembered having one in some other run. The push felt like a body remembering.' },
+  { id: 'fast-streak',     type: 'resonance', when: { peakStreak: 5 },
+    body: 'You remember chaining. One color, then another, then another, the universe revealing its key signature in real time.',
+    resonance: { startBoostBonus: 15 } },
+  { id: 'deep-streak',     type: 'threshold', when: { peakStreak: 12 },
+    body: 'You remember the resonance. Twelve obstacles in a row tuned to your wavelength. The universe was speaking your language and not the other way around.',
+    threshold: { unlockVariant: 'gamma' } },
+  { id: 'gamma-tuning',    type: 'narrative', when: { gammaPhases: 10 },
+    body: 'You remember the gamma rays. Sharp, narrow, expensive. Most things let you through but the things that did not let you through were violent about it.' },
+  { id: 'radio-patience',  type: 'narrative', when: { radioPhases: 10 },
+    body: 'You remember the radio. Soft, wide, slow. It went where the sharper colors could not.' },
+  { id: 'visible-thanks',  type: 'narrative', when: { visiblePhases: 10 },
+    body: 'You remember the visible. Plain old light. The wavelength most things were tuned for. You were grateful for it. You forgot to say so.' },
+  // === Run milestones (presence) ===
+  { id: 'fivefold',        type: 'narrative', when: { runs: 5 },
+    body: 'You remember being five photons. You remember each of their endings. You also remember feeling, vaguely, that they had all been you.' },
+  { id: 'twentyfive',      type: 'narrative', when: { runs: 25 },
+    body: 'You remember being twenty-five photons. The earliest ones felt like strangers. The last few felt like rehearsals.' },
+  { id: 'fifty',           type: 'threshold', when: { runs: 50 },
+    body: 'You remember fifty endings. You stopped counting after that. The number stopped mattering.',
+    threshold: { unlockVariant: 'gamma' } },
+  { id: 'pickups-100',     type: 'resonance', when: { pickupsLifetime: 100 },
+    body: 'You remember finding things. Little glowing leftovers from older photons that did not make it. You took them. You made of them what you could.',
+    resonance: { startEnergyBonus: 12 } },
+  // === Meta moments (UI use) ===
+  { id: 'the-pause',       type: 'narrative', when: { pausedOnce: true },
+    body: 'You remember stopping. The universe did not stop. Then it did.' },
+  { id: 'the-mute',        type: 'narrative', when: { mutedOnce: true },
+    body: 'You remember the silence. Not the kind that was waiting at the end. The other kind. The chosen kind.' },
+  { id: 'the-end',         type: 'threshold', when: { reachedEpoch: 8, runs: 5 },
+    body: 'You remember knowing where this was going. Five times. Each time you went anyway.',
+    threshold: { unlockVariant: 'gamma' } },
+];
+
+// Persistent upgrades
+const UPGRADES = [
+  { key: 'topSpeed',     name: 'Faster',           desc: 'The void resists you less. +8% forward speed.',         max: 5, apply: (s,l) => { s.speedBonus = 1 + 0.08 * l; } },
+  { key: 'agility',      name: 'Sharper',          desc: 'Curves want you. +12% lateral acceleration.',           max: 5, apply: (s,l) => { s.agilityBonus = 1 + 0.12 * l; } },
+  { key: 'capacitor',    name: 'Wider',            desc: 'More of you to lose. +15 maximum energy.',              max: 4, apply: (s,l) => { s.energyMaxBonus = 15 * l; } },
+  { key: 'shielding',    name: 'Tougher',          desc: 'Hazards forget you sooner. −12% damage taken.',         max: 4, apply: (s,l) => { s.damageReduction = Math.min(0.6, 0.12 * l); } },
+  { key: 'recharge',     name: 'Hungrier',         desc: 'You recover from pushing faster. +20% boost regen.',     max: 4, apply: (s,l) => { s.boostRechargeBonus = 1 + 0.20 * l; } },
+  { key: 'phaseWindow',  name: 'Forgiveness',      desc: 'A matched wavelength grants a half-second of grace.',    max: 3, apply: (s,l) => { s.phaseWindowSec = 0.18 * l; } },
+];
+
+// Tutorial steps shown on early runs. Each step advances when the condition is met
+// or maxTime elapses, whichever comes first. Drawn as an overlay near the bottom HUD.
+const TUTORIAL_STEPS = [
+  { text: 'STEER WITH  W A S D  OR  ARROW KEYS',                           hint: 'Dodge the colored shapes',   max: 7,  needs: 'steer' },
+  { text: 'PRESS  1  γ      2  VISIBLE      3  RADIO',                      hint: 'Wavelength = your color',     max: 7,  needs: 'shift' },
+  { text: 'MATCH A HAZARD’S COLOR TO PHASE THROUGH IT SAFELY',          hint: '+ small energy bonus on a clean phase', max: 9,  needs: 'phase' },
+  { text: 'COLLECT YELLOW ORBS  ·  HOLD  SPACE  TO BOOST',                  hint: 'Boost recharges when released', max: 7, needs: 'boost' },
+  { text: 'SURVIVE TO RECOMBINATION TO UNLOCK MORE',                       hint: 'Good luck, photon',          max: 4,  needs: null },
+];
+
+// Photon variants. The user selects one on the title screen.
+// Modifiers stack with permanent upgrades. Default-unlocked: visible. Gamma comes through memory.
+// Microwave and X-ray earn their unlocks through the new conditions below (handled in checkVariantUnlocks).
+const VARIANTS = [
+  { key: 'visible',   name: 'Visible',    desc: 'Plain old light. Balanced in every way.',                         unlocked: true,  startWavelength: 1, mods: { speedMul: 1.00, agilityMul: 1.00, energyMul: 1.00, boostMul: 1.00 } },
+  { key: 'gamma',     name: 'Gamma',      desc: 'Sharp, narrow, energetic. Fast and frail.',                       unlocked: false, unlockReq: 'A memory unlocks this',           startWavelength: 0, mods: { speedMul: 1.18, agilityMul: 1.10, energyMul: 0.70, boostMul: 1.00 } },
+  { key: 'microwave', name: 'Microwave',  desc: 'Long, soft, patient. Slower but tougher; starts in radio.',       unlocked: false, unlockReq: 'Witness the heat death once',     startWavelength: 2, mods: { speedMul: 0.88, agilityMul: 0.95, energyMul: 1.40, boostMul: 0.90 } },
+  { key: 'xray',      name: 'X-ray',      desc: 'Penetrating. Recharges boost faster, slightly faster baseline.',  unlocked: false, unlockReq: 'Reach the Stellar era',           startWavelength: 0, mods: { speedMul: 1.06, agilityMul: 1.05, energyMul: 0.95, boostMul: 1.50 } },
+];
+
+// ============================================================================
+// META PROGRESSION (persistent across runs via localStorage with safe fallback)
+// ============================================================================
+const META_KEY = 'photon-meta-v1';
+const defaultMeta = () => ({
+  upgrades: { topSpeed: 0, agility: 0, capacitor: 0, shielding: 0, recharge: 0, phaseWindow: 0 },
+  variant: 'visible',
+  unlockedVariants: ['visible'],
+  bestEpoch: 0,
+  bestDistance: 0,
+  totalRuns: 0,
+  totalEnergy: 0,
+  codex: { PHOTON: true },
+  tutorialDone: false,
+  witnessedHeatDeath: 0,           // PHASE A: count of full universe witnesses
+  // PHASE B: memory system
+  memories: {},                     // { id: true } map of unlocked memories
+  phasesLifetime: 0,                // total clean phases ever
+  pickupsLifetime: 0,               // total pickups ever
+  colorPhases: [0, 0, 0],           // gamma / visible / radio phase counts
+  bestStreak: 0,                    // peak phase streak ever achieved
+  pausedOnce: false,
+  mutedOnce: false,
+  boostedOnce: false,
+  firstWormhole: false,
+  firstChainPhased: false,
+});
+function loadMeta() {
+  try { const s = localStorage.getItem(META_KEY); if (s) return Object.assign(defaultMeta(), JSON.parse(s)); } catch (e) {}
+  return defaultMeta();
+}
+function saveMeta(m) {
+  try { localStorage.setItem(META_KEY, JSON.stringify(m)); } catch (e) {}
+}
+const meta = loadMeta();
+
+// PHASE PERSISTENCE: per-run checkpoint stored separately from meta. Saved at every epoch transition,
+// cleared on death or witness. Lets the player close the tab during Stellar and resume later.
+const RUN_KEY = 'photon-run-v1';
+function saveCheckpoint(snapshot) {
+  try { localStorage.setItem(RUN_KEY, JSON.stringify(snapshot)); } catch(e) {}
+}
+function loadCheckpoint() {
+  try { const s = localStorage.getItem(RUN_KEY); if (s) return JSON.parse(s); } catch(e) {}
+  return null;
+}
+function clearCheckpoint() {
+  try { localStorage.removeItem(RUN_KEY); } catch(e) {}
+}
+
+// ============================================================================
+// COSMIC SEED — every run is its own universe. Mulberry32 PRNG seeded once per run.
+// Modulates: per-epoch twist parameters, hazard kind weighting, palette hue drift.
+// Surfaced on the title screen after the first witness.
+// ============================================================================
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return function() {
+    t = (t + 0x6D2B79F5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function newSeed() {
+  // 32-bit unsigned int. Display as base36 for compactness ("k7m4z2").
+  if (window.crypto && window.crypto.getRandomValues) {
+    const a = new Uint32Array(1); window.crypto.getRandomValues(a); return a[0];
+  }
+  return Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
+}
+function seedToLabel(s) { return (s >>> 0).toString(36).padStart(6, '0').slice(-6).toUpperCase(); }
+let runRng = mulberry32(0);     // replaced every startRun. Use for spawns/twist/palette only.
+
+// Compute per-epoch seeded modulations once and stash on game.epochParams[idx].
+// Called from setEpoch so every spawn/render in that epoch reads the same numbers.
+function computeEpochParams(idx) {
+  const e = EPOCHS[idx]; if (!e) return;
+  // Re-seed deterministically from (runSeed XOR epochIdx) so each epoch has a stable feel
+  const sub = mulberry32((game.runSeed ^ ((idx + 1) * 0x9E3779B9)) >>> 0);
+  const twistFreqMul = 0.85 + sub() * 0.30;       // ±15%
+  const twistAmpMul  = 0.85 + sub() * 0.30;       // ±15%
+  const hueShift     = (sub() - 0.5) * 0.18;      // ~±10° in [0..1] space
+  // Pick a "dominant hazard" from the epoch's hazardKinds. That kind gets 2x weight.
+  const dominantIdx  = Math.floor(sub() * e.hazardKinds.length);
+  const dominantKind = e.hazardKinds[dominantIdx];
+  game.epochParams = game.epochParams || {};
+  game.epochParams[idx] = { twistFreqMul, twistAmpMul, hueShift, dominantKind };
+}
+
+// ============================================================================
+// SETTINGS — separate from meta progression. Persists in localStorage.
+// ============================================================================
+const SETTINGS_KEY = 'photon-settings-v1';
+const defaultSettings = () => ({
+  masterVol: 0.7,
+  muted: false,
+  fov: 72,
+  sensitivity: 1.0,
+  highContrast: false,
+  reducedMotion: false,
+});
+function loadSettings() {
+  try { const s = localStorage.getItem(SETTINGS_KEY); if (s) return Object.assign(defaultSettings(), JSON.parse(s)); } catch (e) {}
+  return defaultSettings();
+}
+function saveSettings(s) { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (e) {} }
+const settings = loadSettings();
+
+// ============================================================================
+// AUDIO ENGINE — fully procedural Web Audio. No external files.
+// ============================================================================
+class AudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.master = null;
+    this.droneNodes = null;
+    this.muted = false;
+  }
+  ensure() {
+    if (this.ctx) return;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    this.ctx = new Ctx();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 0.7;
+    this.master.connect(this.ctx.destination);
+  }
+  resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+  // Per-epoch evolving drone
+  // Per-epoch melodic scale — slow generative arpeggio layered above the drone.
+  // Each scale is chosen for emotional fit: bright/major for revelation epochs, minor for endings.
+  static MELODIES = {
+    'Inflationary':  { freqs: [261.63, 392.00, 523.25, 659.25, 783.99], gap: 3.2, vol: 0.05 }, // C major triad up
+    'Quark Plasma':  { freqs: [220.00, 246.94, 277.18, 369.99, 415.30], gap: 2.6, vol: 0.05 }, // A Phrygian flavor
+    'Recombination': { freqs: [261.63, 329.63, 392.00, 523.25, 659.25], gap: 3.8, vol: 0.06 }, // C major reveal
+    'First Stars':   { freqs: [233.08, 349.23, 466.16, 622.25],          gap: 2.8, vol: 0.05 }, // Bb mixolydian
+    'Galactic':      { freqs: [220.00, 261.63, 311.13, 392.00, 466.16], gap: 3.0, vol: 0.05 }, // A dorian
+    'Stellar':       { freqs: [261.63, 329.63, 392.00, 466.16, 587.33], gap: 3.4, vol: 0.05 }, // C with maj7
+    'Degenerate':    { freqs: [220.00, 246.94, 293.66, 349.23, 415.30], gap: 4.5, vol: 0.04 }, // A natural minor
+    'Black Hole':    { freqs: [110.00, 138.59, 174.61],                   gap: 6.0, vol: 0.04 }, // very low, sparse
+  };
+  startMelody(epoch) {
+    this.ensure(); if (!this.ctx) return;
+    this.stopMelody();
+    const m = AudioEngine.MELODIES[epoch.name];
+    if (!m) return;
+    const tick = () => {
+      if (!this.ctx || this.melodyKey !== epoch.name) return;
+      const freq = m.freqs[Math.floor(Math.random() * m.freqs.length)];
+      this.pluck(freq, m.vol);
+      this.melodyTimeout = setTimeout(tick, (m.gap + (Math.random() - 0.5) * 1.2) * 1000);
+    };
+    this.melodyKey = epoch.name;
+    this.melodyTimeout = setTimeout(tick, 1500);  // settle in
+  }
+  stopMelody() {
+    if (this.melodyTimeout) { clearTimeout(this.melodyTimeout); this.melodyTimeout = null; }
+    this.melodyKey = null;
+  }
+  pluck(freq, vol) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
+    const o2 = this.ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = freq * 2;
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = freq * 4; lp.Q.value = 0.6;
+    o.connect(g); o2.connect(g); g.connect(lp); lp.connect(this.master);
+    g.gain.linearRampToValueAtTime(vol || 0.05, t + 0.06);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 2.8);
+    o.start(t); o.stop(t + 3.0);
+    o2.start(t); o2.stop(t + 3.0);
+  }
+  startDrone(epoch) {
+    this.ensure(); if (!this.ctx) return;
+    this.stopDrone();
+    this.startMelody(epoch);
+    const ctx = this.ctx;
+    const out = ctx.createGain(); out.gain.value = 0; out.connect(this.master);
+    const baseFreq = 50 + epoch.duration * 0.6;
+    // Two detuned saw oscillators through a slow lowpass
+    const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = baseFreq;
+    const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = baseFreq * 1.005;
+    const o3 = ctx.createOscillator(); o3.type = 'sine';     o3.frequency.value = baseFreq * 0.5;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 380; lp.Q.value = 6;
+    // Slow LFO on filter for evolution
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.07;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 180;
+    lfo.connect(lfoGain).connect(lp.frequency);
+    // Pink-ish noise layer
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    let b0=0,b1=0,b2=0;
+    for (let i=0;i<data.length;i++){
+      const w = Math.random() * 2 - 1;
+      b0 = 0.99765 * b0 + w * 0.0990460;
+      b1 = 0.96300 * b1 + w * 0.2965164;
+      b2 = 0.57000 * b2 + w * 1.0526913;
+      data[i] = (b0 + b1 + b2 + w * 0.1848) * 0.06;
+    }
+    const noise = ctx.createBufferSource(); noise.buffer = buf; noise.loop = true;
+    const noiseLp = ctx.createBiquadFilter(); noiseLp.type = 'lowpass'; noiseLp.frequency.value = 700;
+    const noiseGain = ctx.createGain(); noiseGain.gain.value = 0.4;
+    noise.connect(noiseLp).connect(noiseGain).connect(lp);
+    o1.connect(lp); o2.connect(lp); o3.connect(lp);
+    lp.connect(out);
+    o1.start(); o2.start(); o3.start(); lfo.start(); noise.start();
+    out.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 2.5);
+    this.droneNodes = { o1, o2, o3, lfo, noise, out };
+  }
+  stopDrone() {
+    this.stopMelody();
+    if (!this.droneNodes || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.droneNodes.out.gain.cancelScheduledValues(t);
+    this.droneNodes.out.gain.linearRampToValueAtTime(0, t + 1.4);
+    const nodes = this.droneNodes;
+    setTimeout(() => { try { nodes.o1.stop(); nodes.o2.stop(); nodes.o3.stop(); nodes.lfo.stop(); nodes.noise.stop(); } catch(e){} }, 1600);
+    this.droneNodes = null;
+  }
+  pickup() {
+    this.ensure(); if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(); o.type = 'sine';
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    o.connect(g); g.connect(this.master);
+    o.frequency.setValueAtTime(880, t);
+    o.frequency.exponentialRampToValueAtTime(1760, t + 0.16);
+    g.gain.linearRampToValueAtTime(0.2, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    o.start(t); o.stop(t + 0.25);
+  }
+  hit() {
+    this.ensure(); if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    // Noise burst + low thud
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.4, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(this.ctx.sampleRate*0.08));
+    const n = this.ctx.createBufferSource(); n.buffer = buf;
+    const ng = this.ctx.createGain(); ng.gain.value = 0.5;
+    n.connect(ng).connect(this.master);
+    n.start(t);
+    const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(40, t+0.3);
+    const og = this.ctx.createGain(); og.gain.setValueAtTime(0.4, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    o.connect(og).connect(this.master); o.start(t); o.stop(t+0.32);
+  }
+  shift(idx) {
+    this.ensure(); if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(); o.type = 'triangle';
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    o.connect(g); g.connect(this.master);
+    const baseFreqs = [1400, 800, 380];
+    o.frequency.setValueAtTime(baseFreqs[idx] * 1.6, t);
+    o.frequency.exponentialRampToValueAtTime(baseFreqs[idx], t + 0.18);
+    g.gain.linearRampToValueAtTime(0.15, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.start(t); o.stop(t + 0.22);
+  }
+  // Continuous engine hum — flight tone whose filter cutoff tracks photon speed
+  startEngine() {
+    this.ensure(); if (!this.ctx) return;
+    if (this.engineNodes) return;
+    const ctx = this.ctx;
+    // White noise source (looped)
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * 0.6;
+    const noise = ctx.createBufferSource(); noise.buffer = buf; noise.loop = true;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 600; lp.Q.value = 2;
+    const hum = ctx.createGain(); hum.gain.value = 0;
+    noise.connect(lp).connect(hum).connect(this.master);
+    noise.start();
+    hum.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.8);
+    // Sustained boost layer — sawtooth through resonant lowpass, gated by gain ramp
+    const boostOsc = ctx.createOscillator(); boostOsc.type = 'sawtooth'; boostOsc.frequency.value = 80;
+    const boostFilt = ctx.createBiquadFilter(); boostFilt.type = 'lowpass'; boostFilt.frequency.value = 1200; boostFilt.Q.value = 6;
+    const boostGain = ctx.createGain(); boostGain.gain.value = 0;
+    boostOsc.connect(boostFilt).connect(boostGain).connect(this.master);
+    boostOsc.start();
+    this.engineNodes = { noise, lp, hum, boostOsc, boostFilt, boostGain };
+    this._boostCurrent = 0;
+  }
+  stopEngine() {
+    if (!this.engineNodes || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    const n = this.engineNodes;
+    n.hum.gain.cancelScheduledValues(t);
+    n.hum.gain.linearRampToValueAtTime(0, t + 0.6);
+    n.boostGain.gain.cancelScheduledValues(t);
+    n.boostGain.gain.linearRampToValueAtTime(0, t + 0.4);
+    setTimeout(() => { try { n.noise.stop(); n.boostOsc.stop(); } catch(e){} }, 800);
+    this.engineNodes = null;
+  }
+  // Called every frame: speedFactor 1.0 = base, 2.1 = boosted; boosting = bool
+  updateEngine(speedFactor, boosting) {
+    if (!this.engineNodes || !this.ctx) return;
+    const n = this.engineNodes;
+    // Filter cutoff scales with speed (300 Hz at base → 2400 Hz at full boost)
+    const cutoff = 300 + (speedFactor - 1) * 1200;
+    n.lp.frequency.setTargetAtTime(Math.max(200, cutoff), this.ctx.currentTime, 0.05);
+    // Hum gain rises slightly with speed
+    const humGain = 0.05 + (speedFactor - 1) * 0.04;
+    n.hum.gain.setTargetAtTime(humGain, this.ctx.currentTime, 0.1);
+    // Boost layer: target 0.10 when boosting, 0 when not. Smooth ramp.
+    const targetBoost = boosting ? 0.10 : 0;
+    n.boostGain.gain.setTargetAtTime(targetBoost, this.ctx.currentTime, 0.06);
+    // Boost filter sweeps higher when sustained
+    const boostCut = boosting ? 1800 : 800;
+    n.boostFilt.frequency.setTargetAtTime(boostCut, this.ctx.currentTime, 0.1);
+  }
+  death() {
+    this.ensure(); if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 1.6, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(this.ctx.sampleRate*0.4)) * 0.6;
+    const n = this.ctx.createBufferSource(); n.buffer = buf;
+    const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(1200, t); f.frequency.exponentialRampToValueAtTime(60, t + 1.5);
+    n.connect(f).connect(this.master); n.start(t);
+  }
+  // PHASE A: Heat Death drone — replaces the standard drone with a 40 Hz sub-bass
+  // that holds for ~4 minutes then fades to silence over 2 minutes.
+  startHeatDeath() {
+    this.ensure(); if (!this.ctx) return;
+    this.stopDrone();
+    const ctx = this.ctx;
+    const out = ctx.createGain(); out.gain.value = 0; out.connect(this.master);
+    const sub = ctx.createOscillator(); sub.type = 'sine'; sub.frequency.value = 40;
+    const sub2 = ctx.createOscillator(); sub2.type = 'sine'; sub2.frequency.value = 40.7;  // tiny detune for warmth
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 120; lp.Q.value = 1.4;
+    sub.connect(lp); sub2.connect(lp); lp.connect(out);
+    sub.start(); sub2.start();
+    // Gain envelope across 6 minutes:
+    //   0s   → 0
+    //   8s   → 0.18 (settled in)
+    //   240s → 0.10 (start fading)
+    //   360s → 0     (silence)
+    const t = ctx.currentTime;
+    out.gain.setValueAtTime(0, t);
+    out.gain.linearRampToValueAtTime(0.18, t + 8);
+    out.gain.linearRampToValueAtTime(0.10, t + 240);
+    out.gain.linearRampToValueAtTime(0.0, t + 360);
+    this.droneNodes = { o1: sub, o2: sub2, o3: { stop: () => {} }, lfo: { stop: () => {} }, noise: { stop: () => {} }, out };
+  }
+  // Final acknowledgment chime when the player picks up the last photon
+  witnessChime() {
+    this.ensure(); if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    [261.63, 392.00, 523.25, 783.99].forEach((freq, i) => {
+      const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
+      const g = this.ctx.createGain(); g.gain.value = 0;
+      o.connect(g); g.connect(this.master);
+      const start = t + i * 0.4;
+      g.gain.linearRampToValueAtTime(0.10, start + 0.3);
+      g.gain.linearRampToValueAtTime(0.0, start + 4.5);
+      o.start(start); o.stop(start + 5);
+    });
+  }
+}
+const audio = new AudioEngine();
+
+// ============================================================================
+// THREE.JS RENDERER + POSTPROCESSING
+// ============================================================================
+const canvas = document.getElementById('game');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !IS_MOBILE, powerPreference: 'high-performance' });
+renderer.setPixelRatio(PIXEL_RATIO);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000004);
+scene.fog = new THREE.Fog(0x080012, 80, 480);
+
+const camera = new THREE.PerspectiveCamera(72, window.innerWidth/window.innerHeight, 0.1, 1200);
+camera.position.set(0, 4, 0);
+
+// Postprocessing: bloom for the cosmic glow, then a custom gravitational-lensing chromatic aberration pass
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(PIXEL_RATIO);
+composer.setSize(window.innerWidth, window.innerHeight);
+composer.addPass(new RenderPass(scene, camera));
+// Tuned for readability: lower strength + higher threshold so the photon's glow doesn't blow out the screen
+const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.55, 0.55, 0.35);
+composer.addPass(bloom);
+
+// Chromatic / lensing pass — distorts edges + faint RGB split for the photon-physics feel.
+const lensingPass = new ShaderPass({
+  uniforms: {
+    tDiffuse: { value: null },
+    uTime: { value: 0 },
+    uIntensity: { value: 0.0028 },
+    uVignette: { value: 0.85 },
+    uBarrel:   { value: 0.05 },               // pinches corners during boost
+    uVignettePower: { value: 1.0 },           // amped during death
+    uVignetteColor: { value: new THREE.Vector3(0, 0, 0) }, // becomes red on death
+  },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float uTime, uIntensity, uVignette, uBarrel, uVignettePower;
+    uniform vec3 uVignetteColor;
+    varying vec2 vUv;
+    void main(){
+      vec2 uv = vUv;
+      vec2 c0 = uv - 0.5;
+      float r2 = dot(c0, c0);
+      // Barrel distortion — pulls pixels toward center for boost warp
+      uv = 0.5 + c0 * (1.0 - uBarrel * r2);
+      vec2 c = uv - 0.5;
+      float d = dot(c,c);
+      // RGB split based on radial distance — cheap chromatic aberration
+      vec2 dir = normalize(c + 1e-6) * d * uIntensity * 8.0;
+      float r = texture2D(tDiffuse, uv - dir).r;
+      float g = texture2D(tDiffuse, uv).g;
+      float b = texture2D(tDiffuse, uv + dir).b;
+      vec3 col = vec3(r,g,b);
+      // Vignette with optional tint (used for the dying close-in)
+      float v = smoothstep(0.95, 0.18, d * uVignette);
+      v = pow(v, uVignettePower);
+      col = mix(uVignetteColor, col, v);
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `,
+});
+composer.addPass(lensingPass);
+
+window.addEventListener('resize', () => {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h);
+  composer.setSize(w, h);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+  bloom.setSize(w, h);
+  hudResize();
+});
+
+// ============================================================================
+// COSMIC BACKDROP — sky shader (nebula + redshift) + instanced starfield
+// ============================================================================
+const skyGeo = new THREE.SphereGeometry(900, 48, 24);
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide,
+  depthWrite: false,
+  uniforms: {
+    uTime: { value: 0 },
+    uColorA: { value: EPOCHS[0].paletteA.clone() },
+    uColorB: { value: EPOCHS[0].paletteB.clone() },
+    uPoint:  { value: EPOCHS[0].palettePoint.clone() },
+    uMix:    { value: 0.6 },
+    uRedshift: { value: 0.0 },
+  },
+  vertexShader: `
+    varying vec3 vWorld;
+    void main(){
+      vWorld = normalize(position);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform float uTime, uMix, uRedshift;
+    uniform vec3 uColorA, uColorB, uPoint;
+    varying vec3 vWorld;
+    // 3D simplex-ish noise (cheap fbm using value noise)
+    float hash(vec3 p){ p = fract(p*0.3183099+vec3(0.71,0.113,0.419)); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+    float noise(vec3 p){
+      vec3 i = floor(p); vec3 f = fract(p);
+      vec3 u = f*f*(3.0-2.0*f);
+      float n000 = hash(i+vec3(0,0,0));
+      float n100 = hash(i+vec3(1,0,0));
+      float n010 = hash(i+vec3(0,1,0));
+      float n110 = hash(i+vec3(1,1,0));
+      float n001 = hash(i+vec3(0,0,1));
+      float n101 = hash(i+vec3(1,0,1));
+      float n011 = hash(i+vec3(0,1,1));
+      float n111 = hash(i+vec3(1,1,1));
+      return mix(mix(mix(n000,n100,u.x),mix(n010,n110,u.x),u.y),
+                 mix(mix(n001,n101,u.x),mix(n011,n111,u.x),u.y), u.z);
+    }
+    float fbm(vec3 p){
+      float v = 0.0; float a = 0.5;
+      for(int i=0;i<5;i++){ v += a*noise(p); p = p*2.07 + 11.3; a *= 0.5; }
+      return v;
+    }
+    void main(){
+      vec3 d = normalize(vWorld);
+      float t = uTime * 0.012;
+      float n1 = fbm(d * 1.6 + vec3(t, t*0.7, -t*0.5));
+      float n2 = fbm(d * 4.0 + vec3(-t*1.3, t*0.9, t*0.4));
+      float nebula = smoothstep(0.45, 0.85, n1);
+      float wisps  = smoothstep(0.6, 0.95, n2);
+      vec3 col = mix(uColorA, uColorB, n1);
+      col = mix(col * 0.18, col, nebula);
+      col += uPoint * wisps * 0.6;
+      // Tiny stars from threshold of high-frequency noise
+      float stars = step(0.985, fract(sin(dot(d.xyz, vec3(127.1,311.7,74.7))) * 43758.5453));
+      col += vec3(1.0) * stars * 1.6;
+      // Cosmological redshift: shift color toward red as uRedshift rises
+      col.r += uRedshift * 0.35;
+      col.b *= 1.0 - uRedshift * 0.5;
+      col.g *= 1.0 - uRedshift * 0.2;
+      // overall darkening so the foreground reads
+      col *= 0.55;
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `,
+});
+const sky = new THREE.Mesh(skyGeo, skyMat);
+scene.add(sky);
+
+// Instanced starfield foreground
+function makeStarfield(count) {
+  const g = new THREE.BufferGeometry();
+  const pos = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  for (let i=0;i<count;i++){
+    const r = 200 + Math.random() * 600;
+    const th = Math.random() * Math.PI * 2;
+    const ph = Math.acos(2*Math.random()-1);
+    pos[i*3+0] = r * Math.sin(ph) * Math.cos(th);
+    pos[i*3+1] = r * Math.sin(ph) * Math.sin(th);
+    pos[i*3+2] = r * Math.cos(ph);
+    const c = 0.6 + Math.random() * 0.4;
+    col[i*3+0] = c; col[i*3+1] = c; col[i*3+2] = c + Math.random()*0.2;
+  }
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const m = new THREE.PointsMaterial({ size: 1.4, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.9, depthWrite: false });
+  return new THREE.Points(g, m);
+}
+const stars = makeStarfield(IS_MOBILE ? 1200 : 2400);
+scene.add(stars);
+
+// ============================================================================
+// TRACK — procedural curved tunnel
+// ============================================================================
+class Track {
+  constructor() {
+    // Centerline points; as photon advances we extend forward and discard behind.
+    this.points = [];           // THREE.Vector3
+    this.segIndex = 0;          // index of next point to generate
+    this.curve = null;          // Catmull-Rom over points
+    this.ringPool = [];         // visible tunnel ring meshes
+    this.ringGroup = new THREE.Group(); scene.add(this.ringGroup);
+    this.dustGroup = new THREE.Group(); scene.add(this.dustGroup);
+    // Twist params updated per-epoch
+    this.twistFreq = 0.012;
+    this.twistAmp = 10;
+    // Pre-create ring meshes (reused)
+    // RingGeometry lies in XY plane with normal +Z by default; we want normal aligned with track.fwd.
+    const ringGeo = new THREE.RingGeometry(TUBE_RADIUS - 0.4, TUBE_RADIUS + 0.4, 48, 1);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
+    for (let i = 0; i < 64; i++) {
+      const m = new THREE.Mesh(ringGeo, ringMat.clone());
+      m.frustumCulled = false;
+      this.ringGroup.add(m);
+      this.ringPool.push(m);
+    }
+    // Dust particles inside tube — instanced points
+    const N = IS_MOBILE ? 220 : 480;
+    const g = new THREE.BufferGeometry();
+    const positions = new Float32Array(N * 3);
+    for (let i=0;i<N;i++) {
+      positions[i*3+0] = (Math.random()-0.5) * TUBE_RADIUS * 1.6;
+      positions[i*3+1] = (Math.random()-0.5) * TUBE_RADIUS * 1.6;
+      positions[i*3+2] = Math.random() * SEGMENT_LEN * SEGMENTS_AHEAD;
+    }
+    g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const dustMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, transparent: true, opacity: 0.5, depthWrite: false });
+    this.dust = new THREE.Points(g, dustMat);
+    this.dust.frustumCulled = false;
+    this.dustGroup.add(this.dust);
+    this._ringSeed = Math.random() * 1000;
+  }
+  setEpoch(epoch) {
+    // SEED: apply per-run modulation if available (computed in computeEpochParams)
+    const params = (game.epochParams && game.epochParams[game.epochIndex]) || { twistFreqMul: 1, twistAmpMul: 1 };
+    this.twistFreq = epoch.twistFreq * params.twistFreqMul;
+    this.twistAmp  = epoch.twistAmp  * params.twistAmpMul;
+    const ringColor = epoch.palettePoint.clone();
+    for (const m of this.ringPool) m.material.color.copy(ringColor);
+    this.dust.material.color.copy(epoch.palettePoint).multiplyScalar(0.7);
+  }
+  // Generate the centerline ahead of the photon's current segIndex.
+  ensureAhead(targetSegIdx) {
+    while (this.segIndex < targetSegIdx + SEGMENTS_AHEAD) {
+      const i = this.segIndex;
+      // Use smooth sin-based wandering plus low-freq large arcs
+      const x = Math.sin(i * this.twistFreq) * this.twistAmp + Math.sin(i * this.twistFreq * 0.31 + 1.7) * this.twistAmp * 0.7;
+      const y = Math.cos(i * this.twistFreq * 0.83) * this.twistAmp * 0.6 + Math.sin(i * this.twistFreq * 0.27) * this.twistAmp * 0.4;
+      const z = i * SEGMENT_LEN;
+      this.points.push(new THREE.Vector3(x, y, z));
+      this.segIndex++;
+    }
+    // Trim behind
+    if (this.points.length > SEGMENTS_AHEAD + SEGMENTS_BEHIND + 10) {
+      this.points.splice(0, this.points.length - (SEGMENTS_AHEAD + SEGMENTS_BEHIND));
+    }
+    this.curve = new THREE.CatmullRomCurve3(this.points, false, 'catmullrom', 0.5);
+  }
+  // Get world position at parametric distance d (in world units along z baseline).
+  // We approximate by mapping d to a fractional u along the curve.
+  pointAt(d) {
+    if (!this.curve) return new THREE.Vector3();
+    const firstZ = this.points[0].z;
+    const lastZ = this.points[this.points.length-1].z;
+    const u = THREE.MathUtils.clamp((d - firstZ) / (lastZ - firstZ), 0, 1);
+    return this.curve.getPoint(u);
+  }
+  tangentAt(d) {
+    if (!this.curve) return new THREE.Vector3(0,0,1);
+    const firstZ = this.points[0].z;
+    const lastZ = this.points[this.points.length-1].z;
+    const u = THREE.MathUtils.clamp((d - firstZ) / (lastZ - firstZ), 0, 1);
+    return this.curve.getTangent(u).normalize();
+  }
+  // Build an orthonormal frame (right, up, forward) at curve point d.
+  // NOTE: "right" here means SCREEN-right from the chase-cam's perspective.
+  // Three.js lookAt with eye-behind / target-ahead orientation puts world +X on screen-LEFT,
+  // so we use cross(fwd, worldUp) (i.e. -worldUp×fwd) to get a frame.right that matches
+  // what the player sees. Pressing A now actually goes left on screen.
+  frameAt(d) {
+    const fwd = this.tangentAt(d);
+    const worldUp = new THREE.Vector3(0,1,0);
+    let right = new THREE.Vector3().crossVectors(fwd, worldUp);
+    if (right.lengthSq() < 1e-4) right.set(1,0,0);
+    right.normalize();
+    const up = new THREE.Vector3().crossVectors(right, fwd).normalize();
+    return { fwd, right, up };
+  }
+  // Update the visible ring meshes to span the tunnel from photonZ - ringSpan*0.2 to photonZ + ringSpan
+  updateRings(photonZ) {
+    const startD = photonZ - 30;
+    const endD = photonZ + RING_SPACING * (this.ringPool.length - 4);
+    let idx = 0;
+    for (let d = startD; d <= endD && idx < this.ringPool.length; d += RING_SPACING, idx++) {
+      const m = this.ringPool[idx];
+      const p = this.pointAt(d);
+      const frame = this.frameAt(d);
+      m.position.copy(p);
+      // Build matrix using frame
+      const mtx = new THREE.Matrix4().makeBasis(frame.right, frame.up, frame.fwd);
+      m.quaternion.setFromRotationMatrix(mtx);
+      // Fade rings near the camera and far rings, plus subtle alpha pulse for life
+      const distToPhoton = d - photonZ;
+      const t = THREE.MathUtils.smoothstep(distToPhoton, -20, 60);
+      const farFade = 1 - THREE.MathUtils.clamp((distToPhoton - 200) / 200, 0, 1);
+
+      // Metric fluctuations — vacuum expectation value of the geometry shimmers
+      const time = performance.now() * 0.0018;
+      const shimmer = 0.86 + 0.10 * Math.sin(time * 2.7 + d * 0.09) + 0.06 * Math.sin(time * 7.3 + d * 0.31);
+      m.material.opacity = (0.18 + 0.55 * t * farFade) * shimmer;
+      // Tiny scale pulse so the tube literally breathes
+      const sc = 1 + Math.sin(d * 0.21 + time * 3.3) * 0.025;
+      m.scale.set(sc, sc, 1);
+      m.visible = true;
+    }
+    for (let j = idx; j < this.ringPool.length; j++) this.ringPool[j].visible = false;
+  }
+  updateDust(photonZ) {
+    // Translate dust along z so it loops in front of photon
+    const span = SEGMENT_LEN * SEGMENTS_AHEAD;
+    const arr = this.dust.geometry.attributes.position.array;
+    // SHIMMER: dust gets sub-pixel jitter every frame — looks like virtual particles popping in/out
+    const t = performance.now() * 0.001;
+    for (let i=0;i<arr.length;i+=3) {
+      let dz = arr[i+2] - photonZ;
+      if (dz < -10) {
+        arr[i+2] += span;
+        arr[i+0] = (Math.random()-0.5) * TUBE_RADIUS * 1.5;
+        arr[i+1] = (Math.random()-0.5) * TUBE_RADIUS * 1.5;
+      } else if (dz > span) {
+        arr[i+2] -= span;
+      } else {
+        // Vacuum jitter — tiny offset perpendicular to flight direction
+        arr[i+0] += Math.sin(t * 9.1 + i * 0.31) * 0.04;
+        arr[i+1] += Math.cos(t * 7.7 + i * 0.27) * 0.04;
+      }
+    }
+    this.dust.geometry.attributes.position.needsUpdate = true;
+    const p = this.pointAt(photonZ + span * 0.3);
+    this.dustGroup.position.set(p.x * 0.3, p.y * 0.3, 0);
+  }
+}
+const track = new Track();
+
+// ============================================================================
+// PHOTON — player object (mesh + trail) and steering controller
+// ============================================================================
+class Photon {
+  constructor() {
+    // Core glowing sphere — dimmer base color so it doesn't max out the bloom threshold by itself
+    const coreGeo = new THREE.IcosahedronGeometry(0.9, 2);
+    this.coreMat = new THREE.MeshBasicMaterial({ color: 0xccd8e8 });
+    this.core = new THREE.Mesh(coreGeo, this.coreMat);
+    // Halo (smaller + softer)
+    const haloGeo = new THREE.SphereGeometry(1.8, 24, 16);
+    this.haloMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.32, depthWrite: false });
+    this.halo = new THREE.Mesh(haloGeo, this.haloMat);
+    this.group = new THREE.Group();
+    this.group.add(this.core); this.group.add(this.halo);
+    scene.add(this.group);
+    // Trail — line of last N positions
+    this.trailLen = 64;
+    const trailGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(this.trailLen * 3);
+    const colors = new Float32Array(this.trailLen * 3);
+    trailGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    trailGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const trailMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending });
+    this.trail = new THREE.Line(trailGeo, trailMat);
+    this.trail.frustumCulled = false;
+    scene.add(this.trail);
+    this.trailHistory = [];
+    // State
+    this.distance = 0;          // distance traveled along curve baseline z
+    this.lateral = 0;           // offset on right axis from centerline
+    this.vertical = 0;          // offset on up axis
+    this.lateralVel = 0;
+    this.verticalVel = 0;
+    this.wavelength = 1;        // index into WAVELENGTHS
+    this.boost = BOOST_MAX;
+    this.boosting = false;
+    this.energy = ENERGY_MAX;
+    this.alive = true;
+    this.invulnTimer = 0;       // brief invuln after hit
+    this.phaseTimer = 0;        // brief invuln after wavelength match
+    this.phaseFlashTime = 0;    // visual flash after a clean phase
+    this._currentRoll = 0;      // banking angle, smoothed
+    // Bonuses (mutated by upgrades)
+    this.speedBonus = 1;
+    this.agilityBonus = 1;
+    this.energyMaxBonus = 0;
+    this.damageReduction = 0;
+    this.boostRechargeBonus = 1;
+    this.phaseWindowSec = 0;
+  }
+  reset(variant) {
+    this.distance = 0; this.lateral = 0; this.vertical = 0;
+    this.lateralVel = 0; this.verticalVel = 0;
+    this.boost = BOOST_MAX; this.boosting = false;
+    this.shiftCooldown = 0;
+    this._variant = variant;     // remember for maxEnergy / boost mods
+    this.energy = this.maxEnergy();
+    this.alive = true; this.invulnTimer = 0; this.phaseTimer = 0;
+    this.wavelength = variant.startWavelength;
+    this.setColorFromWavelength(true);
+    this.trailHistory.length = 0;
+  }
+  maxEnergy() {
+    const m = (this._variant && this._variant.mods.energyMul) || 1;
+    return Math.floor((ENERGY_MAX + this.energyMaxBonus) * m);
+  }
+  setColorFromWavelength(immediate=false) {
+    const w = WAVELENGTHS[this.wavelength];
+    if (immediate) { this.coreMat.color.copy(w.color); this.haloMat.color.copy(w.color); }
+    else {
+      this.coreMat.color.lerp(w.color, 0.4);
+      this.haloMat.color.lerp(w.color, 0.4);
+    }
+  }
+  shift(idx) {
+    if (idx === this.wavelength) return false;
+    if (this.shiftCooldown > 0) return false;
+    if (this.energy < 3) return false;
+    this.wavelength = idx;
+    this.setColorFromWavelength(true);
+    this.phaseTimer = this.phaseWindowSec;
+    this.energy = Math.max(0, this.energy - 3);
+    this.shiftCooldown = 0.4;
+    audio.shift(idx);
+    // REDSHIFT FATIGUE: shifting resets the coherence clock
+    game.coherenceTime = 0;
+    return true;
+  }
+  update(dt, input, currentEpoch, variant) {
+    // Snappier feel: bigger acceleration, higher cap, harder damping when no input.
+    // Sensitivity setting scales acceleration AND cap so the player can dial in their feel.
+    const sens = settings.sensitivity || 1.0;
+    const lateralAcc = 180 * this.agilityBonus * sens * (variant.mods.agilityMul || 1);
+    const lateralMax = 52 * this.agilityBonus * Math.min(1.5, sens);
+    const verticalMax = 36 * this.agilityBonus * Math.min(1.5, sens);
+    let ax = 0, ay = 0;
+    if (input.left)  ax -= lateralAcc;
+    if (input.right) ax += lateralAcc;
+    if (input.up)    ay += lateralAcc * 0.85;
+    if (input.down)  ay -= lateralAcc * 0.85;
+    this.lateralVel += ax * dt;
+    this.verticalVel += ay * dt;
+    // Hard damping when no input — feels like real spaceship trim
+    if (!input.left && !input.right) this.lateralVel *= Math.pow(0.0008, dt);
+    if (!input.up && !input.down)    this.verticalVel *= Math.pow(0.0015, dt);
+    this.lateralVel = THREE.MathUtils.clamp(this.lateralVel, -lateralMax, lateralMax);
+    this.verticalVel = THREE.MathUtils.clamp(this.verticalVel, -verticalMax, verticalMax);
+    this.lateral += this.lateralVel * dt;
+    this.vertical += this.verticalVel * dt;
+    // Constrain inside tube — soft bounce
+    const r = TUBE_RADIUS - 2.2;
+    const offRadius = Math.hypot(this.lateral, this.vertical);
+    if (offRadius > r) {
+      const k = r / offRadius;
+      this.lateral *= k; this.vertical *= k;
+      this.lateralVel *= -0.35; this.verticalVel *= -0.35;
+    }
+    // Boost
+    if (input.boost && this.boost > 0) {
+      this.boosting = true; this.boost -= BOOST_DRAIN * dt;
+      if (this.boost <= 0) { this.boost = 0; this.boosting = false; }
+      // PHASE B: first boost memory
+      if (!meta.boostedOnce) { meta.boostedOnce = true; saveMeta(meta); checkMemoryTriggers(); }
+    } else {
+      this.boosting = false;
+      this.boost = Math.min(BOOST_MAX, this.boost + BOOST_RECHARGE * this.boostRechargeBonus * dt);
+    }
+    // Forward distance — endless mode ramps base speed each loop
+    const endlessMul = 1 + (game.endlessLoop || 0) * 0.10;
+    const speed = BASE_SPEED * this.speedBonus * currentEpoch.speedMul * (variant.mods.speedMul || 1) * (this.boosting ? BOOST_MUL : 1) * endlessMul;
+    this.distance += speed * dt;
+    // Invuln/phase/shift timers
+    if (this.invulnTimer > 0) this.invulnTimer -= dt;
+    if (this.phaseTimer > 0) this.phaseTimer -= dt;
+    if (this.shiftCooldown > 0) this.shiftCooldown -= dt;
+    // Update visual position from track frame at current distance
+    const p = track.pointAt(this.distance);
+    const frame = track.frameAt(this.distance);
+    const offset = new THREE.Vector3()
+      .addScaledVector(frame.right, this.lateral)
+      .addScaledVector(frame.up, this.vertical);
+    this.group.position.copy(p).add(offset);
+    // Orient core so it leans toward velocity direction
+    const lookAhead = track.pointAt(this.distance + 8).add(
+      new THREE.Vector3()
+        .addScaledVector(frame.right, this.lateral + this.lateralVel * 0.05)
+        .addScaledVector(frame.up, this.vertical + this.verticalVel * 0.05)
+    );
+    this.group.lookAt(lookAhead);
+    // Bank into turns — roll around local Z proportional to lateral velocity
+    const targetRoll = -THREE.MathUtils.clamp(this.lateralVel / 52, -1, 1) * 0.55;
+    this._currentRoll += (targetRoll - this._currentRoll) * Math.min(1, dt * 9);
+    this.group.rotateZ(this._currentRoll);
+    // Pulse halo with boost; brighten on phase flash
+    if (this.phaseFlashTime > 0) this.phaseFlashTime -= dt;
+    const flashBoost = this.phaseFlashTime > 0 ? this.phaseFlashTime / 0.45 : 0;
+    const pulse = 1 + Math.sin(performance.now() * 0.012) * 0.05 + (this.boosting ? 0.18 : 0) + flashBoost * 0.35;
+    this.halo.scale.setScalar(pulse);
+    // Cap stacked opacity so boost + phase + wormhole-invuln + flash can't combine into pure white
+    const rawHalo = 0.22 + (this.boosting ? 0.12 : 0) + (this.phaseTimer > 0 ? 0.18 : 0) + flashBoost * 0.22;
+    this.haloMat.opacity = Math.min(0.55, rawHalo);
+    // Trail update
+    this.trailHistory.unshift(this.group.position.clone());
+    if (this.trailHistory.length > this.trailLen) this.trailHistory.length = this.trailLen;
+    const posArr = this.trail.geometry.attributes.position.array;
+    const colArr = this.trail.geometry.attributes.color.array;
+    const baseColor = WAVELENGTHS[this.wavelength].color;
+    for (let i=0;i<this.trailLen;i++){
+      const h = this.trailHistory[Math.min(i, this.trailHistory.length-1)] || this.group.position;
+      posArr[i*3+0] = h.x; posArr[i*3+1] = h.y; posArr[i*3+2] = h.z;
+      const fade = 1 - i / this.trailLen;
+      colArr[i*3+0] = baseColor.r * fade;
+      colArr[i*3+1] = baseColor.g * fade;
+      colArr[i*3+2] = baseColor.b * fade;
+    }
+    this.trail.geometry.attributes.position.needsUpdate = true;
+    this.trail.geometry.attributes.color.needsUpdate = true;
+    return speed;
+  }
+  hit(dmg) {
+    if (this.invulnTimer > 0 || this.phaseTimer > 0) return false;
+    const finalDmg = dmg * (1 - this.damageReduction);
+    this.energy -= finalDmg;
+    this.invulnTimer = 0.55;
+    audio.hit();
+    // FEEL: shake + hit-stop. Trauma is squared in updateCamera so 0.55 → ~30% shake.
+    game.trauma = Math.min(1, game.trauma + 0.55);
+    game.timeScale = 0.05;
+    game.hitStopTime = 0.085;
+    game.hitCount++;
+    // COMBO: damage breaks the phase streak
+    game.phaseStreak = 0;
+    // PHASE B: hit breaks the perfect-epoch flag
+    game.perfectEpochThisRun = false;
+    if (this.energy <= 0) { this.energy = 0; this.alive = false; }
+    return true;
+  }
+  collect(amount) {
+    this.energy = Math.min(this.maxEnergy(), this.energy + amount);
+    this.boost = Math.min(BOOST_MAX, this.boost + amount * 0.5);
+    audio.pickup();
+  }
+  phaseFlash() {
+    // Called when wavelength matches and the photon clean-passes a hazard.
+    this.phaseFlashTime = 0.45;
+    game.phaseCount++;
+    // COMBO: extend the phase streak. Reset on damage in hit().
+    game.phaseStreak = (game.phaseStreak || 0) + 1;
+    // PHASE B: lifetime memory tracking
+    meta.phasesLifetime = (meta.phasesLifetime || 0) + 1;
+    if (meta.colorPhases) meta.colorPhases[this.wavelength] = (meta.colorPhases[this.wavelength] || 0) + 1;
+    if ((game.phaseStreak || 0) > (meta.bestStreak || 0)) meta.bestStreak = game.phaseStreak;
+    saveMeta(meta);
+    checkMemoryTriggers();
+  }
+}
+const photon = new Photon();
+
+// ============================================================================
+// PARTICLE SYSTEM — pooled additive points for phase / pickup / hit / death bursts
+// ============================================================================
+class ParticleSystem {
+  constructor(maxParticles) {
+    this.max = maxParticles;
+    this.cursor = 0;
+    this.positions = new Float32Array(maxParticles * 3);
+    this.colors = new Float32Array(maxParticles * 3);
+    this.velocities = new Float32Array(maxParticles * 3);
+    this.lives = new Float32Array(maxParticles);
+    this.maxLives = new Float32Array(maxParticles);
+    this.baseColors = new Float32Array(maxParticles * 3);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(this.colors, 3));
+    const mat = new THREE.PointsMaterial({
+      size: 1.4, sizeAttenuation: true, vertexColors: true,
+      transparent: true, opacity: 1.0, depthWrite: false, blending: THREE.AdditiveBlending,
+    });
+    this.points = new THREE.Points(geo, mat);
+    this.points.frustumCulled = false;
+    scene.add(this.points);
+  }
+  emit(pos, color, count, opts) {
+    opts = opts || {};
+    const speed = opts.speed != null ? opts.speed : 14;
+    const life = opts.life != null ? opts.life : 0.65;
+    const drag = opts.drag != null ? opts.drag : 0.95;
+    const dirBias = opts.dirBias; // optional THREE.Vector3 to bias direction
+    for (let i = 0; i < count; i++) {
+      const idx = this.cursor; this.cursor = (this.cursor + 1) % this.max;
+      this.positions[idx*3+0] = pos.x;
+      this.positions[idx*3+1] = pos.y;
+      this.positions[idx*3+2] = pos.z;
+      const th = Math.random() * Math.PI * 2;
+      const ph = Math.acos(2 * Math.random() - 1);
+      const v = speed * (0.4 + Math.random() * 0.8);
+      let vx = v * Math.sin(ph) * Math.cos(th);
+      let vy = v * Math.sin(ph) * Math.sin(th);
+      let vz = v * Math.cos(ph);
+      if (dirBias) { vx += dirBias.x * speed * 0.5; vy += dirBias.y * speed * 0.5; vz += dirBias.z * speed * 0.5; }
+      this.velocities[idx*3+0] = vx;
+      this.velocities[idx*3+1] = vy;
+      this.velocities[idx*3+2] = vz;
+      this.colors[idx*3+0] = color.r;
+      this.colors[idx*3+1] = color.g;
+      this.colors[idx*3+2] = color.b;
+      this.baseColors[idx*3+0] = color.r;
+      this.baseColors[idx*3+1] = color.g;
+      this.baseColors[idx*3+2] = color.b;
+      this.lives[idx] = life * (0.7 + Math.random() * 0.6);
+      this.maxLives[idx] = this.lives[idx];
+      this._drag = drag;
+    }
+    this.points.geometry.attributes.position.needsUpdate = true;
+    this.points.geometry.attributes.color.needsUpdate = true;
+  }
+  update(dt) {
+    const drag = Math.pow(this._drag || 0.95, dt * 60);
+    for (let i = 0; i < this.max; i++) {
+      if (this.lives[i] > 0) {
+        this.lives[i] -= dt;
+        const fade = Math.max(0, this.lives[i] / this.maxLives[i]);
+        // Color fades to black for additive blending (since we can't fade alpha per-point easily)
+        this.colors[i*3+0] = this.baseColors[i*3+0] * fade;
+        this.colors[i*3+1] = this.baseColors[i*3+1] * fade;
+        this.colors[i*3+2] = this.baseColors[i*3+2] * fade;
+        this.positions[i*3+0] += this.velocities[i*3+0] * dt;
+        this.positions[i*3+1] += this.velocities[i*3+1] * dt;
+        this.positions[i*3+2] += this.velocities[i*3+2] * dt;
+        this.velocities[i*3+0] *= drag;
+        this.velocities[i*3+1] *= drag;
+        this.velocities[i*3+2] *= drag;
+      } else {
+        // Send dead particles far off-screen so they don't render
+        if (this.colors[i*3+0] !== 0 || this.colors[i*3+1] !== 0 || this.colors[i*3+2] !== 0) {
+          this.colors[i*3+0] = this.colors[i*3+1] = this.colors[i*3+2] = 0;
+        }
+      }
+    }
+    this.points.geometry.attributes.position.needsUpdate = true;
+    this.points.geometry.attributes.color.needsUpdate = true;
+  }
+  reset() {
+    this.lives.fill(0);
+    this.colors.fill(0);
+    this.points.geometry.attributes.color.needsUpdate = true;
+  }
+  // Compatibility shim: emitBurst(pos, typeKey, count, color) maps a named burst type to opts
+  emitBurst(pos, typeKey, count, color) {
+    const opts = {
+      phase:  { speed: 16, life: 0.7,  drag: 0.95 },
+      pickup: { speed: 11, life: 0.55, drag: 0.94 },
+      hit:    { speed: 18, life: 0.5,  drag: 0.92 },
+      death:  { speed: 22, life: 1.2,  drag: 0.94 },
+      foam:   { speed: 4,  life: 0.9,  drag: 0.92 },
+    }[typeKey] || { speed: 14, life: 0.6, drag: 0.95 };
+    this.emit(pos, color, count, opts);
+  }
+}
+const particleManager = new ParticleSystem(IS_MOBILE ? 320 : 600);
+const particles = particleManager; // keep both names for compatibility
+
+// ============================================================================
+// HAZARDS
+// ============================================================================
+class HazardManager {
+  constructor() {
+    this.list = [];
+    this.group = new THREE.Group(); scene.add(this.group);
+    // Pre-built geometries
+    this.geos = {
+      asteroid:    new THREE.IcosahedronGeometry(2.2, 1),
+      gluon:       new THREE.TorusGeometry(3.4, 0.45, 8, 24),
+      well:        new THREE.SphereGeometry(2.6, 20, 14),
+      plasma:      new THREE.SphereGeometry(1.8, 12, 10),
+      fluct:       new THREE.OctahedronGeometry(1.6, 0),
+      // PHASE C
+      supernova:   new THREE.TorusGeometry(8.5, 1.4, 10, 36),    // wide ring
+      horizon:     new THREE.CircleGeometry(TUBE_RADIUS - 1, 36), // disc filling tube
+    };
+    this.lastSpawnDist = 0;
+    this.codexUnlockedThisRun = new Set();
+    this.chainCounter = 0;
+  }
+  reset() {
+    for (const h of this.list) this.group.remove(h.mesh);
+    this.list.length = 0; this.lastSpawnDist = 0; this.codexUnlockedThisRun.clear();
+    this.chainCounter = 0;
+  }
+  // Spawn ahead of photon up to a horizon. Density per epoch.
+  ensureAhead(epoch, photonDist) {
+    const horizon = photonDist + SEGMENT_LEN * SEGMENTS_AHEAD - 20;
+    // Forgiving spacing during the first two tutorial steps so new players can learn to steer.
+    const tutorialEase = (game.tutorialActive && game.tutorialStep < 2) ? 2.0 : 1.0;
+    // ENDLESS scaffolding (deprecated, kept while in transition; once Phase C ships, removed entirely)
+    const endlessSqueeze = 1 / (1 + (game.endlessLoop || 0) * 0.22);
+    // PHASE A: Heat Death uses radically sparse spawning and skips chains/pickups entirely.
+    // The intent is silence punctuated by rare lone fluctuations.
+    if (epoch.isHeatDeath) {
+      while (this.lastSpawnDist < horizon) {
+        // ~one hazard per 40-90 distance units (≈ one per 25-55s at slow Heat Death speed)
+        this.lastSpawnDist += 40 + Math.random() * 50;
+        this.spawnAt(epoch, this.lastSpawnDist);
+      }
+    } else {
+      while (this.lastSpawnDist < horizon) {
+        const gap = (12 + Math.random() * 22) / epoch.hazardDensity * tutorialEase * endlessSqueeze;
+        this.lastSpawnDist += gap;
+        this.spawnAt(epoch, this.lastSpawnDist);
+        // CHAIN: if we just spawned a gluon, sometimes chain 2 more in a strand of the same color
+        const just = this.list[this.list.length - 1];
+        if (just && just.kind === 'gluon' && Math.random() < 0.45) {
+          const chainId = ++this.chainCounter;
+          just.chainId = chainId;
+          for (let i = 1; i <= 2; i++) {
+            this.spawnAt(epoch, this.lastSpawnDist + i * 5.5, { forceKind: 'gluon', forceWl: just.wlIdx, chainId });
+          }
+          this.lastSpawnDist += 11;
+        }
+        // Sometimes spawn a pickup nearby
+        if (Math.random() < 0.55 * epoch.pickupDensity) {
+          this.spawnPickup(epoch, this.lastSpawnDist + 2 + Math.random() * 6);
+        }
+      }
+    }
+    // Cull behind
+    for (let i = this.list.length - 1; i >= 0; i--) {
+      const h = this.list[i];
+      if (h.dist < photonDist - 25) {
+        this.group.remove(h.mesh);
+        this.list.splice(i, 1);
+      }
+    }
+  }
+  spawnAt(epoch, dist, chainOpts) {
+    // SEED: weighted pick — dominant hazard gets 2x weight
+    let kind;
+    if (chainOpts && chainOpts.forceKind) {
+      kind = chainOpts.forceKind;
+    } else {
+      const params = (game.epochParams && game.epochParams[game.epochIndex]) || {};
+      const kinds = epoch.hazardKinds;
+      // Build weighted pool
+      const weights = kinds.map(k => k === params.dominantKind ? 2 : 1);
+      const total = weights.reduce((a,b) => a+b, 0);
+      const r = (runRng ? runRng() : Math.random()) * total;
+      let acc = 0;
+      kind = kinds[kinds.length - 1];
+      for (let i = 0; i < kinds.length; i++) { acc += weights[i]; if (r <= acc) { kind = kinds[i]; break; } }
+    }
+    let geo, color, hex, wlIdx, dmg, type;
+    const wl = (chainOpts && chainOpts.forceWl != null) ? chainOpts.forceWl : Math.floor(Math.random() * 3);
+    let hitRadius = 2.6;
+    let isFrontFacing = false;        // true = orient mesh perpendicular to track (full-frontal)
+    let cannotPhase = false;
+    switch (kind) {
+      case 'fluctuation': geo = this.geos.fluct; hex = WAVELENGTHS[wl].hex; wlIdx = wl; dmg = 22; type = 'fluct'; break;
+      case 'gravityWell': geo = this.geos.well; hex = 0x220033; wlIdx = wl; dmg = 35; type = 'well'; break;
+      case 'gluon':       geo = this.geos.gluon; hex = WAVELENGTHS[wl].hex; wlIdx = wl; dmg = 28; type = 'gluon'; break;
+      case 'plasma':      geo = this.geos.plasma; hex = WAVELENGTHS[wl].hex; wlIdx = wl; dmg = 18; type = 'plasma'; break;
+      // PHASE C: wide unphaseable ring — must be dodged through the gap
+      case 'supernova':   geo = this.geos.supernova; hex = 0xff5020; wlIdx = -1; dmg = 50; type = 'supernova'; hitRadius = 7.5; isFrontFacing = true; cannotPhase = true; break;
+      // PHASE C: full-tube disc — phase by matching wavelength, otherwise instant kill
+      case 'eventHorizon':geo = this.geos.horizon; hex = WAVELENGTHS[wl].hex; wlIdx = wl; dmg = 999; type = 'eventHorizon'; hitRadius = TUBE_RADIUS + 4; isFrontFacing = true; break;
+      default:            geo = this.geos.fluct; hex = 0xffffff; wlIdx = -1; dmg = 20; type = 'fluct';
+    }
+    const mat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: type === 'eventHorizon' ? 0.55 : 0.85, wireframe: type === 'gluon', side: isFrontFacing ? THREE.DoubleSide : THREE.FrontSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    // Pick a lateral / vertical offset within tube. Front-facing hazards (supernova / horizon) sit
+    // centered on the track and orient toward the photon — they're meant to be dodged or phased.
+    const ang = Math.random() * Math.PI * 2;
+    const rad = isFrontFacing ? 0 : Math.random() * (TUBE_RADIUS - 5);
+    const lat = Math.cos(ang) * rad;
+    const ver = Math.sin(ang) * rad;
+    const p = track.pointAt(dist);
+    const frame = track.frameAt(dist);
+    mesh.position.copy(p).addScaledVector(frame.right, lat).addScaledVector(frame.up, ver);
+    if (isFrontFacing) {
+      // Orient the mesh's local Z (its normal for ring/circle geos) along the track tangent
+      const mtx = new THREE.Matrix4().makeBasis(frame.right, frame.up, frame.fwd);
+      mesh.quaternion.setFromRotationMatrix(mtx);
+      mesh.userData.spinSpeed = type === 'supernova' ? 0.4 : 0;
+    } else {
+      mesh.userData.spinSpeed = (Math.random() - 0.5) * 2;
+    }
+    this.group.add(mesh);
+    const hazard = { kind, type, dist, lateral: lat, vertical: ver, baseLateral: lat, baseVertical: ver, hex, wlIdx, dmg, mesh, hit: false, hitRadius, isFrontFacing, cannotPhase };
+    if (chainOpts && chainOpts.chainId != null) hazard.chainId = chainOpts.chainId;
+    // MOVING HAZARDS: 35% of fluct/plasma get a sine sway profile (chained items stay still for readability)
+    if (!hazard.chainId && (type === 'fluct' || type === 'plasma') && Math.random() < 0.35) {
+      hazard.movement = {
+        amp: 4 + Math.random() * 7,
+        freq: 0.5 + Math.random() * 0.7,
+        phase: Math.random() * Math.PI * 2,
+        axis: Math.random() < 0.5 ? 'lateral' : 'vertical',
+      };
+    }
+    this.list.push(hazard);
+  }
+  spawnPickup(epoch, dist) {
+    const geo = new THREE.IcosahedronGeometry(0.7, 1);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xfff7d0, transparent: true, opacity: 0.95 });
+    const mesh = new THREE.Mesh(geo, mat);
+    // Halo
+    const halo = new THREE.Mesh(new THREE.SphereGeometry(1.4, 12, 8), new THREE.MeshBasicMaterial({ color: 0xfff7d0, transparent: true, opacity: 0.25, depthWrite: false }));
+    mesh.add(halo);
+    const ang = Math.random() * Math.PI * 2;
+    const rad = Math.random() * (TUBE_RADIUS - 4);
+    const lat = Math.cos(ang) * rad;
+    const ver = Math.sin(ang) * rad;
+    const p = track.pointAt(dist);
+    const frame = track.frameAt(dist);
+    mesh.position.copy(p).addScaledVector(frame.right, lat).addScaledVector(frame.up, ver);
+    this.group.add(mesh);
+    this.list.push({ kind: 'pickup', type: 'pickup', dist, lateral: lat, vertical: ver, mesh, hit: false });
+  }
+  update(dt, photonDist, photonLat, photonVer, photonWL, onHit, onCollect, currentEpoch) {
+    const HIT_WINDOW = 2.6;     // distance window along z for collision check
+    const animTime = performance.now() * 0.001;
+    for (const h of this.list) {
+      // Spin/animate (skip rotational spin for front-facing hazards — they need to keep facing the photon)
+      if (!h.isFrontFacing) {
+        h.mesh.rotation.y += dt * (h.mesh.userData.spinSpeed || 1.2);
+        h.mesh.rotation.x += dt * 0.4;
+      } else if (h.type === 'supernova') {
+        // Slow rotation around its own normal for visual interest
+        h.mesh.rotateZ(dt * h.mesh.userData.spinSpeed);
+      }
+      // MOVING HAZARDS: apply sine sway to base position before computing world placement
+      if (h.movement) {
+        const offset = Math.sin(animTime * h.movement.freq * Math.PI * 2 + h.movement.phase) * h.movement.amp;
+        if (h.movement.axis === 'lateral') h.lateral = h.baseLateral + offset;
+        else                               h.vertical = h.baseVertical + offset;
+      }
+      // Update mesh position: rebuild in case track frame near it shifted (recompute from frame)
+      const p = track.pointAt(h.dist);
+      const frame = track.frameAt(h.dist);
+      h.mesh.position.copy(p).addScaledVector(frame.right, h.lateral).addScaledVector(frame.up, h.vertical);
+      // Re-orient front-facing hazards each frame so they always present their face to the photon
+      if (h.isFrontFacing) {
+        const mtx = new THREE.Matrix4().makeBasis(frame.right, frame.up, frame.fwd);
+        h.mesh.quaternion.setFromRotationMatrix(mtx);
+      }
+      if (h.hit) continue;
+      const dz = h.dist - photonDist;
+      if (Math.abs(dz) > HIT_WINDOW) continue;
+      const dx = h.lateral - photonLat;
+      const dy = h.vertical - photonVer;
+      const dist2 = dx*dx + dy*dy;
+      const r = h.hitRadius || 2.6;
+      if (dist2 > r * r) continue;
+      // Collision!
+      if (h.type === 'pickup' || h.type === 'finalPickup') {
+        h.hit = true; h.mesh.visible = false;
+        if (h.type === 'finalPickup') {
+          // PHASE A: the witness moment. No bonus, no count, just the ending.
+          particleManager.emitBurst(h.mesh.position.clone(), 'death', 80, new THREE.Color(0xfafaff));
+          particleManager.emitBurst(h.mesh.position.clone(), 'death', 60, new THREE.Color(0xb888ff));
+          triggerWitness();
+        } else {
+          onCollect(20);
+          particleManager.emitBurst(h.mesh.position.clone(), 'pickup', 18, new THREE.Color(0xfff3a0));
+          // PHASE B: lifetime pickup count for memory triggers
+          meta.pickupsLifetime = (meta.pickupsLifetime || 0) + 1;
+          saveMeta(meta);
+          checkMemoryTriggers();
+        }
+      } else {
+        // Wavelength matching: same wavelength → phase through (no damage), unlock codex
+        if (h.wlIdx >= 0 && h.wlIdx === photonWL) {
+          h.hit = true;
+          h.mesh.material.opacity = 0.18;
+          // Tiny pickup bonus for clean phase + visual flash on photon
+          onCollect(6);
+          photon.phaseFlash();
+          // JUICE: phase-success burst in the matched wavelength color (smaller for readability)
+          particleManager.emitBurst(h.mesh.position.clone(), 'phase', 14, WAVELENGTHS[h.wlIdx].color);
+          // CHAIN: phasing one gluon in a strand opens up the rest
+          if (h.chainId != null) {
+            for (const other of this.list) {
+              if (other !== h && other.chainId === h.chainId && !other.hit) {
+                other.hit = true;
+                other.mesh.material.opacity = 0.18;
+                particleManager.emitBurst(other.mesh.position.clone(), 'phase', 12, WAVELENGTHS[h.wlIdx].color);
+              }
+            }
+            // PHASE B: first chain phased memory
+            if (!meta.firstChainPhased) { meta.firstChainPhased = true; saveMeta(meta); checkMemoryTriggers(); }
+          }
+
+          // Micro-wormhole on clean gravitational well phase (risk/reward mechanic)
+          if (h.type === 'well') {
+            photon.distance += 95 + Math.random() * 55;
+            photon.invulnTimer = Math.max(photon.invulnTimer, 1.15);
+            photon.energy = Math.min(photon.maxEnergy(), photon.energy + 12);
+            particleManager.emitBurst(h.mesh.position.clone(), 'death', 22, new THREE.Color(0x66ffcc));
+            // PHASE B: first wormhole memory
+            if (!meta.firstWormhole) { meta.firstWormhole = true; saveMeta(meta); checkMemoryTriggers(); }
+            // Subtle forward "whoosh" feel
+            game.trauma = Math.min(1, game.trauma + 0.25);
+          }
+
+          // Unlock wavelength codex
+          if (h.wlIdx === 0) maybeUnlockCodex('GAMMA');
+          if (h.wlIdx === 2) maybeUnlockCodex('RADIO');
+        } else {
+          // Damage
+          if (onHit(h.dmg)) {
+            h.hit = true;
+            h.mesh.material.opacity = 0.25;
+            // JUICE: hit sparks in the hazard's color
+            const hitColor = h.wlIdx >= 0 ? WAVELENGTHS[h.wlIdx].color : new THREE.Color(0xff5566);
+            particleManager.emitBurst(h.mesh.position.clone(), 'hit', 22, hitColor);
+          }
+          if (h.type === 'well') maybeUnlockCodex('GRAVWELL');
+          if (h.type === 'gluon') maybeUnlockCodex('GLUON');
+          if (h.type === 'supernova') maybeUnlockCodex('SUPERNOVA');
+          if (h.type === 'eventHorizon') maybeUnlockCodex('HORIZON');
+        }
+      }
+    }
+  }
+}
+const hazards = new HazardManager();
+
+function maybeUnlockCodex(key) {
+  if (!CODEX_ENTRIES[key]) return;
+  if (!meta.codex[key]) {
+    meta.codex[key] = true;
+    saveMeta(meta);
+    showToast(`◇ Codex: ${CODEX_ENTRIES[key].title}`);
+  }
+}
+
+// ============================================================================
+// MEMORY SYSTEM (Phase B)
+// ============================================================================
+// LIVING MEMORIES: returns evolved body if conditions met, else original.
+function memoryBody(m) {
+  if (m.evolved && (meta.witnessedHeatDeath || 0) >= (m.evolved.afterWitnesses || 1)) return m.evolved.body;
+  return m.body;
+}
+
+function unlockMemory(id) {
+  if (meta.memories[id]) return;
+  const m = MEMORIES.find(x => x.id === id);
+  if (!m) return;
+  meta.memories[id] = true;
+  // Apply threshold side-effects (variant unlocks etc.)
+  if (m.threshold) {
+    if (m.threshold.unlockVariant && !meta.unlockedVariants.includes(m.threshold.unlockVariant)) {
+      meta.unlockedVariants.push(m.threshold.unlockVariant);
+      showToast(`◆ Variant unlocked: ${m.threshold.unlockVariant}`);
+    }
+  }
+  saveMeta(meta);
+  // Track for the death-screen reveal
+  game.newMemoriesThisRun = game.newMemoriesThisRun || [];
+  game.newMemoriesThisRun.push(id);
+  // Also surface a small toast so it's noticed mid-run
+  showToast(`✦ Memory: ${m.id.replace(/-/g,' ')}`);
+}
+
+// Evaluates each memory's `when` clause against current meta + game state.
+// Called at trigger points (epoch reach, milestones, etc.) — cheap to call often.
+function checkMemoryTriggers() {
+  for (const m of MEMORIES) {
+    if (meta.memories[m.id]) continue;
+    const w = m.when;
+    let ok = true;
+    if (w.reachedEpoch != null && (meta.bestEpoch < w.reachedEpoch)) ok = false;
+    if (w.runs != null && meta.totalRuns < w.runs) ok = false;
+    if (w.witnessed != null && (meta.witnessedHeatDeath || 0) < w.witnessed) ok = false;
+    if (w.phasesLifetime != null && (meta.phasesLifetime || 0) < w.phasesLifetime) ok = false;
+    if (w.pickupsLifetime != null && (meta.pickupsLifetime || 0) < w.pickupsLifetime) ok = false;
+    if (w.peakStreak != null && (meta.bestStreak || 0) < w.peakStreak) ok = false;
+    if (w.gammaPhases != null && (meta.colorPhases[0] || 0) < w.gammaPhases) ok = false;
+    if (w.visiblePhases != null && (meta.colorPhases[1] || 0) < w.visiblePhases) ok = false;
+    if (w.radioPhases != null && (meta.colorPhases[2] || 0) < w.radioPhases) ok = false;
+    if (w.boostedOnce && !meta.boostedOnce) ok = false;
+    if (w.pausedOnce && !meta.pausedOnce) ok = false;
+    if (w.mutedOnce && !meta.mutedOnce) ok = false;
+    if (w.firstWormhole && !meta.firstWormhole) ok = false;
+    if (w.firstChainPhased && !meta.firstChainPhased) ok = false;
+    if (w.perfectEpoch && !game.perfectEpochThisRun) ok = false;
+    if (ok) unlockMemory(m.id);
+  }
+}
+
+// Variant unlock evaluation — call after meta updates so newly-met conditions take effect immediately.
+function checkVariantUnlocks() {
+  const ensure = (key) => {
+    if (!meta.unlockedVariants.includes(key)) {
+      meta.unlockedVariants.push(key);
+      const v = VARIANTS.find(x => x.key === key);
+      if (v) showToast(`◆ Form unlocked: ${v.name} photon`);
+      saveMeta(meta);
+    }
+  };
+  if (meta.witnessedHeatDeath >= 1) ensure('microwave');
+  if (meta.bestEpoch >= 5)         ensure('xray');
+  // 'gamma' is unlocked via memory threshold side-effects
+}
+
+// Apply resonance effects (passive bonuses) at the start of each run.
+function applyMemoryResonances() {
+  // Reset transient flags
+  photon._firstChainFreeUsed = false;
+  photon._memoryStartEnergyBonus = 0;
+  photon._memoryStartBoostBonus = 0;
+  // Sum bonuses from unlocked resonance memories
+  for (const m of MEMORIES) {
+    if (!meta.memories[m.id] || !m.resonance) continue;
+    const r = m.resonance;
+    if (r.startEnergyBonus) photon._memoryStartEnergyBonus += r.startEnergyBonus;
+    if (r.startBoostBonus) photon._memoryStartBoostBonus += r.startBoostBonus;
+    if (r.firstChainFreePerRun) photon._firstChainFreePerRun = true;
+    if (r.perfectStartBoost && game.lastRunWasPerfect) photon._memoryStartBoostBonus += r.perfectStartBoost;
+  }
+}
+
+// PHASE A: cosmic time mapping. Real seconds map non-linearly to cosmological time so
+// the late epochs (Heat Death) can credibly hit T + 10^100 years without breaking the HUD.
+function cosmicTimeLabel() {
+  const e = EPOCHS[game.epochIndex];
+  if (!e) return 'T + ?';
+  const t = Math.max(0, game.epochTimer || 0);
+  const total = Math.max(1, e.duration);
+  const f = t / total;  // 0..1 progress through this epoch
+  // Heat Death has its own special exponent ramp regardless of position
+  if (e.isHeatDeath) return `T + 10${superscript(Math.round(14 + f * 86))} years`;
+  switch (e.name) {
+    case 'Inflationary':
+      return `T + 10${superscript(Math.round(-32 + f * 26))} sec`;
+    case 'Quark Plasma': {
+      const exp = -6 + f * 6;
+      return exp >= 0 ? `T + ${(10 ** exp).toFixed(2)} sec` : `T + 10${superscript(Math.round(exp))} sec`;
+    }
+    case 'Recombination':
+      return `T + 380,000 years`;
+    case 'First Stars':
+      return `T + ${Math.round(150 + f * 850)} million years`;
+    case 'Galactic':
+      return `T + ${(1 + f * 4).toFixed(1)} billion years`;
+    case 'Stellar':
+      return `T + ${(5 + f * 95).toFixed(1)} billion years`;
+    case 'Degenerate':
+      return `T + 10${superscript(Math.round(12 + f * 4))} years`;
+    case 'Black Hole':
+      return `T + 10${superscript(Math.round(30 + f * 10))} years`;
+  }
+  return 'T + ?';
+}
+function superscript(n) {
+  const map = {'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  return String(n).split('').map(c => map[c] || c).join('');
+}
+
+// Phase-streak combo multiplier: rewards chained clean phase-throughs.
+// Resets to 0 on damage (handled in photon.hit). Returns 1x baseline.
+function comboMultiplier(streak) {
+  if (streak >= 12) return 5;
+  if (streak >= 8)  return 4;
+  if (streak >= 5)  return 3;
+  if (streak >= 3)  return 2.5;
+  if (streak >= 2)  return 2;
+  if (streak >= 1)  return 1.5;
+  return 1;
+}
+
+// ============================================================================
+// GAME STATE MACHINE
+// ============================================================================
+const STATE = { TITLE: 'title', RUN: 'run', UPGRADE: 'upgrade', DEATH: 'death', CODEX: 'codex', PAUSE: 'pause' };
+const game = {
+  state: STATE.TITLE,
+  epochIndex: 0,
+  epochTimer: 0,
+  epochCleared: false,
+  runDistance: 0,
+  runEnergy: 0,
+  variant: VARIANTS.find(v => v.key === meta.variant) || VARIANTS[0],
+  startTime: 0,
+  // FEEL: shake + hit-stop + dying cinematic
+  trauma: 0,                  // 0..1, decays each frame; squared for shake amount
+  timeScale: 1,               // simulation time scale (used for hit-stop)
+  hitStopTime: 0,             // remaining real-seconds of hit-stop
+  dying: false,               // true during the death cinematic
+  dyingTime: 0,
+  dyingTotal: 1.6,
+  // Tutorial: prompt for first-time players, dismissed by any keypress
+  tutorialActive: false,
+  tutorialStep: 0,
+  tutorialTime: 0,
+  // Run telemetry: phases vs hits this run
+  phaseCount: 0,
+  hitCount: 0,
+};
+
+function applyMetaUpgrades() {
+  // Reset bonuses
+  photon.speedBonus = 1; photon.agilityBonus = 1; photon.energyMaxBonus = 0;
+  photon.damageReduction = 0; photon.boostRechargeBonus = 1; photon.phaseWindowSec = 0;
+  for (const u of UPGRADES) {
+    const lvl = meta.upgrades[u.key] || 0;
+    if (lvl > 0) u.apply(photon, lvl);
+  }
+}
+
+function setEpoch(idx) {
+  // PHASE D: cinematic flash between epochs (only on transitions within a run, not the first epoch)
+  if (game._anyEpochSetThisRun) {
+    const flash = document.getElementById('epoch-flash');
+    flash.classList.add('flash');
+    setTimeout(() => flash.classList.remove('flash'), 1300);
+  }
+  game._anyEpochSetThisRun = true;
+  game.epochIndex = idx;
+  game.epochTimer = 0;
+  game.epochCleared = false;
+  // SEED: compute this universe's modulations for this epoch BEFORE track/audio are set
+  computeEpochParams(idx);
+  const e = EPOCHS[Math.min(idx, EPOCHS.length-1)];
+  // Sky / fog / track
+  skyMat.uniforms.uColorA.value.copy(e.paletteA);
+  skyMat.uniforms.uColorB.value.copy(e.paletteB);
+  skyMat.uniforms.uPoint.value.copy(e.palettePoint);
+  skyMat.uniforms.uRedshift.value = idx / Math.max(1, EPOCHS.length); // gentle redshift accumulation
+  scene.fog.color.copy(e.fogColor);
+  scene.fog.near = e.fogNear; scene.fog.far = e.fogFar;
+  scene.background = e.fogColor.clone().multiplyScalar(0.4);
+  track.setEpoch(e);
+  // PHASE A: Heat Death gets its own sub-bass arc; everything else uses the regular drone
+  if (e.isHeatDeath) {
+    audio.startHeatDeath();
+    game.heatDeathFade = 0;
+    game.heatDeathFinalSpawned = false;
+  } else {
+    audio.startDrone(e);
+  }
+  maybeUnlockCodex(e.codexKey);
+  // PHASE B: epoch reached is a memory trigger
+  if (idx > meta.bestEpoch) meta.bestEpoch = idx;
+  saveMeta(meta);
+  checkMemoryTriggers();
+  checkVariantUnlocks();
+  // PHASE D: pass the chapter line to the toast for the longer narrative card
+  showEpochToast(idx + 1, e.name, e.subtitle, e.chapter);
+  // PERSISTENCE: snapshot run state at every epoch boundary so player can resume later
+  if (game.state === STATE.RUN || idx === 0) {
+    saveCheckpoint({
+      epochIndex: idx,
+      runEnergy: game.runEnergy || 0,
+      energy: photon.energy,
+      maxEnergyAtSave: photon.maxEnergy(),
+      boost: photon.boost,
+      wavelength: photon.wavelength,
+      variant: meta.variant,
+      runSeed: game.runSeed,             // SEED: same universe on resume
+      phaseStreak: 0,                    // streaks don't survive checkpoints
+      perfectEpochThisRun: true,         // fresh slate per epoch
+      startTimeOffset: performance.now() - (game.startTime || performance.now()),
+      savedAt: Date.now(),
+      epochName: e.name,
+    });
+  }
+}
+
+// PHASE A: Heat Death per-frame tick. Fades visuals, schedules the final pickup, kills hazards over time.
+function heatDeathTick(dt, photonDist) {
+  const e = EPOCHS[game.epochIndex];
+  const t = game.epochTimer;            // seconds into Heat Death
+  const total = e.duration;             // 360s = 6 min
+  // Visual fade: nebula brightness ramps down 1 → 0.05 over the first 90 seconds
+  const visFade = THREE.MathUtils.clamp(1 - (t / 90), 0.05, 1);
+  game.heatDeathFade = 1 - visFade;
+  // Star opacity dims through stages
+  if (stars && stars.material) stars.material.opacity = 0.9 * visFade;
+  // Sky shader uMix dims (controls the nebula intensity vs base color)
+  if (skyMat && skyMat.uniforms.uMix) skyMat.uniforms.uMix.value = 0.6 * visFade;
+  // ECHO PHOTONS: past selves drift past on parallel tracks. The more times you have
+  // witnessed the heat death, the more of them accompany you here. Pillar 1: reunion, not emptiness.
+  if ((meta.witnessedHeatDeath || 0) >= 1) {
+    game._echoTime = (game._echoTime || 0) + dt;
+    // Spawn interval shrinks with witness count, capped: 3.6s at 1 witness → ~1.0s at 13+
+    const echoInterval = Math.max(1.0, 3.6 - meta.witnessedHeatDeath * 0.22);
+    if (game._echoTime >= echoInterval) {
+      game._echoTime = 0;
+      spawnEchoPhoton(photonDist);
+    }
+  }
+  // Spawn the final pickup at t=300s (5 minutes in). One. Far enough ahead the player has to fly to it.
+  if (t >= 300 && !game.heatDeathFinalSpawned) {
+    game.heatDeathFinalSpawned = true;
+    spawnFinalPickup(photonDist + 60);
+  }
+  // After 360 seconds without collecting it, end the run with a quiet death (the universe outlived you)
+  if (t >= total && !game.witnessing) {
+    if (photon.alive) photon.alive = false;
+  }
+}
+
+// ============================================================================
+// ECHO PHOTONS — past selves drifting through Heat Death on parallel tracks.
+// Non-collidable. Faint trail with halo. Lifetimes 14-22s.
+// ============================================================================
+class EchoSystem {
+  constructor() {
+    this.echoes = [];
+    this.group = new THREE.Group();
+    scene.add(this.group);
+    this.coreGeo = new THREE.IcosahedronGeometry(0.45, 1);
+    this.haloGeo = new THREE.SphereGeometry(1.1, 12, 8);
+    this.trailLen = 16;
+  }
+  spawn(dist) {
+    const wlIdx = Math.floor(Math.random() * 3);
+    const color = WAVELENGTHS[wlIdx].color.clone();
+    const coreMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.0, depthWrite: false });
+    const haloMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const core = new THREE.Mesh(this.coreGeo, coreMat);
+    const halo = new THREE.Mesh(this.haloGeo, haloMat);
+    const grp = new THREE.Group(); grp.add(core); grp.add(halo);
+    // Place on a parallel track offset from photon
+    const offset = (Math.random() - 0.5) * 16;
+    const verticalOff = (Math.random() - 0.5) * 16;
+    // Trail line
+    const trailGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(this.trailLen * 3);
+    const colors = new Float32Array(this.trailLen * 3);
+    trailGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    trailGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const trailMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const trail = new THREE.Line(trailGeo, trailMat);
+    trail.frustumCulled = false;
+    this.group.add(grp);
+    this.group.add(trail);
+    this.echoes.push({
+      grp, core, halo, coreMat, haloMat, trail, trailMat,
+      dist: dist + (Math.random() - 0.5) * 30,
+      offset, verticalOff,
+      // Drift slightly slower than the photon so echoes appear to fall behind / catch up over time
+      vel: BASE_SPEED * 0.55 * (0.85 + Math.random() * 0.3),
+      life: 14 + Math.random() * 8,
+      maxLife: 14 + Math.random() * 8,
+      history: [],
+      color,
+    });
+  }
+  update(dt) {
+    for (let i = this.echoes.length - 1; i >= 0; i--) {
+      const e = this.echoes[i];
+      e.life -= dt;
+      e.dist += e.vel * dt;
+      // Position
+      const p = track.pointAt(e.dist);
+      const frame = track.frameAt(e.dist);
+      const pos = p.clone().addScaledVector(frame.right, e.offset).addScaledVector(frame.up, e.verticalOff);
+      e.grp.position.copy(pos);
+      // Fade in then fade out (life arc)
+      const f = e.life / e.maxLife;
+      const fadeIn = Math.min(1, (1 - f) * 4);
+      const fadeOut = Math.min(1, f * 3);
+      const alpha = Math.min(fadeIn, fadeOut) * 0.55;
+      e.coreMat.opacity = alpha * 0.9;
+      e.haloMat.opacity = alpha * 0.6;
+      // Trail history
+      e.history.unshift(pos.clone());
+      if (e.history.length > this.trailLen) e.history.length = this.trailLen;
+      const posArr = e.trail.geometry.attributes.position.array;
+      const colArr = e.trail.geometry.attributes.color.array;
+      for (let j = 0; j < this.trailLen; j++) {
+        const h = e.history[Math.min(j, e.history.length - 1)] || pos;
+        posArr[j*3+0] = h.x; posArr[j*3+1] = h.y; posArr[j*3+2] = h.z;
+        const k = (1 - j / this.trailLen) * alpha;
+        colArr[j*3+0] = e.color.r * k;
+        colArr[j*3+1] = e.color.g * k;
+        colArr[j*3+2] = e.color.b * k;
+      }
+      e.trail.geometry.attributes.position.needsUpdate = true;
+      e.trail.geometry.attributes.color.needsUpdate = true;
+      // Cull
+      if (e.life <= 0) {
+        this.group.remove(e.grp);
+        this.group.remove(e.trail);
+        this.echoes.splice(i, 1);
+      }
+    }
+  }
+  reset() {
+    for (const e of this.echoes) { this.group.remove(e.grp); this.group.remove(e.trail); }
+    this.echoes.length = 0;
+  }
+}
+const echoSystem = new EchoSystem();
+
+function spawnEchoPhoton(photonDist) {
+  echoSystem.spawn(photonDist);
+}
+
+// Spawn the singular last pickup that triggers the witness ending when collected.
+function spawnFinalPickup(dist) {
+  const geo = new THREE.IcosahedronGeometry(0.9, 1);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xfafaff, transparent: true, opacity: 1.0 });
+  const mesh = new THREE.Mesh(geo, mat);
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(2.0, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfafaff, transparent: true, opacity: 0.5, depthWrite: false }));
+  mesh.add(halo);
+  const halo2 = new THREE.Mesh(new THREE.SphereGeometry(4.5, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfafaff, transparent: true, opacity: 0.18, depthWrite: false }));
+  mesh.add(halo2);
+  // Center it on the track so it's hard to miss
+  const p = track.pointAt(dist);
+  mesh.position.copy(p);
+  hazards.group.add(mesh);
+  hazards.list.push({ kind: 'pickup', type: 'finalPickup', dist, lateral: 0, vertical: 0, mesh, hit: false });
+}
+
+// Witness ending sequence — the entire vision rests on this landing.
+function triggerWitness() {
+  if (game.witnessing) return;
+  game.witnessing = true;
+  // Persist the witness immediately (don't defer to setTimeout in case the player exits early)
+  meta.witnessedHeatDeath = (meta.witnessedHeatDeath || 0) + 1;
+  saveMeta(meta);
+  clearCheckpoint();   // PERSISTENCE: the universe ended, the run is sealed
+  maybeUnlockCodex('WITNESS');
+  checkVariantUnlocks();
+  // Quiet everything
+  audio.stopDrone();
+  audio.stopEngine();
+  audio.witnessChime();
+  // Show overlay (CSS transitions handle the fade-to-white)
+  const overlay = document.getElementById('witness');
+  overlay.classList.add('on');
+  setTimeout(() => overlay.classList.add('bright'), 1200);
+  setTimeout(() => document.getElementById('witness-line').classList.add('show'), 4500);
+  setTimeout(() => {
+    const c = document.getElementById('witness-count');
+    c.textContent = `You are photon #${meta.witnessedHeatDeath} to witness this`;
+    c.classList.add('show');
+  }, 8000);
+  setTimeout(() => document.getElementById('witness-hint').classList.add('show'), 13000);
+}
+
+function endWitness() {
+  const overlay = document.getElementById('witness');
+  overlay.classList.remove('on', 'bright');
+  document.getElementById('witness-line').classList.remove('show');
+  document.getElementById('witness-count').classList.remove('show');
+  document.getElementById('witness-hint').classList.remove('show');
+  game.witnessing = false;
+  // Restore visuals
+  if (skyMat && skyMat.uniforms.uMix) skyMat.uniforms.uMix.value = 0.6;
+  if (stars && stars.material) stars.material.opacity = 0.9;
+  game.heatDeathFade = 0;
+  refreshTitleStats();
+  setState(STATE.TITLE);
+}
+
+function startRun(resumeSnapshot) {
+  audio.ensure(); audio.resume();
+  audio.startEngine();
+  hazards.reset();
+  particleManager.reset();
+  echoSystem.reset();
+  applyMetaUpgrades();
+  applyMemoryResonances();
+  applySettings();
+  // SEED: derive this universe's seed. Resume reuses the saved seed so the universe is identical.
+  game.runSeed = (resumeSnapshot && resumeSnapshot.runSeed != null) ? resumeSnapshot.runSeed : newSeed();
+  game.epochParams = {};
+  runRng = mulberry32(game.runSeed);
+  game.coherenceTime = 0;       // REDSHIFT FATIGUE: seconds since last wavelength shift
+  // Resume? Swap variant before reset so its mods take effect on photon.maxEnergy.
+  if (resumeSnapshot && resumeSnapshot.variant) {
+    const v = VARIANTS.find(x => x.key === resumeSnapshot.variant);
+    if (v && (v.unlocked || meta.unlockedVariants.includes(v.key))) game.variant = v;
+  }
+  photon.reset(game.variant);
+  // PHASE B: apply memory bonuses to starting state
+  if (photon._memoryStartEnergyBonus) photon.energy = Math.min(photon.maxEnergy(), photon.energy + photon._memoryStartEnergyBonus);
+  if (photon._memoryStartBoostBonus) photon.boost = Math.min(BOOST_MAX, photon.boost + photon._memoryStartBoostBonus);
+  game.newMemoriesThisRun = [];
+  game.perfectEpochThisRun = true;  // assume perfect until first hit
+  game.lastRunWasPerfect = false;
+  game.phaseStreak = 0;
+  game.endlessLoop = 0;
+  game.witnessing = false;
+  game.heatDeathFade = 0;
+  game.heatDeathFinalSpawned = false;
+  game._anyEpochSetThisRun = false;  // Phase D: reset so the very first epoch doesn't flash
+  game.runDistance = 0;
+  game.runEnergy = (resumeSnapshot && resumeSnapshot.runEnergy) || 0;
+  game.startTime = performance.now() - ((resumeSnapshot && resumeSnapshot.startTimeOffset) || 0);
+  game.phaseCount = 0;
+  game.hitCount = 0;
+  game._shiftedThisRun = false;
+  // Tutorial only on truly fresh runs, never on resume
+  if (!resumeSnapshot && (!meta.tutorialDone || meta.totalRuns < 2)) {
+    game.tutorialActive = true;
+    game.tutorialStep = 0;
+    game.tutorialTime = 0;
+  } else {
+    game.tutorialActive = false;
+  }
+  // Reset feel state in case a previous run left it dirty
+  game.trauma = 0; game.timeScale = 1; game.hitStopTime = 0; game.dying = false;
+  // Pick starting epoch — resume jumps to saved index, fresh run starts at 0
+  const startEpoch = (resumeSnapshot && Number.isInteger(resumeSnapshot.epochIndex) && resumeSnapshot.epochIndex < EPOCHS.length) ? resumeSnapshot.epochIndex : 0;
+  setEpoch(startEpoch);
+  // Restore mid-run photon state AFTER setEpoch so the saved values aren't reset
+  if (resumeSnapshot) {
+    if (typeof resumeSnapshot.energy === 'number') photon.energy = Math.min(photon.maxEnergy(), resumeSnapshot.energy);
+    if (typeof resumeSnapshot.boost === 'number') photon.boost = Math.min(BOOST_MAX, resumeSnapshot.boost);
+    if (Number.isInteger(resumeSnapshot.wavelength)) {
+      photon.wavelength = resumeSnapshot.wavelength;
+      photon.setColorFromWavelength(true);
+    }
+  }
+  setState(STATE.RUN);
+  // Don't double-count totalRuns when resuming
+  if (!resumeSnapshot) { meta.totalRuns++; saveMeta(meta); }
+  maybeUnlockCodex('PHOTON');
+}
+
+function beginDeath() {
+  if (game.dying) return;
+  game.dying = true;
+  game.dyingTime = 0;
+  clearCheckpoint();   // PERSISTENCE: a dead photon cannot resume
+  audio.death();
+  audio.stopDrone();
+  audio.stopEngine();
+  game.trauma = Math.min(1, game.trauma + 0.9);
+  // Cancel any active hit-stop so the cinematic plays at intended pace
+  game.timeScale = 1; game.hitStopTime = 0;
+  // JUICE: massive implosion burst at the photon's position
+  particleManager.emitBurst(photon.group.position.clone(), 'death', 90, new THREE.Color(0xff5566));
+  particleManager.emitBurst(photon.group.position.clone(), 'death', 50, WAVELENGTHS[photon.wavelength].color);
+}
+
+function finalizeDeath() {
+  game.dying = false;
+  // Restore visuals so the next run isn't broken
+  photon.group.scale.set(1, 1, 1);
+  photon.trail.material.opacity = 0.85;
+  lensingPass.uniforms.uVignettePower.value = 1;
+  lensingPass.uniforms.uVignetteColor.value.set(0, 0, 0);
+  camera.fov = 72; camera.updateProjectionMatrix();
+  endRun();
+}
+
+function endRun() {
+  // Stats
+  const reachedIdx = game.epochIndex;
+  const e = EPOCHS[Math.min(reachedIdx, EPOCHS.length-1)];
+  // PHASE B: stash perfect-run flag so the next run can pick it up via resonance
+  game.lastRunWasPerfect = !!game.perfectEpochThisRun;
+  // Run-end memory checks (run count, witness milestones, etc.)
+  checkMemoryTriggers();
+  if (reachedIdx > meta.bestEpoch) meta.bestEpoch = reachedIdx;
+  if (game.runDistance > meta.bestDistance) meta.bestDistance = game.runDistance;
+  meta.totalEnergy += Math.floor(game.runEnergy);
+  // Variant unlocks
+  for (const v of VARIANTS) {
+    if (!v.unlocked && !meta.unlockedVariants.includes(v.key)) {
+      if (v.key === 'gamma' && reachedIdx >= 2) {
+        meta.unlockedVariants.push('gamma');
+        showToast('◆ Variant unlocked: Gamma photon');
+      }
+    }
+  }
+  saveMeta(meta);
+  // Populate death panel
+  document.getElementById('death-where').textContent = `${e.name} — ${e.subtitle}`;
+  const stats = document.getElementById('death-stats');
+  stats.innerHTML = '';
+  const fmt = (n) => Math.floor(n).toLocaleString();
+  const items = [
+    ['Drift', `${fmt(game.runDistance)} units`],
+    ['Light gathered', `${fmt(game.runEnergy)}`],
+    ['Era reached', `${reachedIdx + 1} / ${EPOCHS.length}`],
+    ['Time existing', `${((performance.now() - game.startTime)/1000).toFixed(1)} s`],
+    ['Furthest reached', `${meta.bestEpoch + 1}`],
+    ['Lives lived', `${meta.totalRuns}`],
+  ];
+  for (const [k,v] of items) { const d = document.createElement('div'); d.innerHTML = `<span>${k}</span><span>${v}</span>`; stats.appendChild(d); }
+  // PHASE B: surface any new memories unlocked this run, as cards
+  const memWrap = document.getElementById('death-memories');
+  memWrap.innerHTML = '';
+  const newMems = (game.newMemoriesThisRun || []).slice(0, 3);
+  if (newMems.length > 0) {
+    const heading = document.createElement('div');
+    heading.style.cssText = 'font-size:11px;letter-spacing:0.3em;opacity:0.65;text-transform:uppercase;margin:6px 0 8px;text-align:center;color:#ff7ad9';
+    heading.textContent = `New ${newMems.length === 1 ? 'memory' : 'memories'}`;
+    memWrap.appendChild(heading);
+    for (const id of newMems) {
+      const m = MEMORIES.find(x => x.id === id);
+      if (!m) continue;
+      const card = document.createElement('div');
+      const tint = m.type === 'threshold' ? '#ff7ad9' : m.type === 'resonance' ? '#88e0ff' : 'rgba(255,255,255,0.6)';
+      card.style.cssText = `border-left:2px solid ${tint};padding:10px 14px;margin:8px 0;background:rgba(255,255,255,0.03);font-size:12px;line-height:1.55;font-style:italic;opacity:0.92`;
+      card.innerHTML = `<div style="font-size:9px;letter-spacing:0.3em;text-transform:uppercase;opacity:0.6;margin-bottom:6px;font-style:normal;color:${tint}">${m.type} memory</div>${memoryBody(m)}`;
+      memWrap.appendChild(card);
+    }
+  }
+  // Codex flavor
+  const dc = document.getElementById('death-codex');
+  if (CODEX_ENTRIES[e.codexKey]) {
+    dc.style.display = ''; dc.textContent = CODEX_ENTRIES[e.codexKey].body;
+  } else dc.style.display = 'none';
+  setState(STATE.DEATH);
+}
+
+function setState(s) {
+  game.state = s;
+  for (const id of ['title','run','upgrade','death','codex','pause','memories','form']) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('on', id === s);
+  }
+}
+
+// Epoch transition: show upgrade picker
+function epochCleared() {
+  game.epochCleared = true;
+  audio.stopDrone();
+  // PHASE B: trigger memory check, then reset perfect-epoch flag for the next one
+  if (game.perfectEpochThisRun) checkMemoryTriggers();
+  game.perfectEpochThisRun = true;
+  // Build upgrade cards: 3 random distinct upgrades that aren't maxed
+  const pool = UPGRADES.filter(u => (meta.upgrades[u.key] || 0) < u.max);
+  const shuffled = pool.sort(() => Math.random() - 0.5).slice(0, 3);
+  if (shuffled.length === 0) {
+    // All maxed — give energy bonus instead and skip
+    game.runEnergy += 30;
+    advanceEpoch();
+    return;
+  }
+  const e = EPOCHS[Math.min(game.epochIndex, EPOCHS.length-1)];
+  document.getElementById('upgrade-where').textContent = `You survived ${e.name}`;
+  const wrap = document.getElementById('upgrade-cards');
+  wrap.innerHTML = '';
+  for (const u of shuffled) {
+    const lvl = meta.upgrades[u.key] || 0;
+    const card = document.createElement('div');
+    card.className = 'upgrade-card';
+    card.innerHTML = `<div class="name">${u.name}</div><div class="desc">${u.desc}</div><div class="lvl">Level ${lvl} → ${lvl+1} (max ${u.max})</div>`;
+    card.addEventListener('click', () => {
+      meta.upgrades[u.key] = lvl + 1;
+      saveMeta(meta);
+      applyMetaUpgrades();
+      advanceEpoch();
+    });
+    wrap.appendChild(card);
+  }
+  setState(STATE.UPGRADE);
+}
+function advanceEpoch() {
+  const next = game.epochIndex + 1;
+  if (next >= EPOCHS.length) {
+    // We've cleared every epoch including Heat Death. The witness sequence handles ending now.
+    // (This branch should rarely trigger because Heat Death's final pickup ends the run, not the timer.)
+    triggerWitness();
+    return;
+  }
+  setEpoch(next);
+  setState(STATE.RUN);
+}
+
+// ============================================================================
+// INPUT — keyboard now, touch hooks ready for mobile port
+// ============================================================================
+const input = { left:false, right:false, up:false, down:false, boost:false };
+const keyMap = {
+  'KeyA': 'left', 'ArrowLeft': 'left',
+  'KeyD': 'right', 'ArrowRight': 'right',
+  'KeyW': 'up', 'ArrowUp': 'up',
+  'KeyS': 'down', 'ArrowDown': 'down',
+  'Space': 'boost', 'ShiftLeft': 'boost', 'ShiftRight': 'boost',
+};
+window.addEventListener('keydown', e => {
+  if (keyMap[e.code]) { input[keyMap[e.code]] = true; e.preventDefault(); }
+  if (game.state === STATE.RUN) {
+    let did = false;
+    if (e.code === 'Digit1') did = photon.shift(0);
+    if (e.code === 'Digit2') did = photon.shift(1);
+    if (e.code === 'Digit3') did = photon.shift(2);
+    if (did) game._shiftedThisRun = true;
+  }
+  // Pause toggle (P or Esc) — works in RUN or PAUSE
+  if (e.code === 'KeyP' || e.code === 'Escape') {
+    if (game.state === STATE.RUN) { pause(); e.preventDefault(); }
+    else if (game.state === STATE.PAUSE) { resume(); e.preventDefault(); }
+  }
+  // Master mute toggle (M)
+  if (e.code === 'KeyM') {
+    settings.muted = !settings.muted;
+    applySettings(); saveSettings(settings);
+    if (game.state === STATE.PAUSE) refreshSettingsUI();
+    showToast(settings.muted ? '◇ Muted' : '◇ Unmuted');
+    // PHASE B: first mute memory
+    if (settings.muted && !meta.mutedOnce) { meta.mutedOnce = true; saveMeta(meta); checkMemoryTriggers(); }
+  }
+  if (e.code === 'Enter' || e.code === 'Space') {
+    if (game.state === STATE.TITLE) startRun();
+    else if (game.state === STATE.DEATH) startRun();
+  }
+  // PHASE A: any key dismisses the witness ending after the hint shows
+  if (game.witnessing && document.getElementById('witness-hint').classList.contains('show')) {
+    endWitness();
+  }
+});
+window.addEventListener('keyup', e => {
+  if (keyMap[e.code]) { input[keyMap[e.code]] = false; e.preventDefault(); }
+});
+
+// Touch (basic — left/right halves steer, top half = up, bottom = down, double-tap = boost, three-finger = shift)
+let touchActive = null;
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (game.state !== STATE.RUN) return;
+  for (const t of e.changedTouches) {
+    const x = t.clientX / window.innerWidth;
+    const y = t.clientY / window.innerHeight;
+    if (x < 0.33) input.left = true;
+    else if (x > 0.66) input.right = true;
+    if (y < 0.4) input.up = true;
+    else if (y > 0.7) input.down = true;
+  }
+  if (e.touches.length >= 2) input.boost = true;
+}, { passive: false });
+canvas.addEventListener('touchend', e => {
+  if (e.touches.length === 0) { input.left = input.right = input.up = input.down = input.boost = false; }
+}, { passive: false });
+
+// ============================================================================
+// HUD — canvas overlay
+// ============================================================================
+const hudCanvas = document.getElementById('hud-canvas');
+const hud = hudCanvas.getContext('2d');
+function hudResize() {
+  hudCanvas.width = window.innerWidth * PIXEL_RATIO;
+  hudCanvas.height = window.innerHeight * PIXEL_RATIO;
+  hudCanvas.style.width = window.innerWidth + 'px';
+  hudCanvas.style.height = window.innerHeight + 'px';
+}
+hudResize();
+
+function drawHud() {
+  const W = hudCanvas.width, H = hudCanvas.height;
+  hud.clearRect(0, 0, W, H);
+  if (game.state !== STATE.RUN) return;
+  const PR = PIXEL_RATIO;
+  hud.save();
+  hud.scale(PR, PR);
+  const w = window.innerWidth, h = window.innerHeight;
+  hud.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
+  hud.textBaseline = 'top';
+  // Top-left: epoch info + epoch progress bar
+  const e = EPOCHS[Math.min(game.epochIndex, EPOCHS.length-1)];
+  hud.fillStyle = 'rgba(255,255,255,0.85)';
+  const epochLabel = (game.endlessLoop || 0) > 0
+    ? `ENDLESS  Λ${game.endlessLoop}`
+    : `ERA ${game.epochIndex + 1} / ${EPOCHS.length}`;
+  hud.fillText(epochLabel, 20, 20);
+  hud.fillStyle = '#88e0ff';
+  hud.font = 'bold 16px ui-monospace, monospace';
+  hud.fillText(e.name.toUpperCase(), 20, 36);
+  hud.font = '10px ui-monospace, monospace';
+  hud.fillStyle = 'rgba(255,255,255,0.55)';
+  hud.fillText(e.subtitle, 20, 58);
+  // SEED: small label below the subtitle, only shown after first witness so early players aren't distracted
+  if (game.runSeed != null && (meta.witnessedHeatDeath || 0) >= 1) {
+    hud.fillStyle = 'rgba(255,122,217,0.55)';
+    hud.fillText(`UNIVERSE  ${seedToLabel(game.runSeed)}`, 20, 72);
+  }
+  // Epoch progress bar
+  const bx = 20, by = 78, bw = 180, bh = 4;
+  hud.fillStyle = 'rgba(255,255,255,0.12)'; hud.fillRect(bx, by, bw, bh);
+  const prog = Math.min(1, game.epochTimer / e.duration);
+  hud.fillStyle = '#88e0ff'; hud.fillRect(bx, by, bw * prog, bh);
+  // Top-right: distance + speed
+  hud.textAlign = 'right'; hud.textBaseline = 'top';
+  hud.font = '11px ui-monospace, monospace';
+  hud.fillStyle = 'rgba(255,255,255,0.55)';
+  hud.fillText('DISTANCE', w - 20, 20);
+  hud.font = 'bold 16px ui-monospace, monospace';
+  hud.fillStyle = '#fff';
+  hud.fillText(`${Math.floor(game.runDistance).toLocaleString()}`, w - 20, 36);
+  hud.font = '10px ui-monospace, monospace';
+  hud.fillStyle = 'rgba(255,255,255,0.55)';
+  hud.fillText(`× ${game._speed ? game._speed.toFixed(0) : '0'} u/s`, w - 20, 58);
+  // PHASE A: cosmic time overlay — non-linear mapping of (epoch, epochTimer) to a cosmic timestamp
+  hud.fillStyle = 'rgba(255,255,255,0.45)';
+  hud.fillText('COSMIC TIME', w - 20, 86);
+  hud.font = 'bold 12px ui-monospace, monospace';
+  hud.fillStyle = '#ff7ad9';
+  hud.fillText(cosmicTimeLabel(), w - 20, 100);
+  hud.textAlign = 'left';
+  // Bottom-left: energy bar
+  hud.font = '10px ui-monospace, monospace';
+  hud.fillStyle = 'rgba(255,255,255,0.6)';
+  hud.fillText('ENERGY', 20, h - 56);
+  const ex = 20, ey = h - 40, ew = 180, eh = 8;
+  hud.fillStyle = 'rgba(255,255,255,0.12)'; hud.fillRect(ex, ey, ew, eh);
+  const energyFrac = photon.energy / photon.maxEnergy();
+  const energyColor = energyFrac > 0.5 ? '#88e0ff' : energyFrac > 0.25 ? '#ffc850' : '#ff5566';
+  hud.fillStyle = energyColor; hud.fillRect(ex, ey, ew * energyFrac, eh);
+  hud.fillStyle = 'rgba(255,255,255,0.5)';
+  hud.fillText(`${Math.floor(photon.energy)} / ${photon.maxEnergy()}`, ex, ey + 12);
+  // Bottom-right: boost bar
+  hud.textAlign = 'right';
+  hud.fillStyle = 'rgba(255,255,255,0.6)';
+  hud.fillText('BOOST  [SPACE]', w - 20, h - 56);
+  const bxr = w - 200, byr = h - 40, bwr = 180, bhr = 8;
+  hud.fillStyle = 'rgba(255,255,255,0.12)'; hud.fillRect(bxr, byr, bwr, bhr);
+  const boostFrac = photon.boost / BOOST_MAX;
+  hud.fillStyle = photon.boosting ? '#ff7ad9' : '#88e0ff'; hud.fillRect(bxr, byr, bwr * boostFrac, bhr);
+  hud.textAlign = 'left';
+  // Bottom-center: wavelength selector
+  hud.textAlign = 'center';
+  hud.font = '10px ui-monospace, monospace';
+  hud.fillStyle = 'rgba(255,255,255,0.6)';
+  hud.fillText('WAVELENGTH', w/2, h - 56);
+  const segW = 110, segH = 22, segGap = 6;
+  const totalW = segW * 3 + segGap * 2;
+  const sx = (w - totalW) / 2;
+  for (let i = 0; i < WAVELENGTHS.length; i++) {
+    const x = sx + i * (segW + segGap);
+    const y = h - 36;
+    const active = i === photon.wavelength;
+    const wl = WAVELENGTHS[i];
+    const css = `rgb(${Math.floor(wl.color.r*255)},${Math.floor(wl.color.g*255)},${Math.floor(wl.color.b*255)})`;
+    hud.strokeStyle = active ? css : 'rgba(255,255,255,0.18)';
+    hud.lineWidth = active ? 2 : 1;
+    hud.strokeRect(x, y, segW, segH);
+    if (active) { hud.fillStyle = css.replace('rgb','rgba').replace(')',',0.18)'); hud.fillRect(x, y, segW, segH); }
+    hud.fillStyle = active ? css : 'rgba(255,255,255,0.5)';
+    hud.fillText(`${i+1}  ${wl.name}`, x + segW/2, y + 7);
+  }
+  hud.textAlign = 'left';
+  // Phase invuln flash
+  if (photon.phaseTimer > 0) {
+    hud.fillStyle = `rgba(136,224,255,${photon.phaseTimer / Math.max(0.18, photon.phaseWindowSec) * 0.15})`;
+    hud.fillRect(0, 0, w, h);
+  }
+  // REDSHIFT FATIGUE: subtle red pulse around the edges when coherence drain is active
+  if ((game.coherenceTime || 0) > 14) {
+    const intensity = Math.min(1, (game.coherenceTime - 14) / 16);
+    const pulse = 0.4 + 0.6 * Math.abs(Math.sin(performance.now() * 0.003));
+    const grad = hud.createRadialGradient(w/2, h/2, Math.min(w,h)*0.35, w/2, h/2, Math.min(w,h)*0.7);
+    grad.addColorStop(0, `rgba(255,80,80,0)`);
+    grad.addColorStop(1, `rgba(255,40,60,${intensity * pulse * 0.18})`);
+    hud.fillStyle = grad;
+    hud.fillRect(0, 0, w, h);
+  }
+  // FEEL: Radial speed lines that intensify with velocity / boost
+  if (game._speed) {
+    const speedFactor = Math.max(0, (game._speed - BASE_SPEED) / BASE_SPEED);
+    if (speedFactor > 0.04) {
+      const cx = w/2, cy = h/2;
+      const numLines = Math.floor(18 + speedFactor * 50);
+      const baseAlpha = Math.min(0.45, speedFactor * 0.7);
+      hud.save();
+      hud.translate(cx, cy);
+      hud.rotate((performance.now() * 0.00018) % (Math.PI*2));
+      const minDim = Math.min(w, h);
+      for (let i = 0; i < numLines; i++) {
+        const a = (i / numLines) * Math.PI * 2 + (i * 0.13);
+        const r1 = minDim * (0.34 + (i % 3) * 0.045);
+        const r2 = minDim * (0.55 + speedFactor * 0.12);
+        const fade = baseAlpha * (0.35 + Math.sin(i * 1.7 + performance.now()*0.005) * 0.6);
+        hud.strokeStyle = `rgba(255,255,255,${Math.max(0, fade)})`;
+        hud.lineWidth = 1;
+        hud.beginPath();
+        hud.moveTo(Math.cos(a)*r1, Math.sin(a)*r1);
+        hud.lineTo(Math.cos(a)*r2, Math.sin(a)*r2);
+        hud.stroke();
+      }
+      hud.restore();
+    }
+  }
+  // COMBO: multiplier badge floats above the photon when streak ≥ 1
+  const streak = game.phaseStreak || 0;
+  if (streak >= 1) {
+    const mult = comboMultiplier(streak);
+    // Project photon's 3D position to screen
+    const v = photon.group.position.clone().project(camera);
+    if (v.z < 1) {
+      const sx = (v.x * 0.5 + 0.5) * w;
+      const sy = (-v.y * 0.5 + 0.5) * h - 60;
+      const pulse = 1 + Math.sin(performance.now() * 0.012) * 0.06;
+      hud.save();
+      hud.translate(sx, sy);
+      hud.scale(pulse, pulse);
+      hud.textAlign = 'center'; hud.textBaseline = 'middle';
+      hud.font = 'bold 22px ui-monospace, monospace';
+      const color = streak >= 8 ? '#ff7ad9' : streak >= 5 ? '#ffc850' : '#88e0ff';
+      hud.fillStyle = color;
+      hud.fillText(`×${mult.toFixed(mult % 1 ? 1 : 0)}`, 0, 0);
+      hud.font = '9px ui-monospace, monospace';
+      hud.fillStyle = `rgba(255,255,255,0.7)`;
+      hud.fillText(`RESONANCE`, 0, 16);
+      hud.restore();
+      hud.textAlign = 'left'; hud.textBaseline = 'top';
+    }
+  }
+  // ONBOARDING: tutorial overlay — pinned just above the wavelength selector
+  if (game.tutorialActive && game.tutorialStep < TUTORIAL_STEPS.length) {
+    const step = TUTORIAL_STEPS[game.tutorialStep];
+    const fadeIn = Math.min(1, game.tutorialTime / 0.35);
+    const lifeLeft = step.max - game.tutorialTime;
+    const fadeOut = Math.min(1, lifeLeft / 0.4);
+    const alpha = Math.max(0, Math.min(fadeIn, fadeOut));
+    if (alpha > 0.01) {
+      const ty = h - 110;
+      const padX = 24, padY = 14;
+      hud.font = 'bold 14px ui-monospace, monospace';
+      hud.textAlign = 'center'; hud.textBaseline = 'middle';
+      const textW = hud.measureText(step.text).width;
+      hud.font = '11px ui-monospace, monospace';
+      const hintW = hud.measureText(step.hint).width;
+      const boxW = Math.max(textW, hintW) + padX * 2;
+      const boxH = padY * 2 + 36;
+      const bx = w/2 - boxW/2;
+      hud.fillStyle = `rgba(8, 10, 22, ${alpha * 0.78})`;
+      hud.fillRect(bx, ty - boxH/2, boxW, boxH);
+      hud.strokeStyle = `rgba(136, 224, 255, ${alpha * 0.55})`;
+      hud.lineWidth = 1;
+      hud.strokeRect(bx, ty - boxH/2, boxW, boxH);
+      hud.fillStyle = `rgba(136, 224, 255, ${alpha})`;
+      hud.font = 'bold 13px ui-monospace, monospace';
+      hud.fillText(step.text, w/2, ty - 8);
+      hud.fillStyle = `rgba(255, 255, 255, ${alpha * 0.65})`;
+      hud.font = '11px ui-monospace, monospace';
+      hud.fillText(step.hint, w/2, ty + 12);
+      // Step pip indicator
+      const pipY = ty + boxH/2 - 4;
+      const pipSpacing = 10;
+      const pipsTotal = TUTORIAL_STEPS.length;
+      const pipsX = w/2 - (pipsTotal - 1) * pipSpacing / 2;
+      for (let i = 0; i < pipsTotal; i++) {
+        hud.fillStyle = i <= game.tutorialStep ? `rgba(136,224,255,${alpha})` : `rgba(255,255,255,${alpha*0.18})`;
+        hud.fillRect(pipsX + i * pipSpacing - 2, pipY, 4, 2);
+      }
+      hud.textAlign = 'left'; hud.textBaseline = 'top';
+    }
+  }
+  hud.restore();
+}
+
+function showToast(msg) {
+  // Very lightweight toast at bottom of screen
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:rgba(8,10,22,0.85);border:1px solid rgba(180,200,255,0.3);padding:10px 18px;font-size:11px;letter-spacing:0.25em;color:#88e0ff;z-index:50;text-transform:uppercase;border-radius:2px;backdrop-filter:blur(10px);transition:opacity 0.4s;pointer-events:none';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(()=>t.remove(), 500); }, 2400);
+}
+
+function showEpochToast(numOrLabel, name, sub, chapter) {
+  const el = document.getElementById('epoch-toast');
+  // If numOrLabel is already a string, use it directly (for endless mode "Λn")
+  const label = (typeof numOrLabel === 'string') ? numOrLabel : `ERA ${numOrLabel} / ${EPOCHS.length}`;
+  document.getElementById('epoch-num').textContent = label;
+  document.getElementById('epoch-name').textContent = name;
+  document.getElementById('epoch-sub').textContent = sub;
+  document.getElementById('epoch-chapter').textContent = chapter || '';
+  el.classList.add('on');
+  // Chapter cards linger longer to be read and felt
+  const dur = chapter ? 5200 : 2400;
+  setTimeout(() => el.classList.remove('on'), dur);
+}
+
+// ============================================================================
+// UI WIRING — title / death / codex buttons + content rendering
+// ============================================================================
+function refreshTitleStats() {
+  const stats = document.getElementById('title-stats');
+  stats.innerHTML = '';
+  const memCount = Object.values(meta.memories || {}).filter(Boolean).length;
+  const currentVariant = VARIANTS.find(v => v.key === meta.variant) || VARIANTS[0];
+  const unlockedFormCount = VARIANTS.filter(v => v.unlocked || meta.unlockedVariants.includes(v.key)).length;
+  const items = [
+    ['Witnessed the end', `${meta.witnessedHeatDeath || 0}×`],
+    ['Furthest reached', `${meta.bestEpoch + 1} / ${EPOCHS.length}`],
+    ['Memories', `${memCount} / ${MEMORIES.length}`],
+    ['Codex', `${Object.keys(meta.codex).length} / ${Object.keys(CODEX_ENTRIES).length}`],
+    ['Form', `${currentVariant.name}  ·  ${unlockedFormCount}/${VARIANTS.length} unlocked`],
+    ['Lives lived', `${meta.totalRuns}`],
+  ];
+  for (const [k,v] of items) { const d = document.createElement('div'); d.innerHTML = `<span>${k}</span><span>${v}</span>`; stats.appendChild(d); }
+  // PERSISTENCE: surface Resume button (or hide it) based on whether a checkpoint exists
+  const cp = loadCheckpoint();
+  const resumeBtn = document.getElementById('btn-resume');
+  if (cp && Number.isInteger(cp.epochIndex) && cp.epochIndex < EPOCHS.length) {
+    resumeBtn.style.display = '';
+    resumeBtn.textContent = `↶ Resume from ${EPOCHS[cp.epochIndex].name}`;
+  } else {
+    resumeBtn.style.display = 'none';
+  }
+}
+function refreshCodex() {
+  const list = document.getElementById('codex-list');
+  list.innerHTML = '';
+  for (const [key, entry] of Object.entries(CODEX_ENTRIES)) {
+    const div = document.createElement('div');
+    const unlocked = !!meta.codex[key];
+    div.className = 'codex-entry' + (unlocked ? '' : ' locked');
+    div.innerHTML = `<div class="title">${unlocked ? entry.title : '???'}</div><div class="body">${unlocked ? entry.body : 'Phenomenon not yet encountered. Survive longer to unlock.'}</div>`;
+    list.appendChild(div);
+  }
+}
+document.getElementById('btn-start').addEventListener('click', () => {
+  // Starting fresh discards any existing checkpoint
+  clearCheckpoint();
+  startRun();
+});
+document.getElementById('btn-resume').addEventListener('click', () => {
+  const cp = loadCheckpoint();
+  if (cp) startRun(cp);
+});
+document.getElementById('btn-again').addEventListener('click', () => startRun());
+document.getElementById('btn-menu').addEventListener('click', () => { refreshTitleStats(); setState(STATE.TITLE); });
+document.getElementById('btn-codex').addEventListener('click', () => { refreshCodex(); setState(STATE.CODEX); });
+document.getElementById('btn-codex-back').addEventListener('click', () => { refreshTitleStats(); setState(STATE.TITLE); });
+// PHASE B: memories tab wiring
+const STATE_MEM = 'memories';
+function refreshMemories() {
+  const list = document.getElementById('memories-list');
+  list.innerHTML = '';
+  const unlockedCount = MEMORIES.filter(m => meta.memories[m.id]).length;
+  document.getElementById('mem-count').textContent = `${unlockedCount} / ${MEMORIES.length} remembered`;
+  for (const m of MEMORIES) {
+    const unlocked = !!meta.memories[m.id];
+    const div = document.createElement('div');
+    div.className = 'codex-entry' + (unlocked ? '' : ' locked');
+    const tint = m.type === 'threshold' ? '#ff7ad9' : m.type === 'resonance' ? '#88e0ff' : '#aab';
+    if (unlocked) {
+      const isEvolved = m.evolved && (meta.witnessedHeatDeath || 0) >= (m.evolved.afterWitnesses || 1);
+      const evoTag = isEvolved ? `<span style="margin-left:8px; font-size:9px; color:#ff7ad9; opacity:0.7">· REMEMBERED ANEW</span>` : '';
+      div.innerHTML = `<div class="title" style="color:${tint}">${m.id.replace(/-/g,' ')}  ·  ${m.type}${evoTag}</div><div class="body" style="font-style:italic">${memoryBody(m)}</div>`;
+    } else {
+      div.innerHTML = `<div class="title">···</div><div class="body">An experience the universe has not yet shown you.</div>`;
+    }
+    list.appendChild(div);
+  }
+}
+document.getElementById('btn-memories').addEventListener('click', () => { refreshMemories(); setState(STATE_MEM); });
+document.getElementById('btn-memories-back').addEventListener('click', () => { refreshTitleStats(); setState(STATE.TITLE); });
+
+// Variant (form) panel
+function refreshForm() {
+  const list = document.getElementById('form-list');
+  list.innerHTML = '';
+  for (const v of VARIANTS) {
+    const isUnlocked = v.unlocked || meta.unlockedVariants.includes(v.key);
+    const isCurrent = meta.variant === v.key;
+    const card = document.createElement('div');
+    card.style.cssText = `padding: 14px 16px; margin: 10px 0; border: 1px solid ${isCurrent ? '#88e0ff' : isUnlocked ? 'rgba(180,200,255,0.22)' : 'rgba(255,255,255,0.08)'}; border-radius: 3px; cursor: ${isUnlocked ? 'pointer' : 'default'}; transition: all 0.18s; background: ${isCurrent ? 'rgba(120,200,255,0.08)' : 'transparent'}; ${isUnlocked ? '' : 'opacity:0.45'}`;
+    const wlColor = WAVELENGTHS[v.startWavelength].color;
+    const wlHex = `rgb(${Math.floor(wlColor.r*255)},${Math.floor(wlColor.g*255)},${Math.floor(wlColor.b*255)})`;
+    const stats = `speed ×${v.mods.speedMul.toFixed(2)}  ·  agility ×${v.mods.agilityMul.toFixed(2)}  ·  energy ×${v.mods.energyMul.toFixed(2)}  ·  boost ×${v.mods.boostMul.toFixed(2)}`;
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px">
+        <div style="font-size:14px; letter-spacing:0.25em; text-transform:uppercase; color:${isUnlocked ? wlHex : '#666'}">${v.name} ${isCurrent ? '· current' : ''}</div>
+        <div style="font-size:10px; opacity:0.5; letter-spacing:0.15em; text-transform:uppercase">${isUnlocked ? 'unlocked' : 'locked'}</div>
+      </div>
+      <div style="font-size:12px; opacity:0.85; margin-top:8px; line-height:1.55">${isUnlocked ? v.desc : v.unlockReq}</div>
+      <div style="font-size:10px; opacity:0.55; margin-top:8px; letter-spacing:0.06em">${isUnlocked ? stats : ''}</div>
+    `;
+    if (isUnlocked) {
+      card.addEventListener('mouseenter', () => { if (!isCurrent) card.style.borderColor = '#88e0ff'; });
+      card.addEventListener('mouseleave', () => { if (!isCurrent) card.style.borderColor = 'rgba(180,200,255,0.22)'; });
+      card.addEventListener('click', () => {
+        meta.variant = v.key;
+        game.variant = v;
+        saveMeta(meta);
+        refreshForm();
+        refreshTitleStats();
+      });
+    }
+    list.appendChild(card);
+  }
+}
+document.getElementById('btn-form').addEventListener('click', () => { checkVariantUnlocks(); refreshForm(); setState('form'); });
+document.getElementById('btn-form-back').addEventListener('click', () => { refreshTitleStats(); setState(STATE.TITLE); });
+
+// ----- Settings + Pause -----
+// Apply current settings to the game systems. Called on boot and after any change.
+function applySettings() {
+  if (audio.master) audio.master.gain.value = settings.muted ? 0 : settings.masterVol;
+  // FOV is the base; updateCamera adds the boost punch on top
+  camera.fov = settings.fov;
+  camera.updateProjectionMatrix();
+  // High-contrast: brighten and saturate wavelength colors so they're maximally distinct
+  if (settings.highContrast) {
+    WAVELENGTHS[0].color.setRGB(1.0, 0.0, 1.0);  // gamma → magenta
+    WAVELENGTHS[1].color.setRGB(0.0, 1.0, 1.0);  // visible → cyan
+    WAVELENGTHS[2].color.setRGB(1.0, 0.7, 0.0);  // radio → orange
+    WAVELENGTHS[0].hex = 0xff00ff; WAVELENGTHS[1].hex = 0x00ffff; WAVELENGTHS[2].hex = 0xffb300;
+  } else {
+    WAVELENGTHS[0].color.setHex(0xb888ff); WAVELENGTHS[0].hex = 0xb888ff;
+    WAVELENGTHS[1].color.setHex(0xffffff); WAVELENGTHS[1].hex = 0xffffff;
+    WAVELENGTHS[2].color.setHex(0xff5566); WAVELENGTHS[2].hex = 0xff5566;
+  }
+  // Reduced motion suppresses shake/lensing
+  game.reducedMotion = settings.reducedMotion;
+}
+
+function pause() {
+  if (game.state !== STATE.RUN) return;
+  refreshSettingsUI();
+  setState(STATE.PAUSE);
+  if (audio.ctx) try { audio.ctx.suspend(); } catch(e) {}
+  // PHASE B: first pause memory
+  if (!meta.pausedOnce) { meta.pausedOnce = true; saveMeta(meta); checkMemoryTriggers(); }
+}
+function resume() {
+  if (game.state !== STATE.PAUSE) return;
+  setState(STATE.RUN);
+  if (audio.ctx) try { audio.ctx.resume(); } catch(e) {}
+  last = performance.now(); // avoid a giant dt jump
+}
+
+function refreshSettingsUI() {
+  document.getElementById('set-master').value = settings.masterVol;
+  document.getElementById('set-master-val').textContent = Math.round(settings.masterVol * 100);
+  document.getElementById('set-fov').value = settings.fov;
+  document.getElementById('set-fov-val').textContent = settings.fov;
+  document.getElementById('set-sens').value = settings.sensitivity;
+  document.getElementById('set-sens-val').textContent = settings.sensitivity.toFixed(2);
+  document.getElementById('set-mute').classList.toggle('on', settings.muted);
+  document.getElementById('set-contrast').classList.toggle('on', settings.highContrast);
+  document.getElementById('set-reduced').classList.toggle('on', settings.reducedMotion);
+}
+
+// Wire settings controls
+document.getElementById('set-master').addEventListener('input', e => {
+  settings.masterVol = parseFloat(e.target.value); document.getElementById('set-master-val').textContent = Math.round(settings.masterVol * 100);
+  applySettings(); saveSettings(settings);
+});
+document.getElementById('set-fov').addEventListener('input', e => {
+  settings.fov = parseInt(e.target.value); document.getElementById('set-fov-val').textContent = settings.fov;
+  applySettings(); saveSettings(settings);
+});
+document.getElementById('set-sens').addEventListener('input', e => {
+  settings.sensitivity = parseFloat(e.target.value); document.getElementById('set-sens-val').textContent = settings.sensitivity.toFixed(2);
+  applySettings(); saveSettings(settings);
+});
+document.getElementById('set-mute').addEventListener('click', () => { settings.muted = !settings.muted; applySettings(); saveSettings(settings); refreshSettingsUI(); });
+document.getElementById('set-contrast').addEventListener('click', () => { settings.highContrast = !settings.highContrast; applySettings(); saveSettings(settings); refreshSettingsUI(); });
+document.getElementById('set-reduced').addEventListener('click', () => { settings.reducedMotion = !settings.reducedMotion; applySettings(); saveSettings(settings); refreshSettingsUI(); });
+document.getElementById('btn-resume').addEventListener('click', resume);
+document.getElementById('btn-end-run').addEventListener('click', () => { resume(); beginDeath(); });
+document.getElementById('btn-reset-meta').addEventListener('click', () => {
+  if (!confirm('Reset ALL progress (upgrades, codex, runs, best distance)? This cannot be undone.')) return;
+  try { localStorage.removeItem(META_KEY); } catch(e) {}
+  Object.assign(meta, defaultMeta());
+  saveMeta(meta);
+  applyMetaUpgrades();
+  refreshTitleStats(); refreshCodex();
+  showToast('◇ Progress reset');
+});
+
+// ============================================================================
+// CAMERA RIG — chase cam behind photon along curve tangent
+// ============================================================================
+function updateCamera(dt, realDt, currentSpeed) {
+  // Camera target: a point behind photon along curve, raised slightly along up axis
+  const behind = 8.5;
+  const upOffset = 2.4;
+  const lookAhead = 14;
+  const p = track.pointAt(photon.distance - behind);
+  const frame = track.frameAt(photon.distance - behind);
+  const target = new THREE.Vector3()
+    .copy(p)
+    .addScaledVector(frame.right, photon.lateral * 0.85)
+    .addScaledVector(frame.up, photon.vertical * 0.85 + upOffset);
+  // Smooth camera position (use real dt so the lerp doesn't freeze during hit-stop)
+  camera.position.lerp(target, Math.min(1, realDt * 7));
+  // Look at a point ahead of photon
+  const look = track.pointAt(photon.distance + lookAhead);
+  const lookFrame = track.frameAt(photon.distance + lookAhead);
+  const lookPoint = new THREE.Vector3()
+    .copy(look)
+    .addScaledVector(lookFrame.right, photon.lateral * 0.6)
+    .addScaledVector(lookFrame.up, photon.vertical * 0.6);
+  camera.lookAt(lookPoint);
+  // FOV punch with speed/boost — kept moderate so the barrel + chromatic don't compound
+  const fovTarget = (settings.fov || 72) + (photon.boosting ? 9 : 0) + Math.max(0, currentSpeed - BASE_SPEED) * 0.03;
+  camera.fov += (fovTarget - camera.fov) * Math.min(1, realDt * 8);
+  camera.updateProjectionMatrix();
+  // Lensing intensity scales with boost; barrel distortion on top.
+  // Reduced motion zeroes out the chromatic aberration and barrel warp.
+  // Tuned conservatively so boost-stacked-with-particle-bursts stays readable.
+  const motionMul = settings.reducedMotion ? 0 : 1;
+  lensingPass.uniforms.uIntensity.value = (0.0014 + (photon.boosting ? 0.0020 : 0)) * motionMul;
+  lensingPass.uniforms.uBarrel.value    = (0.020 + (photon.boosting ? 0.060 : 0))  * motionMul;
+  // FEEL: trauma-based shake. Squared so small trauma shakes barely, big trauma rocks hard.
+  if (game.trauma > 0 && !settings.reducedMotion) {
+    const t2 = game.trauma * game.trauma;
+    const time = performance.now() * 0.06;
+    const amp = 0.85 * t2;
+    camera.position.x += (Math.sin(time * 1.7) + Math.sin(time * 2.4)) * 0.5 * amp;
+    camera.position.y += (Math.cos(time * 1.4) + Math.sin(time * 1.9)) * 0.5 * amp;
+    camera.rotation.z += Math.sin(time * 2.1) * amp * 0.04;
+  }
+  if (game.trauma > 0) game.trauma = Math.max(0, game.trauma - realDt * 1.7);
+}
+
+// ============================================================================
+// MAIN LOOP
+// ============================================================================
+let last = performance.now();
+function loop() {
+  const now = performance.now();
+  let realDt = (now - last) / 1000;
+  if (realDt > 0.05) realDt = 0.05; // clamp huge frames
+  last = now;
+
+  // Hit-stop countdown uses real time so it always elapses
+  if (game.hitStopTime > 0) {
+    game.hitStopTime -= realDt;
+    if (game.hitStopTime <= 0) game.timeScale = 1;
+  }
+  const dt = realDt * game.timeScale;
+
+  // Shader/star time uses real dt so visuals don't visibly freeze during hit-stop
+  skyMat.uniforms.uTime.value += realDt;
+  lensingPass.uniforms.uTime.value += realDt;
+  stars.rotation.y += realDt * 0.003;
+
+  // Quantum foam — random vacuum fluctuations popping along the track (atmospheric Planck-scale activity)
+  if (game.state === STATE.RUN && !game.dying && Math.random() < 0.05) {
+    const foamD = photon.distance + 35 + Math.random() * 160;
+    const p = track.pointAt(foamD);
+    const off = new THREE.Vector3((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18, (Math.random() - 0.5) * 6);
+    particleManager.emitBurst(p.clone().add(off), 'foam', 3 + Math.floor(Math.random() * 4), new THREE.Color(0x99ddff));
+  }
+
+  // Particles always tick (so death/foam burst keep animating during state changes), use real dt
+  particleManager.update(realDt);
+  // Echo photons keep moving across all states so they can fade out gracefully
+  echoSystem.update(realDt);
+
+  if (game.state === STATE.PAUSE) {
+    // Render only — no simulation, no input applied. The HUD draws too so the player sees the world frozen.
+    composer.render();
+    drawHud();
+    requestAnimationFrame(loop);
+    return;
+  }
+
+  if (game.state === STATE.RUN) {
+    if (game.dying) {
+      // -- Cinematic death sequence --
+      game.dyingTime += realDt;
+      const t = Math.min(1, game.dyingTime / game.dyingTotal);
+      const ease = t * t;
+      // Photon collapses inward
+      const s = Math.max(0, 1 - ease * 1.3);
+      photon.group.scale.setScalar(s);
+      photon.trail.material.opacity = Math.max(0, 0.85 - ease);
+      // Vignette tightens and tints red
+      lensingPass.uniforms.uVignettePower.value = 1 + ease * 5;
+      lensingPass.uniforms.uVignetteColor.value.set(0.55 * ease, 0.06 * ease, 0.10 * ease);
+      // Camera drifts back and tilts gently
+      camera.position.y += realDt * 1.6;
+      camera.fov += realDt * 5;
+      camera.updateProjectionMatrix();
+      if (game.dyingTime >= game.dyingTotal) finalizeDeath();
+    } else {
+      // -- Normal play --
+      const photonSegIdx = Math.floor(photon.distance / SEGMENT_LEN);
+      track.ensureAhead(photonSegIdx);
+      const e = EPOCHS[Math.min(game.epochIndex, EPOCHS.length-1)];
+      hazards.ensureAhead(e, photon.distance);
+      const speed = photon.update(dt, input, e, game.variant);
+      game._speed = speed;
+      // SOUND: keep the engine hum tracking current speed and boost state
+      audio.updateEngine(speed / BASE_SPEED, photon.boosting);
+      track.updateRings(photon.distance);
+      track.updateDust(photon.distance);
+      hazards.update(dt, photon.distance, photon.lateral, photon.vertical, photon.wavelength,
+        (dmg) => photon.hit(dmg),
+        (amt) => {
+          const mult = comboMultiplier(game.phaseStreak || 0);
+          const total = amt * mult;
+          photon.collect(total);
+          game.runEnergy += total;
+        },
+        e
+      );
+      game.epochTimer += dt;
+      game.runDistance = photon.distance;
+      // PHASE A: Heat Death special handling — fade visuals, spawn final pickup, etc.
+      if (e.isHeatDeath) heatDeathTick(dt, photonDist);
+      // REDSHIFT FATIGUE: cosmological stretching drains energy if you stay on one wavelength too long.
+      // Active in Black Hole + Heat Death only. Threshold 14s, ramp at 30s.
+      if (e.isHeatDeath || e.name === 'Black Hole') {
+        game.coherenceTime = (game.coherenceTime || 0) + dt;
+        if (game.coherenceTime > 14) {
+          const ramp = Math.min(3, 1 + (game.coherenceTime - 14) / 8);
+          photon.energy = Math.max(0, photon.energy - ramp * dt);
+          if (photon.energy <= 0) photon.alive = false;
+        }
+      } else {
+        game.coherenceTime = 0;
+      }
+      // Tutorial step machine — advance on demonstrated action OR time cap
+      if (game.tutorialActive && game.tutorialStep < TUTORIAL_STEPS.length) {
+        game.tutorialTime += realDt;
+        const step = TUTORIAL_STEPS[game.tutorialStep];
+        let demonstrated = false;
+        const inputting = input.left || input.right || input.up || input.down;
+        if (step.needs === 'steer' && (inputting || Math.abs(photon.lateralVel) > 8)) demonstrated = true;
+        if (step.needs === 'shift' && game._shiftedThisRun) demonstrated = true;
+        if (step.needs === 'phase' && game.phaseCount > 0) demonstrated = true;
+        if (step.needs === 'boost' && (input.boost || photon.boost < BOOST_MAX - 5)) demonstrated = true;
+        if (demonstrated || game.tutorialTime >= step.max) {
+          game.tutorialStep++;
+          game.tutorialTime = 0;
+          if (game.tutorialStep >= TUTORIAL_STEPS.length) {
+            game.tutorialActive = false;
+            meta.tutorialDone = true; saveMeta(meta);
+          }
+        }
+      }
+      // Heat Death: don't trigger upgrade picker between epochs (it's the final epoch)
+      if (game.epochTimer >= e.duration && !game.epochCleared && !e.isHeatDeath && !game.witnessing) epochCleared();
+      // Death is suppressed during the witness sequence so the photon doesn't crash mid-fade
+      if (!photon.alive && !game.witnessing) beginDeath();
+      updateCamera(dt, realDt, speed);
+    }
+  } else {
+    // Idle title spin: slow track render anyway
+    if (track.points.length === 0) {
+      track.ensureAhead(0);
+      track.updateRings(0);
+    }
+    // Auto-fly the camera through the tube as a screensaver
+    game._idleZ = (game._idleZ || 0) + realDt * 18;
+    track.ensureAhead(Math.floor(game._idleZ / SEGMENT_LEN));
+    const p = track.pointAt(game._idleZ);
+    const frame = track.frameAt(game._idleZ);
+    camera.position.copy(p).addScaledVector(frame.up, 2);
+    const lookP = track.pointAt(game._idleZ + 14);
+    camera.lookAt(lookP);
+    track.updateRings(game._idleZ);
+    track.updateDust(game._idleZ);
+    // Reset any leftover dying visuals so the title screen looks pristine
+    lensingPass.uniforms.uVignettePower.value = 1;
+    lensingPass.uniforms.uVignetteColor.value.set(0, 0, 0);
+  }
+
+  composer.render();
+  drawHud();
+  requestAnimationFrame(loop);
+}
+
+// ============================================================================
+// BOOT
+// ============================================================================
+refreshTitleStats();
+setState(STATE.TITLE);
+applySettings();
+setTimeout(() => document.getElementById('boot').classList.add('gone'), 600);
+loop();
+</script>
+</body>
+</html>

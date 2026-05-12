@@ -1,0 +1,287 @@
+import * as THREE from 'three';
+import { BASE_SPEED, BOOST_MAX, BOOST_DRAIN, BOOST_RECHARGE, BOOST_MUL, ENERGY_MAX, EDGE_STRAIN_START, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH } from './constants';
+import { WAVELENGTHS, type Variant, type Epoch } from './cosmology';
+import { scene } from './scene';
+import { track } from './track';
+import { game } from './state';
+import { meta, saveMeta } from './meta';
+import { audio } from './audio';
+import { settings } from './settings';
+import { checkMemoryTriggers } from './memories';
+import { funLab } from './funlab/runtime';
+
+export interface InputState { left: boolean; right: boolean; up: boolean; down: boolean; boost: boolean; }
+
+class Photon {
+  group: THREE.Group;
+  core: THREE.Mesh;
+  halo: THREE.Mesh;
+  coreMat: THREE.MeshBasicMaterial;
+  haloMat: THREE.MeshBasicMaterial;
+  trail: THREE.Line;
+  trailLen = 64;
+  trailHistory: THREE.Vector3[] = [];
+
+  distance = 0;
+  lateral = 0;
+  vertical = 0;
+  lateralVel = 0;
+  verticalVel = 0;
+  wavelength = 1;
+  boost = BOOST_MAX;
+  boosting = false;
+  energy = ENERGY_MAX;
+  alive = true;
+  invulnTimer = 0;
+  phaseTimer = 0;
+  phaseFlashTime = 0;
+  shiftCooldown = 0;
+  _currentRoll = 0;
+  _variant: Variant | null = null;
+  _funStrained = false;
+  _funLastStrainAt = 0;
+
+  // Bonuses applied by upgrades / memories
+  speedBonus = 1;
+  agilityBonus = 1;
+  energyMaxBonus = 0;
+  damageReduction = 0;
+  boostRechargeBonus = 1;
+  phaseWindowSec = 0;
+  _firstChainFreePerRun = false;
+  _firstChainFreeUsed = false;
+  _memoryStartEnergyBonus = 0;
+  _memoryStartBoostBonus = 0;
+
+  constructor() {
+    const coreGeo = new THREE.IcosahedronGeometry(0.9, 2);
+    this.coreMat = new THREE.MeshBasicMaterial({ color: 0xccd8e8 });
+    this.core = new THREE.Mesh(coreGeo, this.coreMat);
+    const haloGeo = new THREE.SphereGeometry(1.8, 24, 16);
+    this.haloMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.32, depthWrite: false });
+    this.halo = new THREE.Mesh(haloGeo, this.haloMat);
+    this.group = new THREE.Group();
+    this.group.add(this.core); this.group.add(this.halo);
+    scene.add(this.group);
+    const trailGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(this.trailLen * 3);
+    const colors = new Float32Array(this.trailLen * 3);
+    trailGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    trailGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const trailMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending });
+    this.trail = new THREE.Line(trailGeo, trailMat);
+    this.trail.frustumCulled = false;
+    scene.add(this.trail);
+  }
+
+  reset(variant: Variant) {
+    this.distance = 0; this.lateral = 0; this.vertical = 0;
+    this.lateralVel = 0; this.verticalVel = 0;
+    this.boost = BOOST_MAX; this.boosting = false;
+    this.shiftCooldown = 0;
+    this._variant = variant;
+    this.energy = this.maxEnergy();
+    this.alive = true; this.invulnTimer = 0; this.phaseTimer = 0;
+    this.wavelength = variant.startWavelength;
+    this.setColorFromWavelength(true);
+    this.trailHistory.length = 0;
+  }
+
+  maxEnergy(): number {
+    const m = (this._variant?.mods.energyMul) || 1;
+    return Math.floor((ENERGY_MAX + this.energyMaxBonus) * m);
+  }
+
+  setColorFromWavelength(immediate = false) {
+    const w = WAVELENGTHS[this.wavelength];
+    if (immediate) { this.coreMat.color.copy(w.color); this.haloMat.color.copy(w.color); }
+    else { this.coreMat.color.lerp(w.color, 0.4); this.haloMat.color.lerp(w.color, 0.4); }
+  }
+
+  shift(idx: number): boolean {
+    if (idx === this.wavelength) return false;
+    if (this.shiftCooldown > 0) return false;
+    if (this.energy < 3) return false;
+    this.wavelength = idx;
+    this.setColorFromWavelength(true);
+    this.phaseTimer = this.phaseWindowSec;
+    this.energy = Math.max(0, this.energy - 3);
+    this.shiftCooldown = 0.4;
+    audio.shift(idx);
+    game.coherenceTime = 0;
+    return true;
+  }
+
+  update(dt: number, input: InputState, currentEpoch: Epoch, variant: Variant): number {
+    const wasBoosting = this.boosting;
+    const wasInvulnerable = this.invulnTimer > 0;
+    const sens = settings.sensitivity || 1.0;
+    // MULTIVERSE: cosmic constants apply per-run agility modulation
+    const cosmicAgi = game.cosmicConstants.agilityMul;
+    const lateralAcc = 180 * this.agilityBonus * sens * (variant.mods.agilityMul || 1) * cosmicAgi;
+    const lateralMax = 52 * this.agilityBonus * Math.min(1.5, sens) * cosmicAgi;
+    const verticalMax = 36 * this.agilityBonus * Math.min(1.5, sens) * cosmicAgi;
+    let ax = 0, ay = 0;
+    if (input.left)  ax -= lateralAcc;
+    if (input.right) ax += lateralAcc;
+    if (input.up)    ay += lateralAcc * 0.85;
+    if (input.down)  ay -= lateralAcc * 0.85;
+    this.lateralVel += ax * dt;
+    this.verticalVel += ay * dt;
+    if (!input.left && !input.right) this.lateralVel *= Math.pow(0.0008, dt);
+    if (!input.up && !input.down)    this.verticalVel *= Math.pow(0.0015, dt);
+    this.lateralVel = THREE.MathUtils.clamp(this.lateralVel, -lateralMax, lateralMax);
+    this.verticalVel = THREE.MathUtils.clamp(this.verticalVel, -verticalMax, verticalMax);
+    this.lateral += this.lateralVel * dt;
+    this.vertical += this.verticalVel * dt;
+
+    const edgeX = PLAYFIELD_HALF_WIDTH;
+    const edgeY = PLAYFIELD_HALF_HEIGHT;
+    const xRatio = Math.abs(this.lateral) / edgeX;
+    const yRatio = Math.abs(this.vertical) / edgeY;
+    const xStrain = THREE.MathUtils.smoothstep(xRatio, EDGE_STRAIN_START, 1);
+    const yStrain = THREE.MathUtils.smoothstep(yRatio, EDGE_STRAIN_START, 1);
+    const edgeStrain = Math.max(xStrain, yStrain);
+    game.fieldStrain = edgeStrain;
+    game.fieldStrainX = this.lateral / edgeX;
+    game.fieldStrainY = this.vertical / edgeY;
+    if (edgeStrain > 0) {
+      this.energy = Math.max(0, this.energy - (1.8 + game._speed * 0.004) * edgeStrain * dt);
+      this.boost = Math.max(0, this.boost - 2.5 * edgeStrain * dt);
+    }
+    const now = performance.now();
+    if (edgeStrain > 0.25 && !this._funStrained) {
+      this._funStrained = true;
+      funLab.record('field-strain-enter', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: this.distance, strain: edgeStrain });
+    }
+    if (edgeStrain > 0.72 && now - this._funLastStrainAt > 900) {
+      this._funLastStrainAt = now;
+      funLab.record('field-strain-peak', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: this.distance, strain: edgeStrain });
+    }
+    if (edgeStrain <= 0.08 && this._funStrained) {
+      this._funStrained = false;
+      funLab.record('field-strain-recovery', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: this.distance, strain: edgeStrain });
+    }
+    const outsideX = Math.abs(this.lateral) > edgeX;
+    const outsideY = Math.abs(this.vertical) > edgeY;
+    if (outsideX || outsideY) {
+      this.lateral = THREE.MathUtils.clamp(this.lateral, -edgeX, edgeX);
+      this.vertical = THREE.MathUtils.clamp(this.vertical, -edgeY, edgeY);
+      this.lateralVel *= -0.35; this.verticalVel *= -0.35;
+      game.railScrapeTime = 0.28;
+      this.energy = Math.max(0, this.energy - (5.5 + game._speed * 0.018) * dt);
+      this.boost = Math.max(0, this.boost - 10 * dt);
+      game.phaseStreak = 0;
+      game.lineStreak = 0;
+      game.perfectEpochThisRun = false;
+      if (game.railScrapeCooldown <= 0) {
+        game.railScrapeCooldown = 0.36;
+        game.lineEventText = 'FIELD STRAIN';
+        game.lineEventTime = 0.75;
+        audio.railScrape();
+      }
+      if (this.energy <= 0) { this.energy = 0; this.alive = false; }
+    }
+
+    if (input.boost && this.boost > 0) {
+      this.boosting = true; this.boost -= BOOST_DRAIN * dt;
+      if (this.boost <= 0) { this.boost = 0; this.boosting = false; }
+      if (!meta.boostedOnce) { meta.boostedOnce = true; saveMeta(meta); checkMemoryTriggers(); }
+    } else {
+      this.boosting = false;
+      this.boost = Math.min(BOOST_MAX, this.boost + BOOST_RECHARGE * this.boostRechargeBonus * dt);
+    }
+    if (!wasBoosting && this.boosting) funLab.record('boost-start', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: this.distance });
+    if (wasBoosting && !this.boosting) funLab.record(this.boost <= 0 ? 'boost-depleted' : 'boost-end', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: this.distance });
+
+    const endlessMul = 1 + (game.endlessLoop || 0) * 0.10;
+    // MULTIVERSE: this universe's effective speed-of-light multiplier
+    const cosmicSpeed = game.cosmicConstants.speedMul;
+    const padBoost = game.padBoostTime > 0
+      ? 1 + 0.36 * Math.min(1, game.padBoostTime / Math.max(0.1, game.padBoostTotal || 1.35))
+      : 1;
+    const speed = BASE_SPEED * this.speedBonus * currentEpoch.speedMul * (variant.mods.speedMul || 1) * (this.boosting ? BOOST_MUL : 1) * endlessMul * cosmicSpeed * padBoost;
+    this.distance += speed * dt;
+
+    if (this.invulnTimer > 0) this.invulnTimer -= dt;
+    if (wasInvulnerable && this.invulnTimer <= 0) funLab.record('recovery', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: this.distance });
+    if (this.phaseTimer > 0) this.phaseTimer -= dt;
+    if (this.shiftCooldown > 0) this.shiftCooldown -= dt;
+
+    const p = track.pointAt(this.distance);
+    const frame = track.frameAt(this.distance);
+    const offset = new THREE.Vector3()
+      .addScaledVector(frame.right, this.lateral)
+      .addScaledVector(frame.up, this.vertical);
+    this.group.position.copy(p).add(offset);
+    const lookAhead = track.pointAt(this.distance + 8).add(
+      new THREE.Vector3()
+        .addScaledVector(frame.right, this.lateral + this.lateralVel * 0.05)
+        .addScaledVector(frame.up, this.vertical + this.verticalVel * 0.05)
+    );
+    this.group.lookAt(lookAhead);
+    const targetRoll = -THREE.MathUtils.clamp(this.lateralVel / 52, -1, 1) * 0.55;
+    this._currentRoll += (targetRoll - this._currentRoll) * Math.min(1, dt * 9);
+    this.group.rotateZ(this._currentRoll);
+
+    if (this.phaseFlashTime > 0) this.phaseFlashTime -= dt;
+    const flashBoost = this.phaseFlashTime > 0 ? this.phaseFlashTime / 0.45 : 0;
+    const pulse = 1 + Math.sin(performance.now() * 0.012) * 0.05 + (this.boosting ? 0.18 : 0) + flashBoost * 0.35;
+    this.halo.scale.setScalar(pulse);
+    const rawHalo = 0.22 + (this.boosting ? 0.12 : 0) + (this.phaseTimer > 0 ? 0.18 : 0) + flashBoost * 0.22;
+    this.haloMat.opacity = Math.min(0.55, rawHalo);
+
+    this.trailHistory.unshift(this.group.position.clone());
+    if (this.trailHistory.length > this.trailLen) this.trailHistory.length = this.trailLen;
+    const posArr = this.trail.geometry.attributes.position.array as Float32Array;
+    const colArr = this.trail.geometry.attributes.color.array as Float32Array;
+    const baseColor = WAVELENGTHS[this.wavelength].color;
+    for (let i = 0; i < this.trailLen; i++) {
+      const h = this.trailHistory[Math.min(i, this.trailHistory.length - 1)] || this.group.position;
+      posArr[i*3+0] = h.x; posArr[i*3+1] = h.y; posArr[i*3+2] = h.z;
+      const fade = 1 - i / this.trailLen;
+      colArr[i*3+0] = baseColor.r * fade;
+      colArr[i*3+1] = baseColor.g * fade;
+      colArr[i*3+2] = baseColor.b * fade;
+    }
+    this.trail.geometry.attributes.position.needsUpdate = true;
+    this.trail.geometry.attributes.color.needsUpdate = true;
+    return speed;
+  }
+
+  hit(dmg: number): boolean {
+    if (this.invulnTimer > 0 || this.phaseTimer > 0) return false;
+    const finalDmg = dmg * (1 - this.damageReduction);
+    funLab.record('damage', { epochIndex: game.epochIndex, distance: this.distance, damage: finalDmg, value: finalDmg });
+    this.energy -= finalDmg;
+    this.invulnTimer = 0.55;
+    audio.hit();
+    game.trauma = Math.min(1, game.trauma + 0.55);
+    game.timeScale = 0.05;
+    game.hitStopTime = 0.085;
+    game.hitCount++;
+    game.phaseStreak = 0;
+    game.perfectEpochThisRun = false;
+    if (this.energy <= 0) { this.energy = 0; this.alive = false; }
+    return true;
+  }
+
+  collect(amount: number) {
+    this.energy = Math.min(this.maxEnergy(), this.energy + amount);
+    this.boost = Math.min(BOOST_MAX, this.boost + amount * 0.5);
+    audio.pickup();
+  }
+
+  phaseFlash() {
+    this.phaseFlashTime = 0.45;
+    game.phaseCount++;
+    game.phaseStreak = (game.phaseStreak || 0) + 1;
+    meta.phasesLifetime = (meta.phasesLifetime || 0) + 1;
+    if (meta.colorPhases) meta.colorPhases[this.wavelength] = (meta.colorPhases[this.wavelength] || 0) + 1;
+    if ((game.phaseStreak || 0) > (meta.bestStreak || 0)) meta.bestStreak = game.phaseStreak;
+    saveMeta(meta);
+    checkMemoryTriggers();
+  }
+}
+
+export const photon = new Photon();

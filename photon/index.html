@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#000000" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23000004'/%3E%3Ccircle cx='32' cy='32' r='16' fill='%2388e0ff'/%3E%3Ccircle cx='32' cy='32' r='7' fill='%23ff7ad9'/%3E%3C/svg%3E" />
+<title>PHOTON — A Cosmic Roguelike</title>
+<link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+<div id="boot">Initializing spacetime…</div>
+<div id="stage"><canvas id="game"></canvas></div>
+<div id="epoch-flash"></div>
+<canvas id="hud-canvas"></canvas>
+<div class="epoch-toast" id="epoch-toast">
+  <div class="num" id="epoch-num"></div>
+  <div class="name" id="epoch-name"></div>
+  <div class="sub" id="epoch-sub"></div>
+  <div class="chapter" id="epoch-chapter"></div>
+</div>
+<div id="witness">
+  <h1 id="witness-line">You have witnessed the universe.</h1>
+  <div class="small" id="witness-subline">The last light is not brave. It is only still moving.</div>
+  <div class="small" id="witness-count"></div>
+  <div class="hint" id="witness-hint">Press any key to begin again</div>
+</div>
+<div id="ui">
+  <div class="layer" id="title">
+    <div class="panel">
+      <h1><span class="accent">P H O T O N</span></h1>
+      <h2>Survive the universe</h2>
+      <p><strong style="color:#88e0ff">You are a single packet of light.</strong> One run is the entire history of physical reality, from the first pressure after the Big Bang to the last useful difference in the dark. <strong>Steer to dodge</strong> colored hazards, <strong>match their color</strong> with keys 1, 2, or 3 to phase through, and <strong>thread cyan gates</strong> to hold the racing line. Magenta speed pads turn clean driving into raw velocity. Reach the end and the universe will not go unseen.</p>
+      <div class="stats" id="title-stats"></div>
+      <div class="row">
+        <button class="primary" id="btn-start">▶ Begin run</button>
+        <button id="btn-resume" style="display:none">↶ Resume</button>
+        <button id="btn-funlab">Fun Lab</button>
+        <button id="btn-form">Form</button>
+        <button id="btn-codex">Codex</button>
+        <button id="btn-memories">Memories</button>
+      </div>
+      <p style="margin-top:18px;font-size:11px;opacity:0.5;text-align:center;line-height:2">
+        <span class="key">A</span><span class="key">D</span> steer · <span class="key">W</span><span class="key">S</span> climb · <span class="key">SPACE</span> boost · <span class="key">1</span> γ · <span class="key">2</span> visible · <span class="key">3</span> radio · cyan gates build line
+      </p>
+      <div id="multiverse-row" style="display:none;margin-top:10px;padding-top:14px;border-top:1px dotted rgba(255,255,255,0.10);text-align:center">
+        <div style="font-size:10px;letter-spacing:0.3em;opacity:0.55;text-transform:uppercase;margin-bottom:8px;color:#ff7ad9">Multiverse</div>
+        <div style="font-size:11px;opacity:0.7;line-height:1.7;margin-bottom:10px">Replay a universe whose constants have already been measured. Paste a seed and run those laws again.</div>
+        <input id="seed-input" type="text" maxlength="6" placeholder="K7M4Z2" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,122,217,0.25);color:#ff7ad9;padding:8px 12px;font-family:inherit;font-size:13px;letter-spacing:0.4em;text-transform:uppercase;text-align:center;width:160px;border-radius:2px;outline:none" />
+        <button id="btn-start-seed" style="margin-left:8px;border-color:rgba(255,122,217,0.4);color:#ff7ad9">▶ Run this universe</button>
+      </div>
+    </div>
+  </div>
+  <div class="layer" id="death">
+    <div class="panel">
+      <h1>A B S O R B E D</h1>
+      <h2 id="death-where">Era unknown</h2>
+      <p id="death-line" style="font-size:12px;opacity:0.68;margin:-6px 0 8px;line-height:1.7;text-align:center">You enter matter and do not come out.</p>
+      <p style="font-size:12px;opacity:0.55;margin:0 0 14px;letter-spacing:0.2em;text-align:center;text-transform:uppercase">You forget. But the universe remembers.</p>
+      <div class="stats" id="death-stats"></div>
+      <div id="death-memories" style="margin-top:14px"></div>
+      <p id="death-codex" style="display:none;border-left:2px solid #88e0ff;padding-left:12px;font-size:12px"></p>
+      <div class="row">
+        <button class="primary" id="btn-again">↻ Run again</button>
+        <button id="btn-menu">Menu</button>
+      </div>
+    </div>
+  </div>
+  <div class="layer" id="upgrade">
+    <div class="panel">
+      <h1 style="font-size:24px">YOU PERSIST</h1>
+      <h2 id="upgrade-where"></h2>
+      <p>Something about this era changed you. Choose what. The change holds for this run and every future one.</p>
+      <div class="row" id="upgrade-cards"></div>
+    </div>
+  </div>
+  <div class="layer" id="codex">
+    <div class="panel">
+      <h1 style="font-size:24px">C O D E X</h1>
+      <h2>Discovered phenomena</h2>
+      <div class="codex-list" id="codex-list"></div>
+      <div class="row"><button id="btn-codex-back">Back</button></div>
+    </div>
+  </div>
+  <div class="layer" id="memories">
+    <div class="panel">
+      <h1 style="font-size:24px">M E M O R I E S</h1>
+      <h2 id="mem-count">What the universe remembers of you</h2>
+      <div class="codex-list" id="memories-list"></div>
+      <div class="row"><button id="btn-memories-back">Back</button></div>
+    </div>
+  </div>
+  <div class="layer" id="form">
+    <div class="panel">
+      <h1 style="font-size:24px">C H O O S E   F O R M</h1>
+      <h2>What kind of light are you this time?</h2>
+      <div id="form-list"></div>
+      <div class="row"><button id="btn-form-back">Back</button></div>
+    </div>
+  </div>
+  <div class="layer" id="pause">
+    <div class="panel">
+      <h1 style="font-size:24px">P A U S E D</h1>
+      <h2>Settings</h2>
+      <div class="settings-row"><label>Master volume</label><div class="control"><input type="range" id="set-master" min="0" max="1" step="0.01"><span class="val" id="set-master-val">70</span></div></div>
+      <div class="settings-row"><label>Mute audio</label><div class="control"><div class="toggle" id="set-mute"></div></div></div>
+      <div class="settings-row"><label>Field of view</label><div class="control"><input type="range" id="set-fov" min="50" max="100" step="1"><span class="val" id="set-fov-val">72</span></div></div>
+      <div class="settings-row"><label>Steering sensitivity</label><div class="control"><input type="range" id="set-sens" min="0.5" max="1.8" step="0.05"><span class="val" id="set-sens-val">1.0</span></div></div>
+      <div class="settings-row"><label>High-contrast hazards</label><div class="control"><div class="toggle" id="set-contrast"></div></div></div>
+      <div class="settings-row"><label>Reduced motion</label><div class="control"><div class="toggle" id="set-reduced"></div></div></div>
+      <div class="row" style="margin-top:18px">
+        <button class="primary" id="btn-pause-resume">▶ Resume</button>
+        <button id="btn-pause-funlab">Fun Lab</button>
+        <button id="btn-end-run">End run</button>
+        <button class="danger" id="btn-reset-meta">Reset all progress</button>
+      </div>
+      <p class="pause-hint">Press <span class="key">P</span> or <span class="key">ESC</span> to resume</p>
+    </div>
+  </div>
+  <div class="layer" id="vibe">
+    <div class="panel" id="vibe-panel">
+      <h1 style="font-size:24px">R U N   F E E L</h1>
+      <h2>Tell the lab what telemetry cannot know</h2>
+      <div class="funlab-summary" id="vibe-summary"></div>
+      <div id="vibe-controls"></div>
+      <textarea id="vibe-note" maxlength="140" placeholder="Optional note: cheap death, perfect speed, too much clutter..."></textarea>
+      <div class="row">
+        <button class="primary" id="btn-vibe-submit">Save feel</button>
+        <button id="btn-vibe-skip">Skip</button>
+        <button id="btn-vibe-again">↻ Run again</button>
+      </div>
+    </div>
+  </div>
+  <div class="layer" id="funlab">
+    <div class="panel funlab-panel">
+      <h1 style="font-size:24px">F U N   L A B</h1>
+      <h2>Local run fingerprints and tuning recommendations</h2>
+      <div class="funlab-grid">
+        <div class="funlab-list" id="funlab-run-list"></div>
+        <div class="funlab-detail" id="funlab-detail"></div>
+      </div>
+      <div class="row">
+        <button id="btn-funlab-back">Back</button>
+        <button id="btn-funlab-export">Export JSON</button>
+        <button class="danger" id="btn-funlab-clear">Clear lab</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>
