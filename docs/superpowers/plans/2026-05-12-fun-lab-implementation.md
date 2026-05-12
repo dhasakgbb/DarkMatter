@@ -146,13 +146,13 @@
 **Files:**
 - All intentional project files.
 
-- [ ] Initialize git with `main` as the default branch.
-- [ ] Confirm ignored files do not include source/docs/artifact and do exclude dependencies/scratch files.
-- [ ] Commit implementation and source docs.
-- [ ] Create or reuse `dhasakgbb/DarkMatter` on GitHub.
-- [ ] Push `main`.
-- [ ] Enable GitHub Pages from the `main` branch root.
-- [ ] Verify the published Pages URL responds or report the propagation status.
+- [x] Initialize git with `main` as the default branch.
+- [x] Confirm ignored files do not include source/docs/artifact and do exclude dependencies/scratch files.
+- [x] Commit implementation and source docs.
+- [x] Create or reuse `dhasakgbb/DarkMatter` on GitHub.
+- [x] Push `main`.
+- [x] Enable GitHub Pages from the `main` branch root.
+- [x] Verify the published Pages URL responds or report the propagation status.
 
 ---
 
