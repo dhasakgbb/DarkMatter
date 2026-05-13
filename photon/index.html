@@ -13,6 +13,7 @@
 </head>
 <body>
 <div id="boot">Initializing spacetime…</div>
+<div id="graphics-status">Graphics context lost. Restoring…</div>
 <div id="stage"><canvas id="game"></canvas></div>
 <div id="epoch-flash"></div>
 <canvas id="hud-canvas"></canvas>
@@ -107,6 +108,7 @@
       <h2>Settings</h2>
       <div class="settings-row"><label>Master volume</label><div class="control"><input type="range" id="set-master" min="0" max="1" step="0.01"><span class="val" id="set-master-val">70</span></div></div>
       <div class="settings-row"><label>Mute audio</label><div class="control"><div class="toggle" id="set-mute"></div></div></div>
+      <div class="settings-row"><label>Procedural audio</label><div class="control"><div class="toggle" id="set-procedural-audio"></div></div></div>
       <div class="settings-row"><label>Field of view</label><div class="control"><input type="range" id="set-fov" min="50" max="100" step="1"><span class="val" id="set-fov-val">72</span></div></div>
       <div class="settings-row"><label>Steering sensitivity</label><div class="control"><input type="range" id="set-sens" min="0.5" max="1.8" step="0.05"><span class="val" id="set-sens-val">1.0</span></div></div>
       <div class="settings-row"><label>High-contrast hazards</label><div class="control"><div class="toggle" id="set-contrast"></div></div></div>

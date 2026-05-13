@@ -7,12 +7,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "sync:standalone": "cp dist/index.html ../photon-racer-v2.html",
+    "build:standalone": "npm run build && npm run sync:standalone",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "qa:fast": "npm test && npm run typecheck && npm run build",
-    "precommit": "npm test && npm run typecheck && npm run build"
+    "precommit": "npm test && npm run typecheck && npm run build:standalone"
   },
   "devDependencies": {
     "typescript": "^5.4.5",

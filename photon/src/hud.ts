@@ -7,6 +7,7 @@ import { photon } from './photon';
 import { BASE_SPEED, BOOST_MAX, IS_MOBILE, PIXEL_RATIO } from './constants';
 import { cosmicTimeLabel, comboMultiplier } from './utils';
 import { seedToLabel } from './seed';
+import { WAVELENGTH_SEGMENT_GAP, WAVELENGTH_SEGMENT_HEIGHT, WAVELENGTH_SEGMENT_WIDTH, wavelengthStartX, wavelengthTotalWidth } from './hudLayout';
 
 const HEAT_DEATH_MICRO_LINES = [
   { at: 72, text: 'THE LIGHT THINS' },
@@ -17,6 +18,49 @@ const HEAT_DEATH_MICRO_LINES = [
 ];
 
 const comboProject = new THREE.Vector3();
+
+function wrapHudText(text: string, maxWidth: number) {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let line = '';
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && hud.measureText(next).width > maxWidth) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = next;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function tutorialCopy(step: typeof TUTORIAL_STEPS[number]) {
+  if (!IS_MOBILE) return step;
+  if (step.needs === 'steer') {
+    return {
+      ...step,
+      text: 'TOUCH LEFT / RIGHT / TOP / BOTTOM TO STEER',
+      hint: 'Dodge the colored shapes',
+    };
+  }
+  if (step.needs === 'shift') {
+    return {
+      ...step,
+      text: 'TAP GAMMA / VISIBLE / RADIO AT THE BOTTOM',
+      hint: 'Wavelength changes how matter answers',
+    };
+  }
+  if (step.needs === 'boost') {
+    return {
+      ...step,
+      text: 'COLLECT YELLOW ORBS  ·  USE TWO FINGERS TO BOOST',
+      hint: 'Boost recharges when released',
+    };
+  }
+  return step;
+}
 
 export function showEpochToast(numOrLabel: number | string, name: string, sub: string, chapter?: string) {
   const el = document.getElementById('epoch-toast')!;
@@ -106,7 +150,7 @@ export function drawHud() {
   // Boost bar
   hud.textAlign = 'right';
   hud.fillStyle = 'rgba(255,255,255,0.6)';
-  hud.fillText('BOOST  [SPACE]', w - 20, h - 56);
+  hud.fillText(IS_MOBILE ? 'BOOST  [2 TOUCH]' : 'BOOST  [SPACE]', w - 20, h - 56);
   const bxr = w - 200, byr = h - 40, bwr = 180, bhr = 8;
   hud.fillStyle = 'rgba(255,255,255,0.12)'; hud.fillRect(bxr, byr, bwr, bhr);
   const boostFrac = photon.boost / BOOST_MAX;
@@ -116,10 +160,12 @@ export function drawHud() {
   hud.textAlign = 'center';
   hud.font = '10px ui-monospace, monospace';
   hud.fillStyle = 'rgba(255,255,255,0.6)';
-  hud.fillText('WAVELENGTH', w / 2, h - 56);
-  const segW = 110, segH = 22, segGap = 6;
-  const totalW = segW * 3 + segGap * 2;
-  const sx = (w - totalW) / 2;
+  hud.fillText(IS_MOBILE ? 'TAP WAVELENGTH' : 'WAVELENGTH', w / 2, h - 56);
+  const segW = WAVELENGTH_SEGMENT_WIDTH;
+  const segH = WAVELENGTH_SEGMENT_HEIGHT;
+  const segGap = WAVELENGTH_SEGMENT_GAP;
+  const totalW = wavelengthTotalWidth();
+  const sx = wavelengthStartX(w);
   for (let i = 0; i < WAVELENGTHS.length; i++) {
     const x = sx + i * (segW + segGap);
     const y = h - 36;
@@ -284,21 +330,27 @@ export function drawHud() {
   }
   // Tutorial overlay
   if (game.tutorialActive && game.tutorialStep < TUTORIAL_STEPS.length) {
-    const step = TUTORIAL_STEPS[game.tutorialStep];
+    const step = tutorialCopy(TUTORIAL_STEPS[game.tutorialStep]);
     const fadeIn = Math.min(1, game.tutorialTime / 0.35);
     const lifeLeft = step.max - game.tutorialTime;
     const fadeOut = Math.min(1, lifeLeft / 0.4);
     const alpha = Math.max(0, Math.min(fadeIn, fadeOut));
     if (alpha > 0.01) {
-      const ty = h - 110;
+      const ty = IS_MOBILE ? Math.max(210, h - 190) : h - 110;
       const padX = 24, padY = 14;
-      hud.font = 'bold 14px ui-monospace, monospace';
+      hud.font = `bold ${IS_MOBILE ? 12 : 14}px ui-monospace, monospace`;
       hud.textAlign = 'center'; hud.textBaseline = 'middle';
-      const textW = hud.measureText(step.text).width;
-      hud.font = '11px ui-monospace, monospace';
-      const hintW = hud.measureText(step.hint).width;
-      const boxW = Math.max(textW, hintW) + padX * 2;
-      const boxH = padY * 2 + 36;
+      const maxTextW = IS_MOBILE ? Math.max(220, w - 72) : 620;
+      const textLines = wrapHudText(step.text, maxTextW);
+      hud.font = `${IS_MOBILE ? 10 : 11}px ui-monospace, monospace`;
+      const hintLines = wrapHudText(step.hint, maxTextW);
+      const measuredW = Math.max(
+        ...textLines.map((line) => hud.measureText(line).width),
+        ...hintLines.map((line) => hud.measureText(line).width),
+      );
+      const boxW = Math.min(w - 32, measuredW + padX * 2);
+      const lineH = IS_MOBILE ? 15 : 17;
+      const boxH = padY * 2 + textLines.length * lineH + hintLines.length * lineH + 16;
       const bx2 = w / 2 - boxW / 2;
       hud.fillStyle = `rgba(8, 10, 22, ${alpha * 0.78})`;
       hud.fillRect(bx2, ty - boxH / 2, boxW, boxH);
@@ -306,11 +358,19 @@ export function drawHud() {
       hud.lineWidth = 1;
       hud.strokeRect(bx2, ty - boxH / 2, boxW, boxH);
       hud.fillStyle = `rgba(136, 224, 255, ${alpha})`;
-      hud.font = 'bold 13px ui-monospace, monospace';
-      hud.fillText(step.text, w / 2, ty - 8);
+      hud.font = `bold ${IS_MOBILE ? 12 : 13}px ui-monospace, monospace`;
+      let textY = ty - boxH / 2 + padY + lineH / 2;
+      for (const line of textLines) {
+        hud.fillText(line, w / 2, textY);
+        textY += lineH;
+      }
       hud.fillStyle = `rgba(255, 255, 255, ${alpha * 0.65})`;
-      hud.font = '11px ui-monospace, monospace';
-      hud.fillText(step.hint, w / 2, ty + 12);
+      hud.font = `${IS_MOBILE ? 10 : 11}px ui-monospace, monospace`;
+      textY += 4;
+      for (const line of hintLines) {
+        hud.fillText(line, w / 2, textY);
+        textY += lineH;
+      }
       const pipY = ty + boxH / 2 - 4;
       const pipSpacing = 10;
       const pipsTotal = TUTORIAL_STEPS.length;

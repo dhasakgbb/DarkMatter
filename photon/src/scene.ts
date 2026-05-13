@@ -7,12 +7,23 @@ import { IS_MOBILE, PIXEL_RATIO } from './constants';
 import { EPOCHS } from './cosmology';
 
 export const canvas = document.getElementById('game') as HTMLCanvasElement;
+const graphicsStatus = document.getElementById('graphics-status');
 export const renderer = new THREE.WebGLRenderer({ canvas, antialias: !IS_MOBILE, powerPreference: 'high-performance', precision: IS_MOBILE ? 'mediump' : 'highp' });
 renderer.setPixelRatio(PIXEL_RATIO);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.96;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+canvas.addEventListener('webglcontextlost', (event) => {
+  event.preventDefault();
+  graphicsStatus?.classList.add('on');
+});
+
+canvas.addEventListener('webglcontextrestored', () => {
+  graphicsStatus?.classList.remove('on');
+  window.location.reload();
+});
 
 export const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000004);
