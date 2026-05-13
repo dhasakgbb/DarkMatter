@@ -39,6 +39,38 @@ function recommendationCard(record: FunRunRecord) {
   `).join('');
 }
 
+function dopamineEngineCard(record: FunRunRecord) {
+  const engine = record.dopamineEngine;
+  if (!engine) return '';
+  const missing = engine.missingBeats.length ? engine.missingBeats.map((beat) =>
+    '<li><b>' + escapeHtml(beat.beat) + '</b><span>' + escapeHtml(beat.principle) + '</span><em>' + escapeHtml(beat.suggestion) + '</em></li>'
+  ).join('') : '<li><b>No major missing beat</b><span>flow-channel</span><em>Preserve this seed profile as a reference.</em></li>';
+  const plan = engine.plan.map((step) =>
+    '<div class="funlab-plan-step priority-' + escapeHtml(step.priority) + ' risk-' + escapeHtml(step.risk) + '">' +
+      '<div><b>' + escapeHtml(step.priority) + '</b><span>' + escapeHtml(step.principle) + '</span></div>' +
+      '<h4>' + escapeHtml(step.title) + '</h4>' +
+      '<p>' + escapeHtml(step.diagnosis) + '</p>' +
+      '<p>' + escapeHtml(step.action) + '</p>' +
+      '<em>' + escapeHtml(step.expectedEffect) + '</em>' +
+      '<ul>' + step.evidence.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>' +
+    '</div>'
+  ).join('');
+  return '<h3>Dopamine Engine</h3>' +
+    '<div class="funlab-engine">' +
+      '<div class="funlab-engine-head"><b>' + escapeHtml(engine.state) + '</b><span>' + escapeHtml(engine.score) + '/100</span><em>' + escapeHtml(engine.theoryTags.join(' · ')) + '</em></div>' +
+      '<div class="funlab-engine-grid">' +
+        axisBar('Pressure', engine.pressure) +
+        axisBar('Mastery', engine.mastery) +
+        axisBar('Safety', engine.safety) +
+        axisBar('Novelty', engine.novelty) +
+      '</div>' +
+      '<p>Cadence ' + escapeHtml(engine.rewardCadenceSec) + 's · ' + escapeHtml(engine.rewardEventsPerMin) + ' reward events/min</p>' +
+      '<h4>Missing beats</h4>' +
+      '<ul class="funlab-missing">' + missing + '</ul>' +
+      '<h4>Plan</h4>' +
+      '<div class="funlab-plan">' + plan + '</div>' +
+    '</div>';
+}
 function renderTimeline(record: FunRunRecord) {
   return record.events
     .filter((event) => ['epoch-enter', 'gate-hit', 'gate-miss', 'speed-pad-hit', 'gravity-sling', 'hazard-near-miss', 'hazard-hit', 'damage', 'phase-through', 'field-strain-peak', 'death', 'run-end', 'quit'].includes(event.type))
@@ -143,6 +175,7 @@ export function renderFunLabDashboard(selectedId?: string) {
     </div>
     ${vibe}
     ${selected.fingerprint.uncertainty.length ? `<div class="funlab-uncertain">${selected.fingerprint.uncertainty.map(escapeHtml).join(' ')}</div>` : ''}
+    ${dopamineEngineCard(selected)}
     <h3>Tuning queue</h3>
     ${recommendationCard(selected)}
     <h3>Evidence timeline</h3>

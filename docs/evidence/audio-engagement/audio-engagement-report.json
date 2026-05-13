@@ -1,0 +1,2881 @@
+{
+  "generatedAt": "2026-05-13T23:17:31.623Z",
+  "manifest": "photon/src/audio-manifest.json",
+  "environment": {
+    "ffmpegAvailable": true,
+    "sampleRate": 16000,
+    "windowMs": 50
+  },
+  "gates": {
+    "directorTempAssets": true,
+    "productionCap": 68,
+    "note": "Current manifest identifies these as director-temp/generated placeholder assets; raw waveform scores are reference signals, not final audio signoff."
+  },
+  "summary": {
+    "overall": 68,
+    "rawWaveform": 98,
+    "music": 96,
+    "sfx": 100,
+    "heatDeath": 96,
+    "racingReadability": 100,
+    "coverage": 100
+  },
+  "coverage": {
+    "musicStemCoverage": {
+      "Stellar": {
+        "required": [
+          "pulse",
+          "bass",
+          "motion",
+          "danger"
+        ],
+        "present": [
+          "pulse",
+          "bass",
+          "motion",
+          "danger"
+        ],
+        "score": 100
+      },
+      "Heat Death": {
+        "required": [
+          "low-tone",
+          "vanishing-texture"
+        ],
+        "present": [
+          "low-tone",
+          "vanishing-texture"
+        ],
+        "score": 100
+      }
+    },
+    "sfxCoverage": {
+      "speedPad": {
+        "required": 4,
+        "present": 4,
+        "score": 100
+      },
+      "lineGate": {
+        "required": 6,
+        "present": 6,
+        "score": 100
+      },
+      "gateMiss": {
+        "required": 3,
+        "present": 3,
+        "score": 100
+      },
+      "railScrape": {
+        "required": 5,
+        "present": 5,
+        "score": 100
+      },
+      "pickup": {
+        "required": 4,
+        "present": 4,
+        "score": 100
+      },
+      "wavelengthShift": {
+        "required": 3,
+        "present": 3,
+        "score": 100
+      },
+      "damageHit": {
+        "required": 5,
+        "present": 5,
+        "score": 100
+      },
+      "death": {
+        "required": 2,
+        "present": 2,
+        "score": 100
+      },
+      "witnessChime": {
+        "required": 1,
+        "present": 1,
+        "score": 100
+      },
+      "hazardWhoosh": {
+        "required": 6,
+        "present": 6,
+        "score": 100
+      },
+      "gravityWellWhoosh": {
+        "required": 4,
+        "present": 4,
+        "score": 100
+      },
+      "engineLoop": {
+        "required": 1,
+        "present": 1,
+        "score": 100
+      },
+      "uiTick": {
+        "required": 1,
+        "present": 1,
+        "score": 100
+      },
+      "uiClick": {
+        "required": 1,
+        "present": 1,
+        "score": 100
+      },
+      "uiSwoosh": {
+        "required": 1,
+        "present": 1,
+        "score": 100
+      },
+      "epochRiser": {
+        "required": 2,
+        "present": 2,
+        "score": 100
+      },
+      "memoryUnlock": {
+        "required": 1,
+        "present": 1,
+        "score": 100
+      }
+    },
+    "musicScore": 100,
+    "sfxScore": 100
+  },
+  "entries": [
+    {
+      "kind": "music",
+      "cue": "Inflationary",
+      "stem": "pulse",
+      "path": "music/inflationary/pulse.ogg",
+      "gain": 0.55,
+      "loop": true,
+      "role": "pressure",
+      "status": "ok",
+      "score": 96,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 80.5,
+        "silence": 100
+      },
+      "lowestParts": [
+        "pulseClarity 80.5",
+        "duration 88.3",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -25.481,
+        "peakDb": -12.837,
+        "crestDb": 12.644,
+        "dynamicRangeDb": 17.128,
+        "motionDb": 6.439,
+        "transientDensity": 3.438,
+        "pulseClarity": 1,
+        "zeroCrossingsPerSecond": 1025.125,
+        "silenceRatio": 0.225,
+        "activityRatio": 0.775
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Inflationary",
+      "stem": "texture",
+      "path": "music/inflationary/texture.ogg",
+      "gain": 0.45,
+      "loop": true,
+      "role": "pressure",
+      "status": "ok",
+      "score": 98,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 97.6,
+        "pulseClarity": 100,
+        "silence": 100
+      },
+      "lowestParts": [
+        "duration 88.3",
+        "transientDensity 97.6",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -25.49,
+        "peakDb": -18.297,
+        "crestDb": 7.193,
+        "dynamicRangeDb": 1.29,
+        "motionDb": 0.861,
+        "transientDensity": 0.125,
+        "pulseClarity": 0.177,
+        "zeroCrossingsPerSecond": 290.375,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Quark Plasma",
+      "stem": "pulse",
+      "path": "music/quark-plasma/pulse.ogg",
+      "gain": 0.52,
+      "loop": true,
+      "role": "pressure",
+      "status": "ok",
+      "score": 96,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 81,
+        "silence": 100
+      },
+      "lowestParts": [
+        "pulseClarity 81",
+        "duration 88.3",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -26.213,
+        "peakDb": -13.61,
+        "crestDb": 12.603,
+        "dynamicRangeDb": 16.046,
+        "motionDb": 6.206,
+        "transientDensity": 3.313,
+        "pulseClarity": 0.997,
+        "zeroCrossingsPerSecond": 822.313,
+        "silenceRatio": 0.238,
+        "activityRatio": 0.763
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Quark Plasma",
+      "stem": "texture",
+      "path": "music/quark-plasma/texture.ogg",
+      "gain": 0.48,
+      "loop": true,
+      "role": "pressure",
+      "status": "ok",
+      "score": 97,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 97.6,
+        "transientDensity": 95.2,
+        "pulseClarity": 100,
+        "silence": 100
+      },
+      "lowestParts": [
+        "duration 88.3",
+        "transientDensity 95.2",
+        "motion 97.6"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -23.974,
+        "peakDb": -16.931,
+        "crestDb": 7.044,
+        "dynamicRangeDb": 1.138,
+        "motionDb": 0.576,
+        "transientDensity": 0,
+        "pulseClarity": 0.158,
+        "zeroCrossingsPerSecond": 496.875,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Recombination",
+      "stem": "motion",
+      "path": "music/recombination/motion.ogg",
+      "gain": 0.48,
+      "loop": true,
+      "role": "clarity",
+      "status": "ok",
+      "score": 94,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 57.3,
+        "silence": 100
+      },
+      "lowestParts": [
+        "pulseClarity 57.3",
+        "duration 88.3",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -30.922,
+        "peakDb": -20.026,
+        "crestDb": 10.896,
+        "dynamicRangeDb": 13.76,
+        "motionDb": 5.037,
+        "transientDensity": 4.75,
+        "pulseClarity": 0.999,
+        "zeroCrossingsPerSecond": 1280.875,
+        "silenceRatio": 0.231,
+        "activityRatio": 0.769
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Recombination",
+      "stem": "texture",
+      "path": "music/recombination/texture.ogg",
+      "gain": 0.42,
+      "loop": true,
+      "role": "clarity",
+      "status": "ok",
+      "score": 97,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 97.7,
+        "transientDensity": 95.2,
+        "pulseClarity": 100,
+        "silence": 100
+      },
+      "lowestParts": [
+        "duration 88.3",
+        "transientDensity 95.2",
+        "motion 97.7"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -28.363,
+        "peakDb": -21.346,
+        "crestDb": 7.017,
+        "dynamicRangeDb": 1.444,
+        "motionDb": 0.586,
+        "transientDensity": 0,
+        "pulseClarity": 0.147,
+        "zeroCrossingsPerSecond": 288.688,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "First Stars",
+      "stem": "pulse",
+      "path": "music/first-stars/pulse.ogg",
+      "gain": 0.52,
+      "loop": true,
+      "role": "lift",
+      "status": "ok",
+      "score": 96,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 81,
+        "silence": 100
+      },
+      "lowestParts": [
+        "pulseClarity 81",
+        "duration 88.3",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -26.631,
+        "peakDb": -14.044,
+        "crestDb": 12.587,
+        "dynamicRangeDb": 15.939,
+        "motionDb": 6.192,
+        "transientDensity": 2.938,
+        "pulseClarity": 0.996,
+        "zeroCrossingsPerSecond": 747.375,
+        "silenceRatio": 0.25,
+        "activityRatio": 0.75
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "First Stars",
+      "stem": "reward",
+      "path": "music/first-stars/reward.ogg",
+      "gain": 0.36,
+      "loop": true,
+      "role": "lift",
+      "status": "ok",
+      "score": 96,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 98.8,
+        "pulseClarity": 80.8,
+        "silence": 100
+      },
+      "lowestParts": [
+        "pulseClarity 80.8",
+        "duration 88.3",
+        "transientDensity 98.8"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -30.151,
+        "peakDb": -19.377,
+        "crestDb": 10.774,
+        "dynamicRangeDb": 13.729,
+        "motionDb": 5.076,
+        "transientDensity": 5.563,
+        "pulseClarity": 0.998,
+        "zeroCrossingsPerSecond": 1300.5,
+        "silenceRatio": 0.191,
+        "activityRatio": 0.809
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Galactic",
+      "stem": "pulse",
+      "path": "music/galactic/pulse.ogg",
+      "gain": 0.52,
+      "loop": true,
+      "role": "flow",
+      "status": "ok",
+      "score": 94,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 80.5,
+        "silence": 50
+      },
+      "lowestParts": [
+        "silence 50",
+        "pulseClarity 80.5",
+        "duration 88.3"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -27.519,
+        "peakDb": -14.489,
+        "crestDb": 13.03,
+        "dynamicRangeDb": 12.83,
+        "motionDb": 5.08,
+        "transientDensity": 2.438,
+        "pulseClarity": 1,
+        "zeroCrossingsPerSecond": 653.625,
+        "silenceRatio": 0.375,
+        "activityRatio": 0.625
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Galactic",
+      "stem": "motion",
+      "path": "music/galactic/motion.ogg",
+      "gain": 0.44,
+      "loop": true,
+      "role": "flow",
+      "status": "ok",
+      "score": 96,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 80.5,
+        "silence": 100
+      },
+      "lowestParts": [
+        "pulseClarity 80.5",
+        "duration 88.3",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -30.473,
+        "peakDb": -19.907,
+        "crestDb": 10.566,
+        "dynamicRangeDb": 14.386,
+        "motionDb": 5.956,
+        "transientDensity": 4.938,
+        "pulseClarity": 1,
+        "zeroCrossingsPerSecond": 1029,
+        "silenceRatio": 0.25,
+        "activityRatio": 0.75
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Stellar",
+      "stem": "pulse",
+      "path": "music/stellar/pulse.ogg",
+      "gain": 0.58,
+      "loop": true,
+      "role": "peak",
+      "status": "ok",
+      "score": 95,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 94.4,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 80.5,
+        "silence": 100
+      },
+      "lowestParts": [
+        "pulseClarity 80.5",
+        "duration 88.3",
+        "loudness 94.4"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -26.835,
+        "peakDb": -14.665,
+        "crestDb": 12.17,
+        "dynamicRangeDb": 22.648,
+        "motionDb": 7.478,
+        "transientDensity": 2.438,
+        "pulseClarity": 1,
+        "zeroCrossingsPerSecond": 642,
+        "silenceRatio": 0.25,
+        "activityRatio": 0.75
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Stellar",
+      "stem": "bass",
+      "path": "music/stellar/bass.ogg",
+      "gain": 0.48,
+      "loop": true,
+      "role": "peak",
+      "status": "ok",
+      "score": 95,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 96,
+        "transientDensity": 95.2,
+        "pulseClarity": 81.3,
+        "silence": 100
+      },
+      "lowestParts": [
+        "pulseClarity 81.3",
+        "duration 88.3",
+        "transientDensity 95.2"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -18.19,
+        "peakDb": -13.249,
+        "crestDb": 4.941,
+        "dynamicRangeDb": 1.282,
+        "motionDb": 0.435,
+        "transientDensity": 0,
+        "pulseClarity": 0.994,
+        "zeroCrossingsPerSecond": 147.188,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Stellar",
+      "stem": "motion",
+      "path": "music/stellar/motion.ogg",
+      "gain": 0.44,
+      "loop": true,
+      "role": "peak",
+      "status": "ok",
+      "score": 92,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 72.3,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 81.6,
+        "silence": 100
+      },
+      "lowestParts": [
+        "loudness 72.3",
+        "pulseClarity 81.6",
+        "duration 88.3"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -30.152,
+        "peakDb": -22.15,
+        "crestDb": 8.002,
+        "dynamicRangeDb": 5.241,
+        "motionDb": 1.96,
+        "transientDensity": 4.688,
+        "pulseClarity": 0.992,
+        "zeroCrossingsPerSecond": 2149.25,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Stellar",
+      "stem": "danger",
+      "path": "music/stellar/danger.ogg",
+      "gain": 0.32,
+      "loop": true,
+      "role": "peak",
+      "status": "ok",
+      "score": 95,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 82.4,
+        "motion": 100,
+        "transientDensity": 96.4,
+        "pulseClarity": 100,
+        "silence": 100
+      },
+      "lowestParts": [
+        "loudness 82.4",
+        "duration 88.3",
+        "transientDensity 96.4"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -28.634,
+        "peakDb": -20.924,
+        "crestDb": 7.71,
+        "dynamicRangeDb": 1.602,
+        "motionDb": 0.797,
+        "transientDensity": 0.063,
+        "pulseClarity": 0.487,
+        "zeroCrossingsPerSecond": 452.125,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Degenerate",
+      "stem": "bass",
+      "path": "music/degenerate/bass.ogg",
+      "gain": 0.42,
+      "loop": true,
+      "role": "cooldown",
+      "status": "ok",
+      "score": 98,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 98.8,
+        "pulseClarity": 100,
+        "silence": 100
+      },
+      "lowestParts": [
+        "duration 88.3",
+        "transientDensity 98.8",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -23.917,
+        "peakDb": -16.992,
+        "crestDb": 6.926,
+        "dynamicRangeDb": 2.474,
+        "motionDb": 1.044,
+        "transientDensity": 0.188,
+        "pulseClarity": 0.102,
+        "zeroCrossingsPerSecond": 147.188,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Degenerate",
+      "stem": "texture",
+      "path": "music/degenerate/texture.ogg",
+      "gain": 0.38,
+      "loop": true,
+      "role": "cooldown",
+      "status": "ok",
+      "score": 98,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 98.9,
+        "transientDensity": 97.6,
+        "pulseClarity": 100,
+        "silence": 100
+      },
+      "lowestParts": [
+        "duration 88.3",
+        "transientDensity 97.6",
+        "motion 98.9"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -29.984,
+        "peakDb": -22.854,
+        "crestDb": 7.129,
+        "dynamicRangeDb": 1.309,
+        "motionDb": 0.695,
+        "transientDensity": 0.125,
+        "pulseClarity": 0.182,
+        "zeroCrossingsPerSecond": 208.125,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Black Hole",
+      "stem": "bass",
+      "path": "music/black-hole/bass.ogg",
+      "gain": 0.46,
+      "loop": true,
+      "role": "restraint",
+      "status": "ok",
+      "score": 98,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 100,
+        "silence": 100
+      },
+      "lowestParts": [
+        "duration 88.3",
+        "headroom 100",
+        "loop 100"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -23.12,
+        "peakDb": -16.043,
+        "crestDb": 7.077,
+        "dynamicRangeDb": 3.514,
+        "motionDb": 1.485,
+        "transientDensity": 1,
+        "pulseClarity": 0.216,
+        "zeroCrossingsPerSecond": 78.438,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Black Hole",
+      "stem": "texture",
+      "path": "music/black-hole/texture.ogg",
+      "gain": 0.3,
+      "loop": true,
+      "role": "restraint",
+      "status": "ok",
+      "score": 98,
+      "breakdown": {
+        "duration": 88.3,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 100,
+        "silence": 100
+      },
+      "lowestParts": [
+        "duration 88.3",
+        "headroom 100",
+        "loop 100"
+      ],
+      "metrics": {
+        "durationSeconds": 16,
+        "rmsDb": -29.116,
+        "peakDb": -22.088,
+        "crestDb": 7.028,
+        "dynamicRangeDb": 2.28,
+        "motionDb": 0.941,
+        "transientDensity": 0.25,
+        "pulseClarity": 0.185,
+        "zeroCrossingsPerSecond": 112.5,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Heat Death",
+      "stem": "low-tone",
+      "path": "music/heat-death/low-tone.ogg",
+      "gain": 0.35,
+      "loop": true,
+      "role": "absence",
+      "status": "ok",
+      "score": 96,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 57.4,
+        "silence": 98.9
+      },
+      "lowestParts": [
+        "pulseClarity 57.4",
+        "silence 98.9",
+        "duration 100"
+      ],
+      "metrics": {
+        "durationSeconds": 360,
+        "rmsDb": -25.502,
+        "peakDb": -18.951,
+        "crestDb": 6.551,
+        "dynamicRangeDb": 12.167,
+        "motionDb": 4.911,
+        "transientDensity": 0,
+        "pulseClarity": 0.999,
+        "zeroCrossingsPerSecond": 83.472,
+        "silenceRatio": 0.042,
+        "activityRatio": 0.958
+      }
+    },
+    {
+      "kind": "music",
+      "cue": "Heat Death",
+      "stem": "vanishing-texture",
+      "path": "music/heat-death/vanishing-texture.ogg",
+      "gain": 0.24,
+      "loop": false,
+      "role": "absence",
+      "status": "ok",
+      "score": 96,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loop": 100,
+        "loudness": 100,
+        "motion": 100,
+        "transientDensity": 100,
+        "pulseClarity": 57.4,
+        "silence": 100
+      },
+      "lowestParts": [
+        "pulseClarity 57.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 360,
+        "rmsDb": -42.712,
+        "peakDb": -28.233,
+        "crestDb": 14.48,
+        "dynamicRangeDb": 12.213,
+        "motionDb": 4.178,
+        "transientDensity": 0,
+        "pulseClarity": 0.999,
+        "zeroCrossingsPerSecond": 149.039,
+        "silenceRatio": 0.748,
+        "activityRatio": 0.252
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "pickup",
+      "path": "sfx/pickup/pickup-01.ogg",
+      "gain": 0.85,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -15.915,
+        "peakDb": -11.739,
+        "crestDb": 4.175,
+        "dynamicRangeDb": 4.372,
+        "motionDb": 2.641,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 3237.497,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "pickup",
+      "path": "sfx/pickup/pickup-02.ogg",
+      "gain": 0.85,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -15.897,
+        "peakDb": -11.706,
+        "crestDb": 4.191,
+        "dynamicRangeDb": 4.427,
+        "motionDb": 2.651,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 3465.16,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "pickup",
+      "path": "sfx/pickup/pickup-03.ogg",
+      "gain": 0.85,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -15.904,
+        "peakDb": -11.746,
+        "crestDb": 4.158,
+        "dynamicRangeDb": 4.409,
+        "motionDb": 2.646,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 3689.475,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "pickup",
+      "path": "sfx/pickup/pickup-04.ogg",
+      "gain": 0.85,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -15.89,
+        "peakDb": -11.706,
+        "crestDb": 4.184,
+        "dynamicRangeDb": 4.417,
+        "motionDb": 2.651,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 3913.789,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "speedPad",
+      "path": "sfx/speed-pad/speed-pad-01.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.597,
+        "rmsDb": -17.876,
+        "peakDb": -10.037,
+        "crestDb": 7.839,
+        "dynamicRangeDb": 11.481,
+        "motionDb": 7.222,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 3100.555,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "speedPad",
+      "path": "sfx/speed-pad/speed-pad-02.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.597,
+        "rmsDb": -17.895,
+        "peakDb": -10.115,
+        "crestDb": 7.78,
+        "dynamicRangeDb": 11.554,
+        "motionDb": 7.26,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 3244.533,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "speedPad",
+      "path": "sfx/speed-pad/speed-pad-03.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.597,
+        "rmsDb": -17.905,
+        "peakDb": -10.032,
+        "crestDb": 7.874,
+        "dynamicRangeDb": 11.682,
+        "motionDb": 7.274,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 3390.185,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "speedPad",
+      "path": "sfx/speed-pad/speed-pad-04.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.597,
+        "rmsDb": -17.926,
+        "peakDb": -10.216,
+        "crestDb": 7.71,
+        "dynamicRangeDb": 11.8,
+        "motionDb": 7.279,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 3537.512,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "lineGate",
+      "path": "sfx/line-gate/line-gate-01.ogg",
+      "gain": 0.75,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -19.901,
+        "peakDb": -11.299,
+        "crestDb": 8.602,
+        "dynamicRangeDb": 16.209,
+        "motionDb": 7.969,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 1396.108,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "lineGate",
+      "path": "sfx/line-gate/line-gate-02.ogg",
+      "gain": 0.75,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -19.883,
+        "peakDb": -11.244,
+        "crestDb": 8.638,
+        "dynamicRangeDb": 15.991,
+        "motionDb": 7.83,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 1499.895,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "lineGate",
+      "path": "sfx/line-gate/line-gate-03.ogg",
+      "gain": 0.75,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -19.89,
+        "peakDb": -11.269,
+        "crestDb": 8.621,
+        "dynamicRangeDb": 16.143,
+        "motionDb": 7.965,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 1653.902,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "lineGate",
+      "path": "sfx/line-gate/line-gate-04.ogg",
+      "gain": 0.75,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -19.88,
+        "peakDb": -11.309,
+        "crestDb": 8.571,
+        "dynamicRangeDb": 16.067,
+        "motionDb": 7.896,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 1784.474,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "lineGate",
+      "path": "sfx/line-gate/line-gate-05.ogg",
+      "gain": 0.75,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -19.889,
+        "peakDb": -11.327,
+        "crestDb": 8.561,
+        "dynamicRangeDb": 15.992,
+        "motionDb": 7.845,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 1925.089,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "lineGate",
+      "path": "sfx/line-gate/line-gate-06.ogg",
+      "gain": 0.75,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "reward",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.2,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.2",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -19.883,
+        "peakDb": -11.298,
+        "crestDb": 8.585,
+        "dynamicRangeDb": 16.144,
+        "motionDb": 7.958,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 2059.008,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "gateMiss",
+      "path": "sfx/gate-miss/gate-miss-01.ogg",
+      "gain": 0.75,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "negative",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 96.8,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 96.8",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.277,
+        "rmsDb": -21.721,
+        "peakDb": -14.066,
+        "crestDb": 7.655,
+        "dynamicRangeDb": 5.481,
+        "motionDb": 3.264,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 526.482,
+        "silenceRatio": 0.167,
+        "activityRatio": 0.833
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "gateMiss",
+      "path": "sfx/gate-miss/gate-miss-02.ogg",
+      "gain": 0.75,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "negative",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 96.8,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 96.8",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.277,
+        "rmsDb": -21.606,
+        "peakDb": -14.105,
+        "crestDb": 7.501,
+        "dynamicRangeDb": 2.977,
+        "motionDb": 1.371,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 317.332,
+        "silenceRatio": 0.167,
+        "activityRatio": 0.833
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "gateMiss",
+      "path": "sfx/gate-miss/gate-miss-03.ogg",
+      "gain": 0.75,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "negative",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 96.8,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 96.8",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.277,
+        "rmsDb": -21.957,
+        "peakDb": -14.031,
+        "crestDb": 7.926,
+        "dynamicRangeDb": 4.986,
+        "motionDb": 2.965,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 241.605,
+        "silenceRatio": 0.167,
+        "activityRatio": 0.833
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "railScrape",
+      "path": "sfx/rail-scrape/rail-scrape-01.ogg",
+      "gain": 0.38,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "strain",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.4,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -28.089,
+        "peakDb": -14.917,
+        "crestDb": 13.171,
+        "dynamicRangeDb": 9.915,
+        "motionDb": 4.674,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 7660.18,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "railScrape",
+      "path": "sfx/rail-scrape/rail-scrape-02.ogg",
+      "gain": 0.38,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "strain",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.4,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -28.244,
+        "peakDb": -13.834,
+        "crestDb": 14.41,
+        "dynamicRangeDb": 10.349,
+        "motionDb": 4.833,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 7750.575,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "railScrape",
+      "path": "sfx/rail-scrape/rail-scrape-03.ogg",
+      "gain": 0.38,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "strain",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.4,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -28.29,
+        "peakDb": -14.089,
+        "crestDb": 14.201,
+        "dynamicRangeDb": 10.236,
+        "motionDb": 4.767,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 7948.106,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "railScrape",
+      "path": "sfx/rail-scrape/rail-scrape-04.ogg",
+      "gain": 0.38,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "strain",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.4,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -28.336,
+        "peakDb": -12.833,
+        "crestDb": 15.503,
+        "dynamicRangeDb": 10.195,
+        "motionDb": 4.742,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 7951.454,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "railScrape",
+      "path": "sfx/rail-scrape/rail-scrape-05.ogg",
+      "gain": 0.38,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "strain",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.4,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.299,
+        "rmsDb": -28.481,
+        "peakDb": -15.408,
+        "crestDb": 13.073,
+        "dynamicRangeDb": 9.952,
+        "motionDb": 4.697,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 7827.579,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "wavelengthShift",
+      "path": "sfx/wavelength-shift/gamma.ogg",
+      "gain": 0.85,
+      "rate": 1.12,
+      "loop": false,
+      "spatial": false,
+      "role": "state",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.4,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.256,
+        "rmsDb": -21.803,
+        "peakDb": -15.47,
+        "crestDb": 6.333,
+        "dynamicRangeDb": 8.213,
+        "motionDb": 4.703,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 1019.531,
+        "silenceRatio": 0.167,
+        "activityRatio": 0.833
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "wavelengthShift",
+      "path": "sfx/wavelength-shift/visible.ogg",
+      "gain": 0.85,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "state",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.4,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.256,
+        "rmsDb": -21.825,
+        "peakDb": -15.442,
+        "crestDb": 6.382,
+        "dynamicRangeDb": 8.059,
+        "motionDb": 4.575,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 871.094,
+        "silenceRatio": 0.167,
+        "activityRatio": 0.833
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "wavelengthShift",
+      "path": "sfx/wavelength-shift/radio.ogg",
+      "gain": 0.85,
+      "rate": 0.88,
+      "loop": false,
+      "spatial": false,
+      "role": "state",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.4,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.256,
+        "rmsDb": -21.825,
+        "peakDb": -15.423,
+        "crestDb": 6.401,
+        "dynamicRangeDb": 8.23,
+        "motionDb": 4.704,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 703.125,
+        "silenceRatio": 0.167,
+        "activityRatio": 0.833
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "damageHit",
+      "path": "sfx/damage-hit/damage-hit-01.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "impact",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.7,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.7",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.533,
+        "rmsDb": -18.203,
+        "peakDb": -7.509,
+        "crestDb": 10.693,
+        "dynamicRangeDb": 11.685,
+        "motionDb": 5.509,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 2310.09,
+        "silenceRatio": 0.091,
+        "activityRatio": 0.909
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "damageHit",
+      "path": "sfx/damage-hit/damage-hit-02.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "impact",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.7,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.7",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.533,
+        "rmsDb": -18.095,
+        "peakDb": -7.586,
+        "crestDb": 10.509,
+        "dynamicRangeDb": 11.95,
+        "motionDb": 5.577,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 2495.722,
+        "silenceRatio": 0.091,
+        "activityRatio": 0.909
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "damageHit",
+      "path": "sfx/damage-hit/damage-hit-03.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "impact",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.7,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.7",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.533,
+        "rmsDb": -18.135,
+        "peakDb": -7.042,
+        "crestDb": 11.093,
+        "dynamicRangeDb": 11.749,
+        "motionDb": 5.596,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 2313.84,
+        "silenceRatio": 0.091,
+        "activityRatio": 0.909
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "damageHit",
+      "path": "sfx/damage-hit/damage-hit-04.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "impact",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.7,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.7",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.533,
+        "rmsDb": -18.178,
+        "peakDb": -7.489,
+        "crestDb": 10.69,
+        "dynamicRangeDb": 11.651,
+        "motionDb": 5.556,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 2368.218,
+        "silenceRatio": 0.091,
+        "activityRatio": 0.909
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "damageHit",
+      "path": "sfx/damage-hit/damage-hit-05.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "impact",
+      "status": "ok",
+      "score": 99,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 95.7,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 95.7",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.533,
+        "rmsDb": -18.08,
+        "peakDb": -7.464,
+        "crestDb": 10.617,
+        "dynamicRangeDb": 12.129,
+        "motionDb": 5.582,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 2278.214,
+        "silenceRatio": 0.091,
+        "activityRatio": 0.909
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "death",
+      "path": "sfx/death/death-absorbed-01.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "meaning",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "duration 100",
+        "headroom 100",
+        "loudness 100"
+      ],
+      "metrics": {
+        "durationSeconds": 1.8,
+        "rmsDb": -20.734,
+        "peakDb": -11.75,
+        "crestDb": 8.984,
+        "dynamicRangeDb": 14.065,
+        "motionDb": 6.163,
+        "transientDensity": 0,
+        "pulseClarity": 0.835,
+        "zeroCrossingsPerSecond": 865.556,
+        "silenceRatio": 0.028,
+        "activityRatio": 0.972
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "death",
+      "path": "sfx/death/death-absorbed-02.ogg",
+      "gain": 0.9,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "meaning",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "duration 100",
+        "headroom 100",
+        "loudness 100"
+      ],
+      "metrics": {
+        "durationSeconds": 1.8,
+        "rmsDb": -20.796,
+        "peakDb": -12.04,
+        "crestDb": 8.756,
+        "dynamicRangeDb": 13.931,
+        "motionDb": 6.142,
+        "transientDensity": 0,
+        "pulseClarity": 0.835,
+        "zeroCrossingsPerSecond": 865,
+        "silenceRatio": 0.028,
+        "activityRatio": 0.972
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "witnessChime",
+      "path": "sfx/witness/witness-chime-01.ogg",
+      "gain": 0.85,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "meaning",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "duration 100",
+        "headroom 100",
+        "loudness 100"
+      ],
+      "metrics": {
+        "durationSeconds": 4.8,
+        "rmsDb": -18.811,
+        "peakDb": -7.854,
+        "crestDb": 10.957,
+        "dynamicRangeDb": 15.423,
+        "motionDb": 6.748,
+        "transientDensity": 0,
+        "pulseClarity": 0.903,
+        "zeroCrossingsPerSecond": 1140.417,
+        "silenceRatio": 0.021,
+        "activityRatio": 0.979
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "path": "sfx/hazard-whoosh/hazard-whoosh-01.ogg",
+      "gain": 0.8,
+      "rate": 1,
+      "loop": false,
+      "spatial": true,
+      "role": "threat",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 97.5,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "crest 97.5",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.469,
+        "rmsDb": -18.919,
+        "peakDb": -14.496,
+        "crestDb": 4.423,
+        "dynamicRangeDb": 6.506,
+        "motionDb": 3.975,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 517.779,
+        "silenceRatio": 0.1,
+        "activityRatio": 0.9
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "path": "sfx/hazard-whoosh/hazard-whoosh-02.ogg",
+      "gain": 0.8,
+      "rate": 1,
+      "loop": false,
+      "spatial": true,
+      "role": "threat",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 97.4,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "crest 97.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.469,
+        "rmsDb": -18.935,
+        "peakDb": -14.525,
+        "crestDb": 4.41,
+        "dynamicRangeDb": 7.339,
+        "motionDb": 4.041,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 541.217,
+        "silenceRatio": 0.1,
+        "activityRatio": 0.9
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "path": "sfx/hazard-whoosh/hazard-whoosh-03.ogg",
+      "gain": 0.8,
+      "rate": 1,
+      "loop": false,
+      "spatial": true,
+      "role": "threat",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 98.4,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "crest 98.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.469,
+        "rmsDb": -19.204,
+        "peakDb": -14.571,
+        "crestDb": 4.633,
+        "dynamicRangeDb": 6.613,
+        "motionDb": 4.024,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 571.048,
+        "silenceRatio": 0.1,
+        "activityRatio": 0.9
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "path": "sfx/hazard-whoosh/hazard-whoosh-04.ogg",
+      "gain": 0.8,
+      "rate": 1,
+      "loop": false,
+      "spatial": true,
+      "role": "threat",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 98.3,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "crest 98.3",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.469,
+        "rmsDb": -19.122,
+        "peakDb": -14.524,
+        "crestDb": 4.598,
+        "dynamicRangeDb": 7.465,
+        "motionDb": 4.144,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 605.14,
+        "silenceRatio": 0.1,
+        "activityRatio": 0.9
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "path": "sfx/hazard-whoosh/hazard-whoosh-05.ogg",
+      "gain": 0.8,
+      "rate": 1,
+      "loop": false,
+      "spatial": true,
+      "role": "threat",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 97.4,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "crest 97.4",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.469,
+        "rmsDb": -18.927,
+        "peakDb": -14.518,
+        "crestDb": 4.409,
+        "dynamicRangeDb": 6.504,
+        "motionDb": 3.981,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 620.056,
+        "silenceRatio": 0.1,
+        "activityRatio": 0.9
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "path": "sfx/hazard-whoosh/hazard-whoosh-06.ogg",
+      "gain": 0.8,
+      "rate": 1,
+      "loop": false,
+      "spatial": true,
+      "role": "threat",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 98.5,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "crest 98.5",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.469,
+        "rmsDb": -19.156,
+        "peakDb": -14.497,
+        "crestDb": 4.659,
+        "dynamicRangeDb": 7.199,
+        "motionDb": 3.956,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 649.887,
+        "silenceRatio": 0.1,
+        "activityRatio": 0.9
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "gravityWellWhoosh",
+      "path": "sfx/gravity-well-whoosh/gravity-well-whoosh-01.ogg",
+      "gain": 0.52,
+      "rate": 1,
+      "loop": false,
+      "spatial": true,
+      "role": "threat",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "duration 100",
+        "headroom 100",
+        "loudness 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.704,
+        "rmsDb": -19.52,
+        "peakDb": -11.406,
+        "crestDb": 8.114,
+        "dynamicRangeDb": 9.126,
+        "motionDb": 5.695,
+        "transientDensity": 0,
+        "pulseClarity": 0.157,
+        "zeroCrossingsPerSecond": 200.284,
+        "silenceRatio": 0.067,
+        "activityRatio": 0.933
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "gravityWellWhoosh",
+      "path": "sfx/gravity-well-whoosh/gravity-well-whoosh-02.ogg",
+      "gain": 0.52,
+      "rate": 1,
+      "loop": false,
+      "spatial": true,
+      "role": "threat",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 99.6,
+        "trim": 100
+      },
+      "lowestParts": [
+        "brightness 99.6",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.704,
+        "rmsDb": -19.104,
+        "peakDb": -11.374,
+        "crestDb": 7.731,
+        "dynamicRangeDb": 9.893,
+        "motionDb": 5.017,
+        "transientDensity": 1.42,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 176.136,
+        "silenceRatio": 0.067,
+        "activityRatio": 0.933
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "gravityWellWhoosh",
+      "path": "sfx/gravity-well-whoosh/gravity-well-whoosh-03.ogg",
+      "gain": 0.52,
+      "rate": 1,
+      "loop": false,
+      "spatial": true,
+      "role": "threat",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "duration 100",
+        "headroom 100",
+        "loudness 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.704,
+        "rmsDb": -18.435,
+        "peakDb": -11.483,
+        "crestDb": 6.952,
+        "dynamicRangeDb": 11.273,
+        "motionDb": 6.057,
+        "transientDensity": 1.42,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 203.125,
+        "silenceRatio": 0.067,
+        "activityRatio": 0.933
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "gravityWellWhoosh",
+      "path": "sfx/gravity-well-whoosh/gravity-well-whoosh-04.ogg",
+      "gain": 0.52,
+      "rate": 1,
+      "loop": false,
+      "spatial": true,
+      "role": "threat",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 99.9,
+        "trim": 100
+      },
+      "lowestParts": [
+        "brightness 99.9",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.704,
+        "rmsDb": -18.566,
+        "peakDb": -11.559,
+        "crestDb": 7.007,
+        "dynamicRangeDb": 9.304,
+        "motionDb": 4.952,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 191.761,
+        "silenceRatio": 0.067,
+        "activityRatio": 0.933
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "engineLoop",
+      "path": "sfx/engine/engine-loop.ogg",
+      "gain": 0.62,
+      "rate": 1,
+      "loop": true,
+      "spatial": false,
+      "role": "loop",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "duration 100",
+        "headroom 100",
+        "loudness 100"
+      ],
+      "metrics": {
+        "durationSeconds": 8,
+        "rmsDb": -19.037,
+        "peakDb": -11.505,
+        "crestDb": 7.532,
+        "dynamicRangeDb": 1.422,
+        "motionDb": 0.509,
+        "transientDensity": 0,
+        "pulseClarity": 0.989,
+        "zeroCrossingsPerSecond": 263.875,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "uiTick",
+      "path": "sfx/ui/ui-tick.ogg",
+      "gain": 0.55,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "ui",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.1,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.1",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.064,
+        "rmsDb": -29.209,
+        "peakDb": -23.853,
+        "crestDb": 5.356,
+        "dynamicRangeDb": 9.654,
+        "motionDb": 5.679,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 2060,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "uiClick",
+      "path": "sfx/ui/ui-click.ogg",
+      "gain": 0.7,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "ui",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.1,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.1",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.128,
+        "rmsDb": -25.513,
+        "peakDb": -19,
+        "crestDb": 6.513,
+        "dynamicRangeDb": 9.94,
+        "motionDb": 5.848,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 742.188,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "uiSwoosh",
+      "path": "sfx/ui/ui-swoosh.ogg",
+      "gain": 0.7,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "ui",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 97.1,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "transientDensity 97.1",
+        "duration 100",
+        "headroom 100"
+      ],
+      "metrics": {
+        "durationSeconds": 0.427,
+        "rmsDb": -23.275,
+        "peakDb": -18.76,
+        "crestDb": 4.515,
+        "dynamicRangeDb": 5.562,
+        "motionDb": 3.247,
+        "transientDensity": 0,
+        "pulseClarity": 0,
+        "zeroCrossingsPerSecond": 3684.195,
+        "silenceRatio": 0.111,
+        "activityRatio": 0.889
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "epochRiser",
+      "path": "sfx/epoch-riser/epoch-riser-01.ogg",
+      "gain": 0.85,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "transition",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "duration 100",
+        "headroom 100",
+        "loudness 100"
+      ],
+      "metrics": {
+        "durationSeconds": 1.351,
+        "rmsDb": -22.258,
+        "peakDb": -14.726,
+        "crestDb": 7.532,
+        "dynamicRangeDb": 7.912,
+        "motionDb": 4.131,
+        "transientDensity": 0,
+        "pulseClarity": 0.557,
+        "zeroCrossingsPerSecond": 1125.353,
+        "silenceRatio": 0.071,
+        "activityRatio": 0.929
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "epochRiser",
+      "path": "sfx/epoch-riser/epoch-riser-02.ogg",
+      "gain": 0.85,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "transition",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "duration 100",
+        "headroom 100",
+        "loudness 100"
+      ],
+      "metrics": {
+        "durationSeconds": 1.351,
+        "rmsDb": -22.268,
+        "peakDb": -14.815,
+        "crestDb": 7.454,
+        "dynamicRangeDb": 7.861,
+        "motionDb": 4.134,
+        "transientDensity": 0,
+        "pulseClarity": 0.558,
+        "zeroCrossingsPerSecond": 1209.014,
+        "silenceRatio": 0.071,
+        "activityRatio": 0.929
+      }
+    },
+    {
+      "kind": "sfx",
+      "cue": "memoryUnlock",
+      "path": "sfx/memory-unlock/memory-unlock-01.ogg",
+      "gain": 0.85,
+      "rate": 1,
+      "loop": false,
+      "spatial": false,
+      "role": "meaning",
+      "status": "ok",
+      "score": 100,
+      "breakdown": {
+        "duration": 100,
+        "headroom": 100,
+        "loudness": 100,
+        "crest": 100,
+        "transientDensity": 100,
+        "brightness": 100,
+        "trim": 100
+      },
+      "lowestParts": [
+        "duration 100",
+        "headroom 100",
+        "loudness 100"
+      ],
+      "metrics": {
+        "durationSeconds": 1.2,
+        "rmsDb": -21.193,
+        "peakDb": -16.857,
+        "crestDb": 4.336,
+        "dynamicRangeDb": 9.603,
+        "motionDb": 5.685,
+        "transientDensity": 0,
+        "pulseClarity": 0.31,
+        "zeroCrossingsPerSecond": 1979.167,
+        "silenceRatio": 0,
+        "activityRatio": 1
+      }
+    }
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "issue": "Current assets are director-temp placeholders",
+      "evidence": "Raw waveform scores can guide tuning, but final engagement/identity still requires commissioned or licensed production audio."
+    }
+  ]
+}

@@ -36,7 +36,7 @@ Use this every time a purchased, commissioned, or generated audio asset enters t
 ## Acceptance
 
 - No console errors if an asset is missing.
-- Missing assets stay silent; no legacy synth should play.
+- Missing assets stay silent; no archived or generated-code audio fallback should play.
 - Enabled SFX plays from the manifest asset path.
 - Enabled music fades in and out without abrupt cuts.
 - Common SFX do not stack into clipping during high-speed play.

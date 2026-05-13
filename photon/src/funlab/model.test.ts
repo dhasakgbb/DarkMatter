@@ -46,11 +46,14 @@ describe('Fun Lab model', () => {
       ev('death', 15, { cause: 'clustered hazards', epochIndex: 2, epochName: 'Recombination' }),
     ];
 
-    const { fingerprint, recommendations } = analyzeRun(events, roughVibe);
+    const { fingerprint, recommendations, dopamineEngine } = analyzeRun(events, roughVibe);
 
     expect(fingerprint.frustration).toBeGreaterThan(70);
     expect(fingerprint.flow).toBeLessThan(45);
     expect(recommendations.map((r) => r.id)).toContain('cheap-damage');
+    expect(dopamineEngine.state).toBe('punishing');
+    expect(dopamineEngine.theoryTags).toContain('recovery-windows');
+    expect(dopamineEngine.plan[0].principle).toBe('recovery-windows');
   });
 
   it('does not double-count paired damage and hazard-hit telemetry', () => {
@@ -96,11 +99,14 @@ describe('Fun Lab model', () => {
       ev('run-end', 45, { distance: 2000, epochIndex: 3, epochName: 'Dark Ages' }),
     ];
 
-    const { summary, recommendations } = analyzeRun(events, { fun: 2, flow: 3, frustration: 1, oneMoreRun: 2, at: 45_000 });
+    const { summary, recommendations, dopamineEngine } = analyzeRun(events, { fun: 2, flow: 3, frustration: 1, oneMoreRun: 2, at: 45_000 });
 
     expect(summary.boredomGapCount).toBeGreaterThan(0);
     expect(summary.longestBoredomGap).toBeGreaterThanOrEqual(12);
     expect(recommendations.map((r) => r.id)).toContain('boredom-gap');
+    expect(dopamineEngine.state).toBe('underfed');
+    expect(dopamineEngine.missingBeats.map((beat) => beat.principle)).toContain('anticipation-payoff');
+    expect(dopamineEngine.plan.some((step) => step.title.includes('reward drought'))).toBe(true);
   });
 
   it('does not treat upgrade deliberation as gameplay boredom', () => {
@@ -138,6 +144,26 @@ describe('Fun Lab model', () => {
 
     expect(happy.trust).toBeGreaterThan(contradictory.trust);
     expect(contradictory.uncertainty.length).toBeGreaterThan(0);
+  });
+
+  it('builds a readability-first plan for confusing route telemetry', () => {
+    const events = [
+      ev('run-start', 0, { epochIndex: 3, epochName: 'Dark Ages' }),
+      ev('gate-miss', 4),
+      ev('line-break', 4.2),
+      ev('gate-miss', 8),
+      ev('line-break', 8.1),
+      ev('gate-miss', 12),
+      ev('hazard-near-miss', 15),
+      ev('run-end', 26, { distance: 1300, epochIndex: 3, epochName: 'Dark Ages' }),
+    ];
+
+    const { dopamineEngine } = analyzeRun(events, { fun: 3, flow: 2, frustration: 2, oneMoreRun: 3, at: 26_000 });
+
+    expect(dopamineEngine.state).toBe('confusing');
+    expect(dopamineEngine.theoryTags).toContain('readable-challenge');
+    expect(dopamineEngine.plan[0].title).toContain('readable challenge');
+    expect(dopamineEngine.tuning.map((delta) => delta.knob)).toContain('routeCueBrightness');
   });
 
   it('keeps manual quits in context instead of over-reading difficulty', () => {

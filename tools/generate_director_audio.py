@@ -67,8 +67,21 @@ def write_wav(path: Path, samples: list[float]) -> None:
 
 def render(path: str, dur: float, fn) -> None:
     count = int(SR * dur)
-    samples = [clamp(fn(i / SR, i)) for i in range(count)]
-    write_wav(Path(path), samples)
+    path_obj = Path(path)
+    path_obj.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(path_obj), "wb") as wf:
+        wf.setnchannels(2)
+        wf.setsampwidth(2)
+        wf.setframerate(SR)
+        frames = bytearray()
+        for i in range(count):
+            sample = int(clamp(fn(i / SR, i)) * 32767)
+            frames += struct.pack("<hh", sample, sample)
+            if len(frames) >= 65_536:
+                wf.writeframes(frames)
+                frames.clear()
+        if frames:
+            wf.writeframes(frames)
 
 
 def convert_to_ogg(src: Path, dst: Path) -> None:
@@ -192,12 +205,27 @@ def make_music(tmp: Path) -> list[tuple[Path, Path]]:
     add("black-hole", "bass", texture_fn(36, 0.11, 0.045, 16))
     add("black-hole", "texture", texture_fn(54, 0.055, 0.055, 17))
 
-    add("heat-death", "low-tone", lambda t, i: 0.085 * sine(40, t) * (1 - 0.35 * (t / 32)), 32.0)
+    add(
+        "heat-death",
+        "low-tone",
+        lambda t, i: (
+            0.078
+            * sine(40 * (1 + 0.012 * sine(0.009, t)), t)
+            * (1 - 0.42 * min(1, t / 240))
+            * (1 if t < 240 else max(0, 1 - (t - 240) / 120))
+        ),
+        360.0,
+    )
     add(
         "heat-death",
         "vanishing-texture",
-        lambda t, i: 0.035 * sine(120 + 8 * sine(0.03, t), t) * max(0, 1 - t / 32),
-        32.0,
+        lambda t, i: (
+            0.028
+            * sine(118 + 6 * sine(0.021, t), t)
+            * (0.25 + 0.75 * max(0, sine(0.031, t)))
+            * max(0, 1 - t / 210)
+        ),
+        360.0,
     )
     return out
 
@@ -219,13 +247,13 @@ def make_sfx(tmp: Path) -> list[tuple[Path, Path]]:
         render(str(wav), dur, fn)
         out.append((wav, AUDIO_ROOT / rel))
 
-    for n in range(1, 4):
+    for n in range(1, 5):
         add(f"sfx/pickup/pickup-{n:02d}.ogg", 0.32, sweep(660 + n * 45, 1600 + n * 120, 0.32, 0.18, sine))
 
     for n in range(1, 5):
         add(f"sfx/speed-pad/speed-pad-{n:02d}.ogg", 0.58, sweep(180 + n * 18, 1380 + n * 80, 0.58, 0.19, saw))
 
-    for n in range(1, 5):
+    for n in range(1, 7):
         base = 420 + n * 45
         add(
             f"sfx/line-gate/line-gate-{n:02d}.ogg",
@@ -236,7 +264,7 @@ def make_sfx(tmp: Path) -> list[tuple[Path, Path]]:
     for n in range(1, 4):
         add(f"sfx/gate-miss/gate-miss-{n:02d}.ogg", 0.26, sweep(440 - n * 35, 130 - n * 8, 0.26, 0.12, saw))
 
-    for n in range(1, 4):
+    for n in range(1, 6):
         rng = noise(100 + n)
         add(
             f"sfx/rail-scrape/rail-scrape-{n:02d}.ogg",
@@ -247,7 +275,7 @@ def make_sfx(tmp: Path) -> list[tuple[Path, Path]]:
     for name, rate in [("gamma", 1.18), ("visible", 1.0), ("radio", 0.82)]:
         add(f"sfx/wavelength-shift/{name}.ogg", 0.24, sweep(900 * rate, 420 * rate, 0.24, 0.12, tri))
 
-    for n in range(1, 4):
+    for n in range(1, 6):
         rng = noise(200 + n)
         add(
             f"sfx/damage-hit/damage-hit-{n:02d}.ogg",
@@ -271,10 +299,10 @@ def make_sfx(tmp: Path) -> list[tuple[Path, Path]]:
         * env_exp(t, 4.8, 0.7, 2.8),
     )
 
-    for n in range(1, 4):
+    for n in range(1, 7):
         add(f"sfx/hazard-whoosh/hazard-whoosh-{n:02d}.ogg", 0.46, sweep(900 + n * 40, 210 + n * 15, 0.46, 0.13, sine))
 
-    for n in range(1, 3):
+    for n in range(1, 5):
         add(f"sfx/gravity-well-whoosh/gravity-well-whoosh-{n:02d}.ogg", 0.7, sweep(260 + n * 10, 54 + n * 5, 0.7, 0.16, saw))
 
     add(

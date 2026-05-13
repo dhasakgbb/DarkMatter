@@ -9,7 +9,7 @@ import { startRun, pause, resume } from './game';
 import { endWitness } from './witness';
 import { refreshSettingsUI } from './ui';
 import { wavelengthIndexAt } from './hudLayout';
-import { isWavelengthTouchPoint, touchTargetForClientPoint } from './touchControls';
+import { isJoystickTouchPoint, isWavelengthTouchPoint, joystickTargetForClientPoint } from './touchControls';
 import { requestLandscapeLock } from './orientation';
 
 export const input = {
@@ -25,6 +25,17 @@ export const input = {
 
 type DigitalInputKey = 'left' | 'right' | 'up' | 'down' | 'boost';
 let steeringTouchId: number | null = null;
+
+function updateJoystickVisual(target?: { normalizedX: number; normalizedY: number }) {
+  const base = document.getElementById('mobile-joystick');
+  const stick = base?.querySelector<HTMLElement>('.stick');
+  if (!base || !stick) return;
+  const active = !!target;
+  base.classList.toggle('active', active);
+  const x = active ? target!.normalizedX * 34 : 0;
+  const y = active ? target!.normalizedY * 34 : 0;
+  stick.style.transform = 'translate(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px)';
+}
 
 const keyMap: Record<string, DigitalInputKey> = {
   KeyA: 'left',  ArrowLeft: 'left',
@@ -53,30 +64,41 @@ function applyTouchInput(touches: TouchList) {
   input.touchTracking = false;
   input.touchTargetLateral = 0;
   input.touchTargetVertical = 0;
-  if (game.state !== 'run') return;
+  if (game.state !== 'run') {
+    steeringTouchId = null;
+    updateJoystickVisual();
+    return;
+  }
   let activeGameplayTouches = 0;
   let trackingTouch: Touch | null = null;
   for (let i = 0; i < touches.length; i++) {
     const touch = touches[i];
     if (isWavelengthTouch(touch)) continue;
     activeGameplayTouches++;
+    if (!isJoystickTouch(touch)) continue;
     if (touch.identifier === steeringTouchId) trackingTouch = touch;
     trackingTouch ??= touch;
   }
   if (trackingTouch) {
     steeringTouchId = trackingTouch.identifier;
-    const target = touchTargetForClientPoint(trackingTouch.clientX, trackingTouch.clientY, window.innerWidth, window.innerHeight);
+    const target = joystickTargetForClientPoint(trackingTouch.clientX, trackingTouch.clientY, window.innerWidth, window.innerHeight);
     input.touchTracking = true;
     input.touchTargetLateral = target.lateral;
     input.touchTargetVertical = target.vertical;
+    updateJoystickVisual(target);
   } else {
     steeringTouchId = null;
+    updateJoystickVisual();
   }
   if (activeGameplayTouches >= 2) input.boost = true;
 }
 
 function isWavelengthTouch(touch: Pick<Touch, 'clientX' | 'clientY'>) {
   return isWavelengthTouchPoint(touch.clientX, touch.clientY, window.innerWidth, window.innerHeight);
+}
+
+function isJoystickTouch(touch: Pick<Touch, 'clientX' | 'clientY'>) {
+  return isJoystickTouchPoint(touch.clientX, touch.clientY, window.innerWidth, window.innerHeight);
 }
 
 function handleWavelengthTouch(touches: TouchList) {

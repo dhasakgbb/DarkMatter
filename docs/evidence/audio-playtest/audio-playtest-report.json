@@ -1,22 +1,21 @@
 {
   "url": "http://127.0.0.1:5178/",
   "screenshots": {
-    "title": "/Users/damian/GitHub/DarkMatter/.playtest/audio-title.png",
-    "run": "/Users/damian/GitHub/DarkMatter/.playtest/audio-run.png"
+    "title": "/Users/damian/GitHub/DarkMatter/docs/evidence/audio-playtest/audio-title.png",
+    "run": "/Users/damian/GitHub/DarkMatter/docs/evidence/audio-playtest/audio-run.png"
   },
   "traceSummary": {
-    "total": 31,
+    "total": 25,
     "byCue": {
-      "engineLoop": 2,
-      "Inflationary": 1,
-      "memoryUnlock": 3,
-      "uiClick": 2,
-      "gravityWellWhoosh": 5,
-      "speedPad": 2,
       "Stellar": 1,
       "epochRiser": 2,
+      "memoryUnlock": 1,
+      "gravityWellWhoosh": 5,
+      "engineLoop": 1,
+      "uiClick": 1,
       "uiSwoosh": 1,
       "pickup": 1,
+      "speedPad": 1,
       "lineGate": 2,
       "gateMiss": 1,
       "railScrape": 1,
@@ -27,107 +26,107 @@
       "hazardWhoosh": 1
     },
     "bySource": {
-      "asset": 29,
-      "music": 2
+      "music": 1,
+      "asset": 24
     },
     "first": [
       {
-        "cue": "engineLoop",
-        "source": "asset",
-        "at": 2371.199999988079,
-        "detail": "loop"
-      },
-      {
-        "cue": "Inflationary",
+        "cue": "Stellar",
         "source": "music",
-        "at": 2371.2999999523163,
-        "detail": "2 stems"
+        "at": 12853.399999976158,
+        "detail": "4 stems"
+      },
+      {
+        "cue": "epochRiser",
+        "source": "asset",
+        "at": 12853.5,
+        "detail": "2 variants"
       },
       {
         "cue": "memoryUnlock",
         "source": "asset",
-        "at": 2371.399999976158,
-        "detail": "1 variants"
-      },
-      {
-        "cue": "uiClick",
-        "source": "asset",
-        "at": 2371.399999976158,
-        "detail": "1 variants"
-      },
-      {
-        "cue": "memoryUnlock",
-        "source": "asset",
-        "at": 3465.899999976158,
+        "at": 12853.599999964237,
         "detail": "1 variants"
       },
       {
         "cue": "gravityWellWhoosh",
         "source": "asset",
-        "at": 3972.7999999523163,
-        "detail": "2 variants"
-      },
-      {
-        "cue": "speedPad",
-        "source": "asset",
-        "at": 4449.599999964237,
+        "at": 13116.800000011921,
         "detail": "4 variants"
       },
       {
         "cue": "gravityWellWhoosh",
         "source": "asset",
-        "at": 5639,
-        "detail": "2 variants"
+        "at": 13733.899999976158,
+        "detail": "4 variants"
+      },
+      {
+        "cue": "engineLoop",
+        "source": "asset",
+        "at": 14056.599999964237,
+        "detail": "loop"
+      },
+      {
+        "cue": "uiClick",
+        "source": "asset",
+        "at": 14056.599999964237,
+        "detail": "1 variants"
+      },
+      {
+        "cue": "uiSwoosh",
+        "source": "asset",
+        "at": 14056.699999988079,
+        "detail": "1 variants"
       }
     ],
     "last": [
       {
-        "cue": "wavelengthShift",
-        "source": "asset",
-        "at": 14162.099999964237,
-        "detail": "3 variants"
-      },
-      {
-        "cue": "wavelengthShift",
-        "source": "asset",
-        "at": 14162.199999988079,
-        "detail": "3 variants"
-      },
-      {
         "cue": "damageHit",
         "source": "asset",
-        "at": 14162.199999988079,
-        "detail": "3 variants"
+        "at": 14056.800000011921,
+        "detail": "5 variants"
       },
       {
         "cue": "death",
         "source": "asset",
-        "at": 14162.199999988079,
+        "at": 14056.899999976158,
         "detail": "2 variants"
       },
       {
         "cue": "witnessChime",
         "source": "asset",
-        "at": 14162.299999952316,
+        "at": 14056.899999976158,
         "detail": "1 variants"
       },
       {
         "cue": "epochRiser",
         "source": "asset",
-        "at": 14162.299999952316,
+        "at": 14056.899999976158,
         "detail": "2 variants"
       },
       {
         "cue": "hazardWhoosh",
         "source": "asset",
-        "at": 14162.5,
-        "detail": "3 variants"
+        "at": 14056.899999976158,
+        "detail": "6 variants"
       },
       {
         "cue": "gravityWellWhoosh",
         "source": "asset",
-        "at": 14162.599999964237,
-        "detail": "2 variants"
+        "at": 14492,
+        "detail": "4 variants"
+      },
+      {
+        "cue": "gravityWellWhoosh",
+        "source": "asset",
+        "at": 15545.800000011921,
+        "detail": "4 variants"
+      },
+      {
+        "cue": "gravityWellWhoosh",
+        "source": "asset",
+        "at": 16203.599999964237,
+        "detail": "4 variants"
       }
     ]
   },
@@ -144,7 +143,7 @@
     "hasContext": true,
     "sfxBuffers": 17,
     "musicBuffers": 9,
-    "traceLength": 31
+    "traceLength": 22
   },
   "cdpEvents": []
 }

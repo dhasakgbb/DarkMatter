@@ -33,6 +33,7 @@ function audioNode(extra: Record<string, unknown> = {}) {
 interface CallCounters {
   oscillator: number;
   buffer: number;
+  convolver: number;
 }
 
 function installFakeAudio(counters: CallCounters) {
@@ -78,7 +79,10 @@ function installFakeAudio(counters: CallCounters) {
       counters.buffer += 1;
       return { getChannelData: vi.fn(() => new Float32Array(length)) };
     }
-    createConvolver() { return audioNode({ buffer: null }); }
+    createConvolver() {
+      counters.convolver += 1;
+      return audioNode({ buffer: null });
+    }
     createDynamicsCompressor() {
       return audioNode({
         threshold: audioParam(), knee: audioParam(), ratio: audioParam(),
@@ -114,9 +118,6 @@ function resetAudio() {
   audio.pendingMusicKey = null;
   audio.pendingEngine = false;
   audio.assetsReady = false;
-  audio.synth = null;
-  audio.useProcedural = true;
-  audio.proceduralEpoch = null;
 }
 
 function fireAllCues() {
@@ -127,6 +128,7 @@ function fireAllCues() {
   audio.railScrape();
   audio.hit();
   audio.shift(1);
+  audio.phaseChime(2);
   audio.death();
   audio.witnessChime();
   audio.memoryUnlock();
@@ -142,59 +144,41 @@ function fireAllCues() {
 
 describe('audio runtime contracts', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     resetAudio();
   });
 
-  it('procedural mode synthesizes via oscillators + buffers without needing studio assets', () => {
-    const counters: CallCounters = { oscillator: 0, buffer: 0 };
+  it('uses manifest assets only and never constructs generated Web Audio nodes', () => {
+    const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
     installFakeAudio(counters);
 
     fireAllCues();
 
-    expect(counters.oscillator).toBeGreaterThan(0);
-    expect(counters.buffer).toBeGreaterThan(0);
-  });
-
-  it('asset-only mode (proceduralAudio=false) does not synthesize legacy audio while assets are unavailable', () => {
-    const counters: CallCounters = { oscillator: 0, buffer: 0 };
-    installFakeAudio(counters);
-
-    audio.ensure();
-    audio.setUseProcedural(false);
-    // Procedural setup ran during ensure(); reset to measure only the asset path.
-    counters.oscillator = 0;
-    counters.buffer = 0;
-
-    fireAllCues();
-
+    expect(audio.mode).toBe('asset');
     expect(counters.oscillator).toBe(0);
     expect(counters.buffer).toBe(0);
+    expect(counters.convolver).toBe(0);
   });
 
-  it('audio.setFlow forwards into the procedural synth wet bus + drone filter', () => {
-    const counters: CallCounters = { oscillator: 0, buffer: 0 };
+  it('keeps missing asset cues silent instead of falling back to generated Web Audio', () => {
+    const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
     installFakeAudio(counters);
 
     audio.ensure();
-    audio.startDrone(EPOCHS[0]);
-    const synth = audio.synth!;
-    expect(synth).toBeTruthy();
+    const played = audio.playSfx('pickup');
 
-    const wetGain = synth.wet.gain as unknown as { setTargetAtTime: ReturnType<typeof vi.fn> };
-    const droneFilterFreq = synth.droneHandle!.filter!.frequency as unknown as { setTargetAtTime: ReturnType<typeof vi.fn> };
-    wetGain.setTargetAtTime.mockClear();
-    droneFilterFreq.setTargetAtTime.mockClear();
+    expect(played).toBe(false);
+    expect(counters.oscillator).toBe(0);
+    expect(counters.buffer).toBe(0);
+    expect(counters.convolver).toBe(0);
+  });
 
-    audio.setFlow(0.9);
+  it('routes phase feedback through the current wavelength asset cue', () => {
+    const playSpy = vi.spyOn(audio, 'playSfx').mockReturnValue(false);
 
-    expect(wetGain.setTargetAtTime).toHaveBeenCalledTimes(1);
-    expect(droneFilterFreq.setTargetAtTime).toHaveBeenCalledTimes(1);
-    expect(synth.intensity).toBeCloseTo(0.9, 5);
+    audio.phaseChime(0);
 
-    // Tiny deltas are no-ops to avoid zipper noise.
-    wetGain.setTargetAtTime.mockClear();
-    audio.setFlow(0.9009);
-    expect(wetGain.setTargetAtTime).not.toHaveBeenCalled();
+    expect(playSpy).toHaveBeenCalledWith('wavelengthShift', { rate: 1.12, gain: 0.45, cooldownMs: 80 });
   });
 });

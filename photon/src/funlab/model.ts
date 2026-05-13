@@ -1,3 +1,4 @@
+import { evaluateDopamineEngine } from './dopamineEngine';
 import type { FunFingerprint, FunRunEvent, FunRunSummary, TuningRecommendation, VibeRating } from './types';
 
 const MEANINGFUL_EVENTS = new Set<FunRunEvent['type']>([
@@ -312,5 +313,8 @@ export function analyzeRun(events: FunRunEvent[], vibe?: VibeRating, fallbackRun
   const summary = summarizeRun(events, fallbackRunId);
   const fingerprint = scoreRun(summary, vibe);
   const recommendations = recommend(summary, fingerprint);
-  return { summary, fingerprint, recommendations };
+  const dopamineEngine = evaluateDopamineEngine(summary, fingerprint);
+  return { summary, fingerprint, recommendations, dopamineEngine };
 }
+
+export { evaluateDopamineEngine } from './dopamineEngine';

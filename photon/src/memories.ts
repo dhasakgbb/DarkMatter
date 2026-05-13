@@ -53,6 +53,7 @@ export function checkMemoryTriggers() {
     if (w.perfectEpoch && !game.perfectEpochThisRun) ok = false;
     if (w.flowPeakDwell != null && (game.flowPeakDwell || 0) < w.flowPeakDwell) ok = false;
     if (w.flowDwellLifetime != null && (meta.flowDwellLifetime || 0) < w.flowDwellLifetime) ok = false;
+    if (w.darkMatterDetections != null && (meta.darkMatterDetections || 0) < w.darkMatterDetections) ok = false;
     if (ok) unlockMemory(m.id);
   }
 }

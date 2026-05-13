@@ -38,4 +38,31 @@ describe('mobile touch controls', () => {
     expect(isWavelengthTouchPoint(32, 352, 812, 375)).toBe(false);
     expect(isWavelengthTouchPoint(348, 352, 812, 375)).toBe(false);
   });
+
+  it('places the virtual joystick in the lower-left play area', async () => {
+    const { isJoystickTouchPoint, joystickGeometry } = await loadTouchControls();
+    const joystick = joystickGeometry(812, 375);
+
+    expect(joystick.centerX).toBeCloseTo(76, 2);
+    expect(joystick.centerY).toBeCloseTo(301, 2);
+    expect(isJoystickTouchPoint(joystick.centerX, joystick.centerY, 812, 375)).toBe(true);
+    expect(isJoystickTouchPoint(406, 352, 812, 375)).toBe(false);
+  });
+
+  it('maps joystick deflection to clamped analog steering targets', async () => {
+    const { joystickGeometry, joystickTargetForClientPoint } = await loadTouchControls();
+    const joystick = joystickGeometry(812, 375);
+    const centered = joystickTargetForClientPoint(joystick.centerX, joystick.centerY, 812, 375);
+    const upRight = joystickTargetForClientPoint(joystick.centerX + joystick.radius, joystick.centerY - joystick.radius, 812, 375);
+    const farDownLeft = joystickTargetForClientPoint(joystick.centerX - joystick.radius * 3, joystick.centerY + joystick.radius * 3, 812, 375);
+
+    expect(centered.lateral).toBeCloseTo(0, 5);
+    expect(centered.vertical).toBeCloseTo(0, 5);
+    expect(upRight.normalizedX).toBeCloseTo(Math.SQRT1_2, 5);
+    expect(upRight.normalizedY).toBeCloseTo(-Math.SQRT1_2, 5);
+    expect(upRight.lateral).toBeGreaterThan(0);
+    expect(upRight.vertical).toBeGreaterThan(0);
+    expect(farDownLeft.normalizedX).toBeCloseTo(-Math.SQRT1_2, 5);
+    expect(farDownLeft.normalizedY).toBeCloseTo(Math.SQRT1_2, 5);
+  });
 });

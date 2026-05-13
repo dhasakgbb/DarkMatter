@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 
 const root = resolve(new URL('..', import.meta.url).pathname);
 const photonDir = join(root, 'photon');
-const outDir = join(root, '.playtest');
+const outDir = join(root, 'docs', 'evidence', 'audio-playtest');
 const vitePort = Number(process.env.PHOTON_PLAYTEST_PORT || 5178);
 const chromePort = Number(process.env.PHOTON_CHROME_PORT || 9337);
 const chromeBin = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -172,10 +172,13 @@ async function main() {
     await drive(send, 9000);
     const runShot = await capture(send, 'audio-run.png');
 
-    await evaluate(send, `window.__PHOTON_AUDIO_TRACE = window.__PHOTON_AUDIO_TRACE || []`);
+    await evaluate(send, `window.__PHOTON_AUDIO_TRACE = []`);
     await evaluate(send, `import('/src/game.ts').then(m => { m.setEpoch(5); return true; })`);
     await delay(1200);
     const directCueResult = await evaluate(send, `import('/src/audio.ts').then(({ audio }) => {
+      audio.ensure();
+      return audio.manifestPromise;
+    }).then(() => import('/src/audio.ts')).then(({ audio }) => {
       audio.stopEngine();
       audio.startEngine();
       audio.uiClick();

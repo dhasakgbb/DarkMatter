@@ -103,6 +103,8 @@ This is the only ending. There is no boss. There is no explosion. There is no wi
 | Codex | Stays for facts. Add Memories as a sister tab. |
 | Upgrades | Stays mechanically. Copy gets reframed in second person. |
 | Variants | Each variant gets a Memory-themed unlock condition and lore. |
+| Dark matter filaments | A rare invisible-mass route event. The player detects it by lensing/shear before seeing a reward label, reinforcing that unseen mass is known by gravitational effect, not by glow. |
+| Science Mode | Baseline quantitative HUD: redshift, scale factor, CMB temperature, matter/dark-energy fractions, and expansion drift are always part of the run. The science layer is the game, not a side mode. |
 | Endless mode | Removed. Replaced with the actual remaining epochs ending in Heat Death. |
 
 That last one is important: **endless mode is incompatible with Pillar 1.** If the universe can be looped, it isn't really the universe. Endless was a useful scaffolding while we had only three epochs. Once Stellar through Heat Death exist, endless gets cut. Players who want to play "again" do so by starting a new run, which is again the entire universe, with new memories carried.

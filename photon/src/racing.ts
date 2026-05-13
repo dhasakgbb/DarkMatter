@@ -19,6 +19,10 @@ function gameSeedPhase() {
   return ((game.runSeed || 0) % 997) * 0.0063;
 }
 
+const INITIAL_ROUTE_SCALE = 0.56;
+const ROUTE_MAX_LAT_STEP = 12.5;
+const ROUTE_MAX_VER_STEP = 8.0;
+
 export interface RacingEntity {
   kind: RacingKind;
   dist: number;
@@ -46,15 +50,19 @@ class RacingLineManager {
   private readonly lineAhead = new THREE.Vector3();
   private readonly lineFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
   private readonly detail = getActiveRenderProfile().hazardDetail;
+  private routeAnchor: { lateral: number; vertical: number } | null = null;
+  private routeAnchorDist = 42;
 
   constructor() {
     scene.add(this.group);
   }
 
-  reset() {
+  reset(startDist = 42) {
     for (const e of this.list) this.group.remove(e.object);
     this.list.length = 0;
-    this.lastSpawnDist = 42;
+    this.lastSpawnDist = startDist;
+    this.routeAnchor = null;
+    this.routeAnchorDist = startDist;
     game.nextRacingCue = null;
   }
 
@@ -64,15 +72,17 @@ class RacingLineManager {
       while (this.lastSpawnDist < horizon) {
         const gap = 62 + runRng() * 38;
         this.lastSpawnDist += gap / Math.max(0.75, epoch.speedMul);
-        const line = this.racingLineAt(this.lastSpawnDist);
+        const line = this.smoothGateTarget(this.lastSpawnDist, this.racingLineAt(this.lastSpawnDist));
         this.spawnGate(this.lastSpawnDist, line.lateral, line.vertical);
 
         if (runRng() < 0.86) {
           const padDist = this.lastSpawnDist + 16 + runRng() * 20;
           const padLine = this.racingLineAt(padDist);
-          const lateral = THREE.MathUtils.lerp(line.lateral, padLine.lateral, 0.65) + (runRng() - 0.5) * 3;
-          const vertical = THREE.MathUtils.lerp(line.vertical, padLine.vertical, 0.65) + (runRng() - 0.5) * 2;
-          this.spawnPad(padDist, lateral, vertical);
+          const padTarget = this.limitRouteStep({
+            lateral: THREE.MathUtils.lerp(line.lateral, padLine.lateral, 0.65) + (runRng() - 0.5) * 2.2,
+            vertical: THREE.MathUtils.lerp(line.vertical, padLine.vertical, 0.65) + (runRng() - 0.5) * 1.6,
+          }, line, 9.5, 6.5);
+          this.spawnPad(padDist, padTarget.lateral, padTarget.vertical);
         }
       }
     }
@@ -125,6 +135,36 @@ class RacingLineManager {
     game.nextRacingCue = pickNextRacingCue(this.list, photonDist, photonLat, photonVer);
   }
 
+  private limitRouteStep(
+    target: { lateral: number; vertical: number },
+    anchor: { lateral: number; vertical: number },
+    maxLatStep: number,
+    maxVerStep: number,
+  ) {
+    return {
+      lateral: THREE.MathUtils.clamp(target.lateral, anchor.lateral - maxLatStep, anchor.lateral + maxLatStep),
+      vertical: THREE.MathUtils.clamp(target.vertical, anchor.vertical - maxVerStep, anchor.vertical + maxVerStep),
+    };
+  }
+
+  private smoothGateTarget(dist: number, target: { lateral: number; vertical: number }) {
+    const centered = {
+      lateral: THREE.MathUtils.clamp(target.lateral, -PLAYFIELD_HALF_WIDTH * INITIAL_ROUTE_SCALE, PLAYFIELD_HALF_WIDTH * INITIAL_ROUTE_SCALE),
+      vertical: THREE.MathUtils.clamp(target.vertical, -PLAYFIELD_HALF_HEIGHT * INITIAL_ROUTE_SCALE, PLAYFIELD_HALF_HEIGHT * INITIAL_ROUTE_SCALE),
+    };
+    if (!this.routeAnchor) {
+      this.routeAnchor = centered;
+      this.routeAnchorDist = dist;
+      return centered;
+    }
+
+    const span = THREE.MathUtils.clamp((dist - this.routeAnchorDist) / 74, 0.75, 1.35);
+    const next = this.limitRouteStep(centered, this.routeAnchor, ROUTE_MAX_LAT_STEP * span, ROUTE_MAX_VER_STEP * span);
+    this.routeAnchor = next;
+    this.routeAnchorDist = dist;
+    return next;
+  }
+
   private racingLineAt(dist: number) {
     const p = track.pointAt(dist, this.linePoint);
     const ahead = track.pointAt(dist + 78, this.lineAhead);
@@ -134,8 +174,8 @@ class RacingLineManager {
     const routeWaveB = Math.sin(dist * 0.013 + 1.8);
     let lateral = -THREE.MathUtils.clamp(bend.dot(frame.right) * 0.72, -15, 15);
     let vertical = -THREE.MathUtils.clamp(bend.dot(frame.up) * 0.58, -10, 10);
-    lateral += routeWaveA * PLAYFIELD_HALF_WIDTH * 0.36 + (runRng() - 0.5) * 4.8;
-    vertical += routeWaveB * PLAYFIELD_HALF_HEIGHT * 0.30 + (runRng() - 0.5) * 3.6;
+    lateral += routeWaveA * PLAYFIELD_HALF_WIDTH * 0.32 + (runRng() - 0.5) * 3.2;
+    vertical += routeWaveB * PLAYFIELD_HALF_HEIGHT * 0.26 + (runRng() - 0.5) * 2.4;
 
     lateral = THREE.MathUtils.clamp(lateral, -PLAYFIELD_HALF_WIDTH * 0.78, PLAYFIELD_HALF_WIDTH * 0.78);
     vertical = THREE.MathUtils.clamp(vertical, -PLAYFIELD_HALF_HEIGHT * 0.78, PLAYFIELD_HALF_HEIGHT * 0.78);

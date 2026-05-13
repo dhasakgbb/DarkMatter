@@ -55,4 +55,23 @@ describe('racing cue selection', () => {
     expect(wide?.align).toBeLessThan(centered?.align || 0);
     expect(wide?.align).toBeGreaterThanOrEqual(0);
   });
+
+  it('prefers a readable lead cue over an off-axis target that is already too late', () => {
+    const cue = pickNextRacingCue([
+      candidate({ dist: 106, lateral: 18, vertical: 0 }),
+      candidate({ kind: 'pad', dist: 132, lateral: 3, vertical: 0 }),
+    ], 100, 0, 0);
+
+    expect(cue?.kind).toBe('pad');
+    expect(cue?.dz).toBe(32);
+  });
+
+  it('keeps a late off-axis cue when no better lead cue exists', () => {
+    const cue = pickNextRacingCue([
+      candidate({ dist: 106, lateral: 18, vertical: 0 }),
+    ], 100, 0, 0);
+
+    expect(cue?.kind).toBe('gate');
+    expect(cue?.dz).toBe(6);
+  });
 });

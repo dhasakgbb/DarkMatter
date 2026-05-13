@@ -11,11 +11,9 @@ import { funLab } from './funlab/runtime';
 export const witnessHooks: {
   setStateTitle: () => void;
   refreshTitleStats: () => void;
-  showVibePrompt: (runId: string) => void;
 } = {
   setStateTitle: () => {},
   refreshTitleStats: () => {},
-  showVibePrompt: () => {},
 };
 
 export function checkVariantUnlocksFromMeta() {
@@ -69,10 +67,6 @@ export function endWitness() {
   if (lensingPass) {
     lensingPass.uniforms.uVignettePower.value = 1;
     (lensingPass.uniforms.uVignetteColor.value as THREE.Vector3).set(0, 0, 0);
-  }
-  if (funLab.pendingVibeRunId) {
-    witnessHooks.showVibePrompt(funLab.pendingVibeRunId);
-    return;
   }
   witnessHooks.refreshTitleStats();
   witnessHooks.setStateTitle();

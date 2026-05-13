@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-05-13T23:38:40.221Z",
+  "checks": {
+    "scienceToggleExists": false,
+    "scienceModeSettingsCopyExists": false,
+    "scienceModeIsBaseline": true,
+    "standaloneStartsRun": true,
+    "renderDiagnosticsIncludeScience": true,
+    "browserErrors": 0
+  },
+  "diagnosticsSample": {
+    "state": "run",
+    "science": {
+      "mode": true,
+      "redshift": 0,
+      "darkMatterSignal": 0,
+      "darkMatterSignalTime": 0,
+      "darkMatterMassSolar": 0,
+      "darkMatterDeflectionArcsec": 0
+    },
+    "canvasCount": 2
+  },
+  "command": "headless Chrome CDP smoke against photon-racer-v2.html standalone artifact",
+  "verdict": "pass"
+}

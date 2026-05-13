@@ -5,7 +5,7 @@ import { VARIANTS, type Variant } from './cosmology';
 import { meta } from './meta';
 import type { RacingCue } from './racingCue';
 
-export type GameStateName = 'title' | 'run' | 'upgrade' | 'death' | 'codex' | 'pause' | 'memories' | 'form' | 'vibe' | 'funlab';
+export type GameStateName = 'title' | 'run' | 'upgrade' | 'death' | 'codex' | 'pause' | 'memories' | 'form';
 
 export interface RunState {
   state: GameStateName;
@@ -80,6 +80,11 @@ export interface RunState {
   _shiftedThisRun: boolean;
   _idleZ?: number;
   reducedMotion?: boolean;
+  scienceMode: boolean;
+  darkMatterSignal: number;
+  darkMatterSignalTime: number;
+  darkMatterMassSolar: number;
+  darkMatterDeflectionArcsec: number;
 }
 
 export const game: RunState = {
@@ -138,4 +143,9 @@ export const game: RunState = {
   cosmicConstants: { speedMul: 1, agilityMul: 1, coherenceThreshold: 14 },
   _speed: 0,
   _shiftedThisRun: false,
+  scienceMode: true,
+  darkMatterSignal: 0,
+  darkMatterSignalTime: 0,
+  darkMatterMassSolar: 0,
+  darkMatterDeflectionArcsec: 0,
 };

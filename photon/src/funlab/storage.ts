@@ -32,6 +32,7 @@ export function updateRunVibe(runId: string, vibe: VibeRating): FunRunRecord | n
     summary: analysis.summary,
     fingerprint: analysis.fingerprint,
     recommendations: analysis.recommendations,
+    dopamineEngine: analysis.dopamineEngine,
   };
   history[index] = updated;
   saveFunHistory(history);

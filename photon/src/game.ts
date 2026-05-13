@@ -22,7 +22,6 @@ import { drawHud, showEpochToast } from './hud';
 import { comboMultiplier, showToast } from './utils';
 import { refreshTitleStats, refreshSettingsUI } from './ui';
 import { funLab } from './funlab/runtime';
-import { renderVibePrompt } from './funlab/ui';
 
 const FOAM_COLOR = new THREE.Color(0x99ddff);
 const BACKGROUND_COLOR = new THREE.Color();
@@ -70,7 +69,8 @@ declare global {
 export function setState(s: GameStateName) {
   const prev = game.state;
   game.state = s;
-  for (const id of ['title', 'run', 'upgrade', 'death', 'codex', 'pause', 'memories', 'form', 'vibe', 'funlab'] as const) {
+  document.body.dataset.state = s;
+  for (const id of ['title', 'run', 'upgrade', 'death', 'codex', 'pause', 'memories', 'form'] as const) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('on', id === s);
   }
@@ -98,7 +98,27 @@ export function checkVariantUnlocks() {
     }
   };
   if (meta.witnessedHeatDeath >= 1) ensure('microwave');
-  if (meta.bestEpoch >= 5)         ensure('xray');
+  if ((meta.darkMatterDetections || 0) >= 1) ensure('xray');
+}
+
+function clearRunFieldForHeatDeath() {
+  hazards.reset(photon.distance);
+  racingLine.reset(photon.distance);
+  game.padBoostTime = 0;
+  game.padBoostTotal = 0;
+  game.lineStreak = 0;
+  game.lineEventText = '';
+  game.lineEventTime = 0;
+  game.railScrapeTime = 0;
+  game.railScrapeCooldown = 0;
+  game.gravityShear = 0;
+  game.gravityShearX = 0;
+  game.gravityShearY = 0;
+  game.nextRacingCue = null;
+  game.darkMatterSignal = 0;
+  game.darkMatterSignalTime = 0;
+  game.darkMatterMassSolar = 0;
+  game.darkMatterDeflectionArcsec = 0;
 }
 
 export function setEpoch(idx: number) {
@@ -130,6 +150,7 @@ export function setEpoch(idx: number) {
   scene.background = BACKGROUND_COLOR.copy(e.fogColor).multiplyScalar(0.4);
   track.setEpoch(e);
   if (e.isHeatDeath) {
+    clearRunFieldForHeatDeath();
     audio.startHeatDeath();
     game.heatDeathFade = 0;
     game.heatDeathFinalSpawned = false;
@@ -139,6 +160,7 @@ export function setEpoch(idx: number) {
   // Cinematic epoch riser plays only on transitions (not the first epoch / not on resume's first epoch)
   if (isTransition) audio.epochRiser();
   maybeUnlockCodex(e.codexKey, CODEX_ENTRIES);
+  if (e.isHeatDeath || idx >= 7) maybeUnlockCodex('DARKENERGY', CODEX_ENTRIES);
   if (idx > meta.bestEpoch) meta.bestEpoch = idx;
   saveMeta(meta);
   checkMemoryTriggers();
@@ -302,6 +324,10 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   game.gravityShearX = 0;
   game.gravityShearY = 0;
   game.nextRacingCue = null;
+  game.darkMatterSignal = 0;
+  game.darkMatterSignalTime = 0;
+  game.darkMatterMassSolar = 0;
+  game.darkMatterDeflectionArcsec = 0;
   game._anyEpochSetThisRun = false;
   game.runDistance = 0;
   game.runEnergy = (resumeSnapshot && resumeSnapshot.runEnergy) || 0;
@@ -429,10 +455,6 @@ export function endRun() {
     dc.style.display = ''; dc.textContent = CODEX_ENTRIES[e.codexKey].body;
   } else dc.style.display = 'none';
   setState('death');
-  if (funLab.pendingVibeRunId) {
-    renderVibePrompt(funLab.pendingVibeRunId);
-    setState('vibe');
-  }
 }
 
 export function epochCleared() {
@@ -486,10 +508,6 @@ export function advanceEpoch() {
 // Wire callbacks the witness module needs without creating a circular import
 witnessHooks.refreshTitleStats = () => refreshTitleStats();
 witnessHooks.setStateTitle = () => setState('title');
-witnessHooks.showVibePrompt = (runId: string) => {
-  renderVibePrompt(runId, 'title');
-  setState('vibe');
-};
 
 function setLineEvent(text: string, time = 1.0) {
   game.lineEventText = text;
@@ -614,6 +632,8 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
       if (game.lineEventTime > 0) game.lineEventTime = Math.max(0, game.lineEventTime - realDt);
       if (game.railScrapeTime > 0) game.railScrapeTime = Math.max(0, game.railScrapeTime - realDt);
       if (game.railScrapeCooldown > 0) game.railScrapeCooldown = Math.max(0, game.railScrapeCooldown - realDt);
+      if (game.darkMatterSignalTime > 0) game.darkMatterSignalTime = Math.max(0, game.darkMatterSignalTime - realDt);
+      if (game.darkMatterSignalTime <= 0) game.darkMatterSignal = Math.max(0, (game.darkMatterSignal || 0) - realDt * 1.4);
       const photonSegIdx = Math.floor(photon.distance / SEGMENT_LEN);
       track.ensureAhead(photonSegIdx);
       const e = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
@@ -902,10 +922,18 @@ export function renderGameToText() {
       tutorialStep: game.tutorialActive ? game.tutorialStep : null,
     },
     audio: {
-      mode: audio.useProcedural ? 'procedural' : 'asset',
+      mode: audio.mode,
       assetsReady: audio.assetsReady,
-      engineActive: audio.useProcedural ? !!audio.synth?.engineHandle : !!audio.engineNodes,
-      droneActive: audio.useProcedural ? !!audio.synth?.droneHandle : !!audio.studioMusicNodes,
+      engineActive: !!audio.engineNodes,
+      droneActive: !!audio.studioMusicNodes,
+    },
+    science: {
+      mode: game.scienceMode,
+      redshift: Math.round(game.redshiftAmount * 1000) / 1000,
+      darkMatterSignal: Math.round((game.darkMatterSignal || 0) * 1000) / 1000,
+      darkMatterSignalTime: Math.round((game.darkMatterSignalTime || 0) * 10) / 10,
+      darkMatterMassSolar: Math.round(game.darkMatterMassSolar || 0),
+      darkMatterDeflectionArcsec: Math.round((game.darkMatterDeflectionArcsec || 0) * 100) / 100,
     },
     counts: {
       activeHazards: hazards.list.filter((h) => !h.hit).length,

@@ -1,22 +1,16 @@
 import { meta, saveMeta, loadCheckpoint, clearCheckpoint, defaultMeta } from './meta';
 import { settings, applySettings, saveSettings } from './settings';
 import { EPOCHS, WAVELENGTHS, CODEX_ENTRIES, MEMORIES, VARIANTS } from './cosmology';
-import { game, type GameStateName } from './state';
+import { game } from './state';
 import { memoryBody } from './memories';
 import { showToast } from './utils';
 import { applyMetaUpgrades, setState, startRun, resume, beginDeath, checkVariantUnlocks } from './game';
 import { audio } from './audio';
 import { parseSeedLabel } from './seed';
-import { funLab } from './funlab/runtime';
-import { buildVibeControls, clearFunLabAndRender, exportFunLab, readVibeRating, renderFunLabDashboard, renderVibePrompt } from './funlab/ui';
 import { removeStorage } from './storage';
 
 function eventInput(e: Event): HTMLInputElement {
   return e.currentTarget as HTMLInputElement;
-}
-
-function panelReturnState(id: string, fallback: GameStateName): GameStateName {
-  return (document.getElementById(id)?.dataset.returnState as GameStateName | undefined) || fallback;
 }
 
 export function refreshTitleStats() {
@@ -124,7 +118,6 @@ export function refreshSettingsUI() {
   document.getElementById('set-sens-val')!.textContent = settings.sensitivity.toFixed(2);
   (document.getElementById('set-visual-quality') as HTMLSelectElement).value = settings.visualQuality;
   document.getElementById('set-mute')!.classList.toggle('on', settings.muted);
-  document.getElementById('set-procedural-audio')!.classList.toggle('on', settings.proceduralAudio);
   document.getElementById('set-contrast')!.classList.toggle('on', settings.highContrast);
   document.getElementById('set-reduced')!.classList.toggle('on', settings.reducedMotion);
 }
@@ -161,13 +154,6 @@ export function bindUI() {
   document.getElementById('btn-memories-back')!.addEventListener('click', () => { refreshTitleStats(); setState('title'); });
   document.getElementById('btn-form')!.addEventListener('click', () => { checkVariantUnlocks(); refreshForm(); setState('form'); });
   document.getElementById('btn-form-back')!.addEventListener('click', () => { refreshTitleStats(); setState('title'); });
-  document.getElementById('btn-funlab')!.addEventListener('click', () => {
-    const panel = document.getElementById('funlab')!;
-    panel.dataset.returnState = 'title';
-    renderFunLabDashboard();
-    setState('funlab');
-  });
-
   // Settings controls
   document.getElementById('set-master')!.addEventListener('input', (e) => {
     settings.masterVol = parseFloat(eventInput(e).value);
@@ -185,7 +171,6 @@ export function bindUI() {
     applySettings(); saveSettings(settings);
   });
   document.getElementById('set-mute')!.addEventListener('click', () => { settings.muted = !settings.muted; applySettings(); saveSettings(settings); refreshSettingsUI(); });
-  document.getElementById('set-procedural-audio')!.addEventListener('click', () => { settings.proceduralAudio = !settings.proceduralAudio; applySettings(); saveSettings(settings); refreshSettingsUI(); });
   document.getElementById('set-visual-quality')!.addEventListener('change', (e) => {
     const value = (e.currentTarget as HTMLSelectElement).value;
     settings.visualQuality = value === 'mobile' || value === 'balanced' || value === 'ultra' ? value : settings.visualQuality;
@@ -194,12 +179,6 @@ export function bindUI() {
   document.getElementById('set-contrast')!.addEventListener('click', () => { settings.highContrast = !settings.highContrast; applySettings(); saveSettings(settings); refreshSettingsUI(); });
   document.getElementById('set-reduced')!.addEventListener('click', () => { settings.reducedMotion = !settings.reducedMotion; applySettings(); saveSettings(settings); refreshSettingsUI(); });
   document.getElementById('btn-pause-resume')!.addEventListener('click', resume);
-  document.getElementById('btn-pause-funlab')!.addEventListener('click', () => {
-    const panel = document.getElementById('funlab')!;
-    panel.dataset.returnState = 'pause';
-    renderFunLabDashboard();
-    setState('funlab');
-  });
   document.getElementById('btn-end-run')!.addEventListener('click', () => { game.manualEndRequested = true; resume(); beginDeath(); });
   document.getElementById('btn-reset-meta')!.addEventListener('click', () => {
     if (!confirm('Reset ALL progress (upgrades, codex, runs, best distance)? This cannot be undone.')) return;
@@ -210,41 +189,4 @@ export function bindUI() {
     refreshTitleStats(); refreshCodex();
     showToast('◇ Progress reset');
   });
-  buildVibeControls();
-  const closeVibePrompt = () => {
-    const returnState = panelReturnState('vibe-panel', 'death');
-    if (returnState === 'title') {
-      refreshTitleStats();
-      setState('title');
-    } else {
-      setState('death');
-    }
-  };
-  document.getElementById('btn-vibe-submit')!.addEventListener('click', () => {
-    const runId = document.getElementById('vibe-panel')!.dataset.runId || funLab.pendingVibeRunId || funLab.lastRecordId;
-    if (runId) funLab.attachVibe(runId, readVibeRating());
-    renderFunLabDashboard(runId);
-    closeVibePrompt();
-  });
-  document.getElementById('btn-vibe-skip')!.addEventListener('click', () => {
-    const runId = document.getElementById('vibe-panel')!.dataset.runId || funLab.pendingVibeRunId || funLab.lastRecordId;
-    if (runId) funLab.skipVibe(runId);
-    closeVibePrompt();
-  });
-  document.getElementById('btn-vibe-again')!.addEventListener('click', () => {
-    const runId = document.getElementById('vibe-panel')!.dataset.runId || funLab.pendingVibeRunId || funLab.lastRecordId;
-    if (runId) funLab.skipVibe(runId);
-    startRun();
-  });
-  document.getElementById('btn-funlab-back')!.addEventListener('click', () => {
-    const returnState = panelReturnState('funlab', 'title');
-    if (returnState === 'pause') setState('pause');
-    else { refreshTitleStats(); setState('title'); }
-  });
-  document.getElementById('btn-funlab-export')!.addEventListener('click', exportFunLab);
-  document.getElementById('btn-funlab-clear')!.addEventListener('click', () => {
-    if (!confirm('Clear local Fun Lab run history? Gameplay progress is untouched.')) return;
-    clearFunLabAndRender();
-  });
-  if (funLab.pendingVibeRunId) renderVibePrompt(funLab.pendingVibeRunId);
 }

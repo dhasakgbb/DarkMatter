@@ -97,10 +97,9 @@ UI:
 
 ## Runtime Contract
 
-Photon has two runtime audio paths:
+Photon has one audible runtime audio path:
 
-- Default: `photon/src/procedural.ts` generates the live score, engine, UI, and SFX in real time through Web Audio.
-- Asset mode: `photon/src/audio.ts` can still play manifest-declared OGG/WAV assets for final commissioned material or A/B tests.
+- `photon/src/audio.ts` plays manifest-declared OGG/WAV assets for the current generated pack and future commissioned material. `tools/generate_director_audio.py` may generate temporary assets offline, but the game runtime does not call any archived or generated-code audio fallback.
 
 Runtime assets are declared in `photon/src/audio-manifest.json`. Small shipped assets that must survive the single-file build live under `photon/src/audio-assets/`; larger externally hosted assets can live under `photon/public/audio/` for dev/server builds.
 
@@ -114,17 +113,17 @@ Rules:
 - Loudness target: avoid clipping; leave headroom for SFX over music.
 - Filenames use lowercase kebab-case.
 - Manifest entries stay `enabled: false` until files exist and licensing is verified, except generated director-temp assets covered by `photon/public/audio/TEMP_LICENSE.md`.
-- `settings.proceduralAudio` starts enabled. The pause menu can A/B procedural mode against the manifest asset path.
-- Missing or late asset-mode files stay silent and are traceable through `__PHOTON_AUDIO_TRACE`; procedural mode should remain audible without those assets.
+- The pause menu has no audio-backend toggle; manifest assets are the runtime source.
+- Missing or late asset files stay silent and are traceable through `__PHOTON_AUDIO_TRACE`; no generated-code audio fallback should play.
 
 ## Acceptance Tests
 
 Before calling an audio pass final:
 
-- Start a run with no audio assets present: no errors, procedural audio remains active, and missing asset-mode cues stay silent.
+- Start a run with no audio assets present: no errors, missing cues stay silent, and no generated-code audio fallback plays.
 - Enable one SFX asset: it plays from the manifest path.
 - Enable one epoch stem set: it loops and fades in on epoch start.
-- Toggle procedural audio off and on from pause: `render_game_to_text().audio.mode` reports `asset` then `procedural`, and the engine/drone are active after returning.
+- `render_game_to_text().audio.mode` reports `asset`, with engine/music activity coming only from decoded manifest assets.
 - Cross an epoch boundary: old loop fades out cleanly, new loop starts when its asset is available.
 - Play 10 minutes: no runaway node buildup or obvious clipping.
 - Reach Heat Death: music thins out and SFX restraint matches the design.

@@ -13,7 +13,6 @@ export interface SettingsState {
   sensitivity: number;
   highContrast: boolean;
   reducedMotion: boolean;
-  proceduralAudio: boolean;
   visualQuality: VisualQuality;
 }
 
@@ -24,12 +23,13 @@ export const defaultSettings = (): SettingsState => ({
   sensitivity: 1.0,
   highContrast: false,
   reducedMotion: false,
-  proceduralAudio: true,
   visualQuality: defaultVisualQuality(),
 });
 
 export function loadSettings(): SettingsState {
-  const loaded = Object.assign(defaultSettings(), readJsonStorage<Partial<SettingsState>>(SETTINGS_KEY, {}));
+  const stored = readJsonStorage<Partial<SettingsState> & { scienceMode?: unknown }>(SETTINGS_KEY, {});
+  delete stored.scienceMode;
+  const loaded = Object.assign(defaultSettings(), stored);
   loaded.visualQuality = normalizeVisualQuality(loaded.visualQuality);
   return loaded;
 }
@@ -42,7 +42,6 @@ export const settings: SettingsState = loadSettings();
 // Apply current settings to the engine + visuals. Called on boot, settings change, and each startRun.
 export function applySettings() {
   if (audio.master) audio.master.gain.value = settings.muted ? 0 : settings.masterVol;
-  audio.setUseProcedural(settings.proceduralAudio);
   scene.applyVisualQuality(settings.visualQuality);
   if (scene.camera) {
     scene.camera.fov = settings.fov;
@@ -58,4 +57,5 @@ export function applySettings() {
     WAVELENGTHS[2].color.setHex(0xff5566); WAVELENGTHS[2].hex = 0xff5566;
   }
   game.reducedMotion = settings.reducedMotion;
+  game.scienceMode = true;
 }

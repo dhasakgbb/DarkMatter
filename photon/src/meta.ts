@@ -26,6 +26,7 @@ export interface MetaState {
   speedPadsHit: number;
   gatesThreaded: number;
   flowDwellLifetime: number;
+  darkMatterDetections: number;
 }
 
 export const defaultMeta = (): MetaState => ({
@@ -53,6 +54,7 @@ export const defaultMeta = (): MetaState => ({
   speedPadsHit: 0,
   gatesThreaded: 0,
   flowDwellLifetime: 0,
+  darkMatterDetections: 0,
 });
 
 export function loadMeta(): MetaState {

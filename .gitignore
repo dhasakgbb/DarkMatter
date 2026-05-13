@@ -3,15 +3,24 @@ node_modules/
 photon/node_modules/
 
 # Local scratch and browser automation output
+.playtest/
 .playwright-mcp/
 .superpowers/
 /*.png
+playwright-report/
+test-results/
 
 # Vite and generated build outputs
 photon/dist/
 photon/dist2/
 photon/dist3/
 photon/vite.config.ts.timestamp-*.mjs
+.vite/
+*.tsbuildinfo
+
+# Python cache
+__pycache__/
+*.pyc
 
 # Logs and temporary files
 *.log

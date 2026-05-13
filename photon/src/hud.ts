@@ -6,6 +6,7 @@ import { EPOCHS, WAVELENGTHS, TUTORIAL_STEPS } from './cosmology';
 import { photon } from './photon';
 import { BASE_SPEED, BOOST_MAX, IS_MOBILE, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH } from './constants';
 import { cosmicTimeLabel, comboMultiplier } from './utils';
+import { formatScienceValue, formatTemperature, scienceSnapshot } from './science';
 import { seedToLabel } from './seed';
 import { WAVELENGTH_SEGMENT_GAP, WAVELENGTH_SEGMENT_HEIGHT, WAVELENGTH_SEGMENT_WIDTH, wavelengthStartX, wavelengthTotalWidth } from './hudLayout';
 import { renderPixelRatio } from './renderProfile';
@@ -31,6 +32,23 @@ function drawRacingCue(w: number, h: number) {
   const alpha = Math.max(0.22, 0.38 + lookAheadAlpha * 0.42);
   const color = cue.kind === 'gate' ? '136,224,255' : '255,122,217';
   const label = cue.kind === 'gate' ? 'LINE' : 'PAD';
+  const cueDx = targetX - w / 2;
+  const cueDy = targetY - h / 2;
+  const cueLen = Math.hypot(cueDx, cueDy);
+  if (cueLen > radius + 28) {
+    const ux = cueDx / cueLen;
+    const uy = cueDy / cueLen;
+    hud.save();
+    hud.strokeStyle = `rgba(${color},${alpha * 0.48})`;
+    hud.lineWidth = cue.align > 0.68 ? 2 : 1;
+    hud.setLineDash([5, 7]);
+    hud.beginPath();
+    hud.moveTo(w / 2 + ux * 24, h / 2 + uy * 24);
+    hud.lineTo(targetX - ux * (radius + 8), targetY - uy * (radius + 8));
+    hud.stroke();
+    hud.setLineDash([]);
+    hud.restore();
+  }
 
   hud.save();
   hud.translate(targetX, targetY);
@@ -161,6 +179,15 @@ export function drawHud() {
   hud.font = 'bold 12px ui-monospace, monospace';
   hud.fillStyle = '#ff7ad9';
   hud.fillText(cosmicTimeLabel(), w - 20, 100);
+  const scienceLineY = 164;
+  const science = scienceSnapshot(game.epochIndex, game.epochTimer, e.duration);
+  hud.font = '10px ui-monospace, monospace';
+  hud.fillStyle = 'rgba(136,224,255,0.62)';
+  hud.fillText(`z ${formatScienceValue(science.redshiftZ)}  ·  a ${formatScienceValue(science.scaleFactor)}`, w - 20, 120);
+  hud.fillStyle = 'rgba(255,255,255,0.46)';
+  hud.fillText(`Tcmb ${formatTemperature(science.cmbKelvin)}  ·  Om ${science.matterOmega.toFixed(2)}  OL ${science.darkEnergyOmega.toFixed(2)}`, w - 20, 134);
+  hud.fillStyle = 'rgba(255,122,217,0.50)';
+  hud.fillText(`drift ${Math.round(science.expansionDrift * 100)}%`, w - 20, 148);
   if (e.isHeatDeath) {
     const micro = HEAT_DEATH_MICRO_LINES.find(line => game.epochTimer >= line.at && game.epochTimer < line.at + 8);
     if (micro) {
@@ -169,7 +196,7 @@ export function drawHud() {
       const alpha = Math.max(0, Math.min(fadeIn, fadeOut));
       hud.font = '10px ui-monospace, monospace';
       hud.fillStyle = `rgba(255,255,255,${0.52 * alpha})`;
-      hud.fillText(micro.text, w - 20, 124);
+      hud.fillText(micro.text, w - 20, scienceLineY);
     }
   }
   hud.textAlign = 'left';
@@ -281,6 +308,17 @@ export function drawHud() {
       hud.lineWidth = 4;
       hud.strokeRect(7, 7, w - 14, h - 14);
     }
+    hud.restore();
+  }
+  if ((game.darkMatterSignalTime || 0) > 0) {
+    const alpha = Math.min(1, game.darkMatterSignalTime / 0.35);
+    hud.save();
+    hud.textAlign = 'center';
+    hud.font = '10px ui-monospace, monospace';
+    hud.fillStyle = `rgba(255,255,255,${0.34 + 0.40 * alpha})`;
+    const mass = game.darkMatterMassSolar > 0 ? `  ·  ${formatScienceValue(game.darkMatterMassSolar)} solar masses` : '';
+    const bend = game.darkMatterDeflectionArcsec > 0 ? `  ·  ${game.darkMatterDeflectionArcsec.toFixed(2)} arcsec` : '';
+    hud.fillText(`MASS DETECTED${mass}${bend}`, w / 2, Math.max(74, h * 0.14));
     hud.restore();
   }
   if ((game.gravityShear || 0) > 0.08) {

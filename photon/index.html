@@ -22,6 +22,7 @@
 <div id="stage"><canvas id="game"></canvas></div>
 <div id="epoch-flash"></div>
 <canvas id="hud-canvas"></canvas>
+<div id="mobile-joystick" aria-hidden="true"><div class="stick"></div></div>
 <div class="epoch-toast" id="epoch-toast">
   <div class="num" id="epoch-num"></div>
   <div class="name" id="epoch-name"></div>
@@ -44,14 +45,13 @@
       <div class="row">
         <button class="primary" id="btn-start">▶ Begin run</button>
         <button id="btn-resume" style="display:none">↶ Resume</button>
-        <button id="btn-funlab">Fun Lab</button>
         <button id="btn-form">Form</button>
         <button id="btn-codex">Codex</button>
         <button id="btn-memories">Memories</button>
       </div>
       <p class="title-controls" style="margin-top:18px;font-size:11px;opacity:0.5;text-align:center;line-height:2">
         <span class="desktop-controls"><span class="key">A/D</span> steer · <span class="key">W/S</span> climb · <span class="key">SPACE</span> boost · <span class="key">1/2/3</span> wavelength · cyan gates build line</span>
-        <span class="mobile-controls">Drag one thumb to steer · two fingers boost · tap wavelength · cyan gates build line</span>
+        <span class="mobile-controls">Bottom-left joystick to steer · second touch boosts · tap wavelength · cyan gates build line</span>
       </p>
       <div id="multiverse-row" style="display:none;margin-top:10px;padding-top:14px;border-top:1px dotted rgba(255,255,255,0.10);text-align:center">
         <div style="font-size:10px;letter-spacing:0.3em;opacity:0.55;text-transform:uppercase;margin-bottom:8px;color:#ff7ad9">Multiverse</div>
@@ -114,7 +114,6 @@
       <h2>Settings</h2>
       <div class="settings-row"><label>Master volume</label><div class="control"><input type="range" id="set-master" min="0" max="1" step="0.01"><span class="val" id="set-master-val">70</span></div></div>
       <div class="settings-row"><label>Mute audio</label><div class="control"><div class="toggle" id="set-mute"></div></div></div>
-      <div class="settings-row"><label>Procedural audio</label><div class="control"><div class="toggle" id="set-procedural-audio"></div></div></div>
       <div class="settings-row"><label>Visual quality</label><div class="control"><select id="set-visual-quality"><option value="mobile">Mobile</option><option value="balanced">Balanced</option><option value="ultra">Ultra</option></select></div></div>
       <div class="settings-row"><label>Field of view</label><div class="control"><input type="range" id="set-fov" min="50" max="100" step="1"><span class="val" id="set-fov-val">72</span></div></div>
       <div class="settings-row"><label>Steering sensitivity</label><div class="control"><input type="range" id="set-sens" min="0.5" max="1.8" step="0.05"><span class="val" id="set-sens-val">1.0</span></div></div>
@@ -122,40 +121,10 @@
       <div class="settings-row"><label>Reduced motion</label><div class="control"><div class="toggle" id="set-reduced"></div></div></div>
       <div class="row" style="margin-top:18px">
         <button class="primary" id="btn-pause-resume">▶ Resume</button>
-        <button id="btn-pause-funlab">Fun Lab</button>
         <button id="btn-end-run">End run</button>
         <button class="danger" id="btn-reset-meta">Reset all progress</button>
       </div>
       <p class="pause-hint">Press <span class="key">P</span> or <span class="key">ESC</span> to resume</p>
-    </div>
-  </div>
-  <div class="layer" id="vibe">
-    <div class="panel" id="vibe-panel">
-      <h1 style="font-size:24px">R U N   F E E L</h1>
-      <h2>Tell the lab what telemetry cannot know</h2>
-      <div class="funlab-summary" id="vibe-summary"></div>
-      <div id="vibe-controls"></div>
-      <textarea id="vibe-note" maxlength="140" placeholder="Optional note: cheap death, perfect speed, too much clutter..."></textarea>
-      <div class="row">
-        <button class="primary" id="btn-vibe-submit">Save feel</button>
-        <button id="btn-vibe-skip">Skip</button>
-        <button id="btn-vibe-again">↻ Run again</button>
-      </div>
-    </div>
-  </div>
-  <div class="layer" id="funlab">
-    <div class="panel funlab-panel">
-      <h1 style="font-size:24px">F U N   L A B</h1>
-      <h2>Local run fingerprints and tuning recommendations</h2>
-      <div class="funlab-grid">
-        <div class="funlab-list" id="funlab-run-list"></div>
-        <div class="funlab-detail" id="funlab-detail"></div>
-      </div>
-      <div class="row">
-        <button id="btn-funlab-back">Back</button>
-        <button id="btn-funlab-export">Export JSON</button>
-        <button class="danger" id="btn-funlab-clear">Clear lab</button>
-      </div>
     </div>
   </div>
 </div>

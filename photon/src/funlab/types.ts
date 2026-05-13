@@ -12,6 +12,7 @@ export type FunEventType =
   | 'speed-pad-hit'
   | 'speed-chain-break'
   | 'gravity-sling'
+  | 'dark-matter-detection'
   | 'hazard-near-miss'
   | 'hazard-hit'
   | 'phase-through'
@@ -118,6 +119,71 @@ export interface TuningRecommendation {
   axes: Array<keyof Pick<FunFingerprint, 'dopamine' | 'flow' | 'oneMoreRun' | 'frustration' | 'readability'>>;
 }
 
+export type DopamineEngineState = 'low-confidence' | 'underfed' | 'sweet-spot' | 'overheated' | 'confusing' | 'punishing';
+export type DopamineTuningKnob =
+  | 'hazardDensity'
+  | 'gateDensity'
+  | 'speedPadDensity'
+  | 'recoverySpacing'
+  | 'routeCueBrightness'
+  | 'visualClutter'
+  | 'difficultyRamp';
+export type DopamineTuningDirection = 'increase' | 'decrease' | 'hold';
+export type GameDesignPrinciple =
+  | 'flow-channel'
+  | 'anticipation-payoff'
+  | 'readable-challenge'
+  | 'risk-reward'
+  | 'variable-reward-cadence'
+  | 'recovery-windows'
+  | 'mastery-feedback'
+  | 'novelty-rotation'
+  | 'perceived-fairness'
+  | 'optional-challenge';
+
+export interface DopamineTuningDelta {
+  knob: DopamineTuningKnob;
+  direction: DopamineTuningDirection;
+  amount: number;
+  confidence: RecommendationConfidence;
+  risk: RecommendationRisk;
+  reason: string;
+}
+
+export interface DopamineMissingBeat {
+  beat: string;
+  principle: GameDesignPrinciple;
+  evidence: string;
+  suggestion: string;
+}
+
+export interface DopaminePlanStep {
+  priority: 'now' | 'next' | 'later';
+  title: string;
+  principle: GameDesignPrinciple;
+  diagnosis: string;
+  action: string;
+  expectedEffect: string;
+  risk: RecommendationRisk;
+  evidence: string[];
+}
+
+export interface DopamineEngineReport {
+  state: DopamineEngineState;
+  score: number;
+  rewardCadenceSec: number;
+  rewardEventsPerMin: number;
+  pressure: number;
+  mastery: number;
+  safety: number;
+  novelty: number;
+  theoryTags: GameDesignPrinciple[];
+  missingBeats: DopamineMissingBeat[];
+  plan: DopaminePlanStep[];
+  tuning: DopamineTuningDelta[];
+  guardrails: string[];
+}
+
 export interface FunRunRecord {
   id: string;
   createdAt: number;
@@ -126,4 +192,5 @@ export interface FunRunRecord {
   vibe?: VibeRating;
   fingerprint: FunFingerprint;
   recommendations: TuningRecommendation[];
+  dopamineEngine?: DopamineEngineReport;
 }

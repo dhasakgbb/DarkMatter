@@ -86,6 +86,7 @@ class HazardManager {
       fluct:    new THREE.OctahedronGeometry(1.6, detail >= 0.9 && !IS_MOBILE ? 1 : 0),
       supernova: new THREE.TorusGeometry(8.5, 1.4, IS_MOBILE ? 8 : 12, IS_MOBILE ? 28 : detail >= 0.9 ? 64 : 42),
       horizon:   new THREE.CircleGeometry(12, IS_MOBILE ? 28 : detail >= 0.9 ? 72 : 44),
+      dmFilament: new THREE.CylinderGeometry(0.55, 0.55, 28, IS_MOBILE ? 6 : 10, 1, true),
     };
   }
 
@@ -136,8 +137,23 @@ class HazardManager {
       data.detailRings = rings;
       return;
     }
-    if (type === 'supernova') {
-      const rings = [0, 1, 2].map((i) => {
+    if (type === 'dmFilament') {
+      const shell = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.55, 1.55, 31, IS_MOBILE ? 6 : 10, 1, true),
+        new THREE.MeshBasicMaterial({
+          color: 0x7d5cff,
+          transparent: true,
+          opacity: 0.10 * detail,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          wireframe: true,
+        }),
+      );
+      mesh.add(shell);
+      data.detailShell = shell;
+      return;
+    }
+    if (type === 'supernova') {      const rings = [0, 1, 2].map((i) => {
         const ring = new THREE.Mesh(
           new THREE.TorusGeometry(9.7 + i * 2.4, 0.07, IS_MOBILE ? 6 : 8, IS_MOBILE ? 32 : 72),
           new THREE.MeshBasicMaterial({
@@ -179,7 +195,7 @@ class HazardManager {
   }
 
   private addHazardGlow(mesh: THREE.Mesh, type: string, hex: number) {
-    if (type === 'well' || (IS_MOBILE && type !== 'supernova' && type !== 'eventHorizon')) return;
+    if (type === 'well' || (IS_MOBILE && type !== 'supernova' && type !== 'eventHorizon' && type !== 'dmFilament')) return;
     const material = new THREE.MeshBasicMaterial({
       color: hex,
       transparent: true,
@@ -227,10 +243,10 @@ class HazardManager {
     return ionized;
   }
 
-  reset() {
+  reset(startDist = 0) {
     for (const h of this.list) this.group.remove(h.mesh);
     this.list.length = 0;
-    this.lastSpawnDist = 0;
+    this.lastSpawnDist = startDist;
     this.chainCounter = 0;
   }
 
@@ -281,7 +297,10 @@ class HazardManager {
     else {
       const params = game.epochParams?.[game.epochIndex];
       const kinds = epoch.hazardKinds;
-      const weights = kinds.map(k => k === params?.dominantKind ? 2 : 1);
+      const weights = kinds.map(k => {
+        const base = k === params?.dominantKind ? 2 : 1;
+        return k === 'darkMatterFilament' ? base * 0.22 : base;
+      });
       const total = weights.reduce((a, b) => a + b, 0);
       const r = rand() * total;
       let acc = 0;
@@ -296,6 +315,7 @@ class HazardManager {
     switch (kind) {
       case 'fluctuation': geo = this.geos.fluct;     hex = WAVELENGTHS[wl].hex; wlIdx = wl; dmg = 22; type = 'fluct';        break;
       case 'gravityWell': geo = this.geos.well;      hex = 0x220033;            wlIdx = wl; dmg = 35; type = 'well';         break;
+      case 'darkMatterFilament': geo = this.geos.dmFilament; hex = 0x241333;   wlIdx = -1; dmg = 0; type = 'dmFilament'; hitRadius = 5.2; cannotPhase = true; break;
       case 'gluon':       geo = this.geos.gluon;     hex = WAVELENGTHS[wl].hex; wlIdx = wl; dmg = 28; type = 'gluon';        break;
       case 'plasma':      geo = this.geos.plasma;    hex = WAVELENGTHS[wl].hex; wlIdx = wl; dmg = 18; type = 'plasma';       break;
       case 'supernova':   geo = this.geos.supernova; hex = 0xff5020;            wlIdx = -1; dmg = 50; type = 'supernova';    hitRadius = 7.5; isFrontFacing = true; cannotPhase = true; break;
@@ -306,14 +326,25 @@ class HazardManager {
     const mesh = new THREE.Mesh(geo, mat);
     if (type === 'well') this.decorateGravityWell(mesh);
     else this.addHazardGlow(mesh, type, hex);
+    if (type === 'dmFilament') {
+      const material = mesh.material as THREE.MeshBasicMaterial;
+      material.color.setHex(0x7d5cff);
+      material.opacity = 0.32;
+      material.wireframe = true;
+      material.depthWrite = false;
+      material.blending = THREE.AdditiveBlending;
+    }
     this.addMaterialDetail(mesh, type, hex);
     const lat = isFrontFacing ? 0 : (rand() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.7;
     const ver = isFrontFacing ? 0 : (rand() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.7;
     const p = track.pointAt(dist, this.scratchPoint);
     const frame = track.frameAt(dist, this.scratchFrame);
     mesh.position.copy(p).addScaledVector(frame.right, lat).addScaledVector(frame.up, ver);
-    if (isFrontFacing) {
-      const mtx = this.scratchMatrix.makeBasis(frame.right, frame.up, frame.fwd);
+    if (type === 'dmFilament') {
+      mesh.rotation.z = rand() * Math.PI;
+      mesh.rotation.x = Math.PI * (0.18 + rand() * 0.22);
+    }
+    if (isFrontFacing) {      const mtx = this.scratchMatrix.makeBasis(frame.right, frame.up, frame.fwd);
       mesh.quaternion.setFromRotationMatrix(mtx);
       hazardUserData(mesh).spinSpeed = type === 'supernova' ? 0.4 : 0;
     } else {
@@ -419,6 +450,33 @@ class HazardManager {
           game.gravityShear = Math.min(1, Math.max(game.gravityShear || 0, strength));
         }
       }
+      if (!h.hit && h.type === 'dmFilament' && dz > -18 && dz < 118) {
+        const dx = h.lateral - photonLat;
+        const dy = h.vertical - photonVer;
+        const lateralDist = Math.max(0.001, Math.sqrt(dx * dx + dy * dy));
+        const zFalloff = 1 - Math.min(1, Math.abs(dz - 22) / 96);
+        const lateralFalloff = 1 - Math.min(1, lateralDist / (PLAYFIELD_HALF_WIDTH * 1.05));
+        const strength = Math.max(0, zFalloff * lateralFalloff);
+        if (strength > 0.015) {
+          game.gravityShearX += (dx / lateralDist) * strength * 0.72;
+          game.gravityShearY += (dy / lateralDist) * strength * 0.64;
+          game.gravityShear = Math.min(1, Math.max(game.gravityShear || 0, strength * 0.82));
+          game.darkMatterSignal = Math.max(game.darkMatterSignal || 0, strength);
+          game.darkMatterSignalTime = Math.max(game.darkMatterSignalTime || 0, 0.62 + strength * 0.72);
+          game.darkMatterMassSolar = 4e11 + Math.abs(Math.sin(h.dist * 0.011)) * 1.6e12;
+          game.darkMatterDeflectionArcsec = 0.18 + strength * 2.4;
+        }
+        if (!h.nearMissed && dz < 18 && dz > -4 && strength > 0.06) {
+          h.nearMissed = true;
+          game.lineEventText = 'MASS DETECTED';
+          game.lineEventTime = 1.1;
+          meta.darkMatterDetections = (meta.darkMatterDetections || 0) + 1;
+          saveMeta(meta);
+          checkMemoryTriggers();
+          maybeUnlockCodexFn('DARKMATTER', CODEX_ENTRIES);
+          funLab.record('dark-matter-detection', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: photonDist, value: strength });
+        }
+      }
       // SPATIAL: emit a Doppler whoosh once as each hazard crosses the photon (4 units ahead → behind).
       // Only for non-pickup hazards (no whoosh on collectibles).
       if (!h.whooshed && h.type !== 'pickup' && h.type !== 'finalPickup') {
@@ -428,15 +486,15 @@ class HazardManager {
           const dx = h.lateral - photonLat;
           const dy = h.vertical - photonVer;
           const lateralDist = Math.sqrt(dx * dx + dy * dy);
-          const acousticRadius = h.type === 'well'
+          const acousticRadius = h.type === 'well' || h.type === 'dmFilament'
             ? PLAYFIELD_HALF_WIDTH * 0.82
             : h.type === 'supernova'
               ? (h.hitRadius || 2.6) + 8
               : (h.hitRadius || 2.6) + 5;
           if (lateralDist <= acousticRadius) {
             const proximity = 1 - Math.min(1, lateralDist / Math.max(1, acousticRadius));
-            const base = h.type === 'fluct' ? 0.35 : h.type === 'well' ? 1.0 : h.type === 'supernova' ? 1.25 : 0.65;
-            audio.whoosh(h.mesh.position, base * (0.35 + proximity * 0.65), h.type);
+            const base = h.type === 'fluct' ? 0.35 : h.type === 'well' || h.type === 'dmFilament' ? 1.0 : h.type === 'supernova' ? 1.25 : 0.65;
+            audio.whoosh(h.mesh.position, base * (0.35 + proximity * 0.65), h.type === 'dmFilament' ? 'well' : h.type);
           }
         }
       }
@@ -468,8 +526,22 @@ class HazardManager {
         continue;
       }
       // Collision
-      if (h.type === 'pickup' || h.type === 'finalPickup') {
-        h.hit = true; h.mesh.visible = false;
+      if (h.type === 'dmFilament') {
+        h.hit = true;
+        (h.mesh.material as THREE.MeshBasicMaterial).opacity = 0.12;
+        const skim = THREE.MathUtils.clamp(1 - Math.sqrt(dist2) / Math.max(1, r), 0, 1);
+        game.padBoostTime = Math.max(game.padBoostTime || 0, 0.34 + skim * 0.36);
+        game.padBoostTotal = Math.max(game.padBoostTotal || 0, 0.70);
+        photon.boost = Math.min(BOOST_MAX, photon.boost + 5 + skim * 7);
+        game.runEnergy += 4 + skim * 5;
+        game.lineEventText = 'LENSING SLING';
+        game.lineEventTime = 0.9;
+        particleManager.emitBurst(h.mesh.position, 'phase', 26, new THREE.Color(0x7d5cff));
+        audio.speedPad();
+        maybeUnlockCodexFn('DARKMATTER', CODEX_ENTRIES);
+        continue;
+      }
+      if (h.type === 'pickup' || h.type === 'finalPickup') {        h.hit = true; h.mesh.visible = false;
         if (h.type === 'finalPickup') {
           particleManager.emitBurst(h.mesh.position, 'death', 80, FINAL_PICKUP_CORE_COLOR);
           particleManager.emitBurst(h.mesh.position, 'death', 60, FINAL_PICKUP_RING_COLOR);

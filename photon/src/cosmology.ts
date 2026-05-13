@@ -61,34 +61,34 @@ export const EPOCHS: Epoch[] = [
     speedMul: 1.10, hazardDensity: 1.2, pickupDensity: 0.9, twistFreq: 0.014, twistAmp: 16,
     description: 'Hydrogen and helium collapse into the first stars. They burn brilliant, brief, and they explode. Most of what you fly through tonight was forged here.',
     chapter: 'The dark catches fire. Brightness is not safety.',
-    hazardKinds: ['plasma','gravityWell','supernova','fluctuation'], codexKey: 'FIRSTSTARS',
+    hazardKinds: ['plasma','gravityWell','darkMatterFilament','supernova','fluctuation'], codexKey: 'FIRSTSTARS',
   },
   {
     name: 'Galactic', subtitle: 'T + 1 billion years', duration: 230,
     paletteA: new THREE.Color(0x6e3aff), paletteB: new THREE.Color(0x2a78b0), palettePoint: new THREE.Color(0xb0d4ff),
     fogColor: new THREE.Color(0x100820), fogNear: 80, fogFar: 540,
     speedMul: 1.08, hazardDensity: 1.1, pickupDensity: 1.0, twistFreq: 0.020, twistAmp: 22,
-    description: 'Galaxies form. Spiral arms whip past in long curves. Magnetic fields tug at every photon they touch.',
-    chapter: 'Matter learns to turn in great slow wheels. You read the curve and keep your line.',
-    hazardKinds: ['plasma','gluon','gravityWell','fluctuation'], codexKey: 'GALACTIC',
+    description: 'Galaxies form inside dark matter halos. Spiral arms whip past in long curves. Invisible mass bends every photon path before starlight names it.',
+    chapter: 'Matter learns to turn in great slow wheels. The unseen scaffold turns first.',
+    hazardKinds: ['plasma','gluon','gravityWell','darkMatterFilament','fluctuation'], codexKey: 'GALACTIC',
   },
   {
     name: 'Stellar', subtitle: 'T + 5 billion years', duration: 360,
     paletteA: new THREE.Color(0xffb04a), paletteB: new THREE.Color(0xb01a4a), palettePoint: new THREE.Color(0xfff8d4),
     fogColor: new THREE.Color(0x18080a), fogNear: 80, fogFar: 520,
     speedMul: 1.12, hazardDensity: 1.4, pickupDensity: 1.2, twistFreq: 0.012, twistAmp: 14,
-    description: 'The heyday of stars. Light, dense, complex. Most photons that ever existed were born now. Most of them are still going.',
-    chapter: 'Worlds catch light in water, leaf, glass, and eye. For a while, matter learns to notice.',
-    hazardKinds: ['plasma','gluon','gravityWell','fluctuation','supernova'], codexKey: 'STELLAR',
+    description: 'The heyday of stars. Light, dense, complex. The visible universe rides inside a larger invisible mass field.',
+    chapter: 'Worlds catch light in water, leaf, glass, and eye. Under them, unseen halos keep their shape.',
+    hazardKinds: ['plasma','gluon','gravityWell','darkMatterFilament','fluctuation','supernova'], codexKey: 'STELLAR',
   },
   {
     name: 'Degenerate', subtitle: 'T + 100 trillion years', duration: 200,
     paletteA: new THREE.Color(0x4a4a90), paletteB: new THREE.Color(0x1a1a3a), palettePoint: new THREE.Color(0xc4c8ff),
     fogColor: new THREE.Color(0x080814), fogNear: 60, fogFar: 420,
     speedMul: 0.95, hazardDensity: 0.9, pickupDensity: 0.7, twistFreq: 0.010, twistAmp: 10,
-    description: 'Stars die. White dwarfs, neutron stars, brown dwarfs. The universe cools, but slowly. Hazards are rarer but heavier.',
-    chapter: 'The bright ones die. The small fires spend themselves carefully.',
-    hazardKinds: ['gravityWell','plasma','fluctuation'], codexKey: 'DEGENERATE',
+    description: 'Stars die. White dwarfs, neutron stars, brown dwarfs. The universe cools, but slowly. The unseen mass remains as the lights go out.',
+    chapter: 'The bright ones die. The bones of the dark keep holding the road.',
+    hazardKinds: ['gravityWell','darkMatterFilament','plasma','fluctuation'], codexKey: 'DEGENERATE',
   },
   {
     name: 'Black Hole', subtitle: 'T + 10⁴⁰ years', duration: 240,
@@ -104,8 +104,8 @@ export const EPOCHS: Epoch[] = [
     paletteA: new THREE.Color(0x0a0a18), paletteB: new THREE.Color(0x05050a), palettePoint: new THREE.Color(0x222244),
     fogColor: new THREE.Color(0x000000), fogNear: 30, fogFar: 200,
     speedMul: 0.55, hazardDensity: 0.06, pickupDensity: 0, twistFreq: 0.005, twistAmp: 4,
-    description: 'The universe runs out of usable energy. Stars burn out. Black holes evaporate. Space stretches. You are still here.',
-    chapter: 'Nothing stops you. That is the wound.',
+    description: 'The universe runs out of usable energy. Stars burn out. Black holes evaporate. Dark energy keeps stretching the distance between what remains. You are still here.',
+    chapter: 'Nothing stops you. Expansion does not need to hurry.',
     hazardKinds: ['fluctuation'], codexKey: 'HEATDEATH', isHeatDeath: true,
   },
 ];
@@ -136,6 +136,8 @@ export const CODEX_ENTRIES: Record<string, CodexEntry> = {
   QGP:        { title: 'Quark-gluon plasma',      body: 'For one millionth of a second the universe was hotter than two trillion Kelvin. No protons, no atoms — only quarks and the gluons that bind them.' },
   CMB:        { title: 'The microwave background',body: 'When the universe cooled to 3000 K, electrons fell into nuclei and photons stopped scattering. Those photons still arrive at every detector on Earth, redshifted to 2.7 K.' },
   GRAVWELL:   { title: 'Gravitational well',      body: 'A region where spacetime curves enough to bend your path. Even light cannot travel a straight line through one.' },
+  DARKMATTER: { title: 'Dark matter scaffold',    body: 'Roughly 27% of the universe is unseen matter. It does not shine, but its gravity builds halos and filaments where galaxies can form. You detect it the same way astronomers do: by how your path bends.' },
+  DARKENERGY: { title: 'Dark energy',             body: 'About 68% of today\'s cosmic energy budget behaves like dark energy. In Lambda-CDM it accelerates expansion, stretching wavelengths and thinning the future until almost nothing can meet.' },
   GAMMA:      { title: 'Gamma wavelength',        body: 'Photons with wavelengths shorter than 10⁻¹¹ m. Energetic enough to ionize matter. Most cosmic gamma rays are born from violent events.' },
   RADIO:      { title: 'Radio wavelength',        body: 'Wavelengths above 1 mm. Photons of this energy slip through dust clouds the visible spectrum cannot.' },
   GLUON:      { title: 'Gluon strand',            body: 'Gluons mediate the strong force. In the early universe they bound quarks into chains that briefly trapped passing light.' },
@@ -178,6 +180,7 @@ export interface MemoryCondition {
   perfectEpoch?: boolean;
   flowPeakDwell?: number;
   flowDwellLifetime?: number;
+  darkMatterDetections?: number;
 }
 export interface MemoryResonance {
   startEnergyBonus?: number;
@@ -268,7 +271,7 @@ export const MEMORIES: Memory[] = [
   { id: 'pickups-100',     type: 'resonance', when: { pickupsLifetime: 100 },
     body: 'You remember finding things. Little glowing leftovers from older photons that did not make it. You took them. You made of them what you could.',
     resonance: { startEnergyBonus: 12 } },
-  { id: 'dark-matter-bones', type: 'threshold', when: { gatesThreaded: 40 },
+  { id: 'dark-matter-bones', type: 'threshold', when: { darkMatterDetections: 1 },
     body: 'You remember something unseen drawing the road through places that never shone. The course has bones.',
     threshold: { unlockVariant: 'xray' } },
   { id: 'the-pause',       type: 'narrative', when: { pausedOnce: true },
@@ -333,7 +336,7 @@ export const VARIANTS: Variant[] = [
   { key: 'visible',   name: 'Visible',   desc: 'Plain old light. Balanced in every way.',                        unlocked: true,  startWavelength: 1, mods: { speedMul: 1.00, agilityMul: 1.00, energyMul: 1.00, boostMul: 1.00 } },
   { key: 'gamma',     name: 'Gamma',     desc: 'Sharp, narrow, energetic. Fast and frail.',                      unlocked: false, unlockReq: 'A memory unlocks this',           startWavelength: 0, mods: { speedMul: 1.18, agilityMul: 1.10, energyMul: 0.70, boostMul: 1.00 } },
   { key: 'microwave', name: 'Microwave', desc: 'Long, soft, patient. Slower but tougher; starts in radio.',      unlocked: false, unlockReq: 'Witness the heat death once',     startWavelength: 2, mods: { speedMul: 0.88, agilityMul: 0.95, energyMul: 1.40, boostMul: 0.90 } },
-  { key: 'xray',      name: 'X-ray',     desc: 'Penetrating. Recharges boost faster, slightly faster baseline.', unlocked: false, unlockReq: 'Reach the Stellar era',           startWavelength: 0, mods: { speedMul: 1.06, agilityMul: 1.05, energyMul: 0.95, boostMul: 1.50 } },
+  { key: 'xray',      name: 'X-ray',     desc: 'Penetrating. Recharges boost faster, slightly faster baseline.', unlocked: false, unlockReq: 'Detect the unseen mass scaffold', startWavelength: 0, mods: { speedMul: 1.06, agilityMul: 1.05, energyMul: 0.95, boostMul: 1.50 } },
 ];
 
 // ============================================================================

@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Produce a single markdown punch-list comparing every concrete claim in `photon-design.md` against live behavior in `photon/src/`, with file:line evidence and pillar-impact ranking.
+**Goal:** Produce a single markdown punch-list comparing every concrete claim in `docs/design/photon-design.md` against live behavior in `photon/src/`, with file:line evidence and pillar-impact ranking.
 
 **Architecture:** Read-only audit. No gameplay code is modified. The output is one new file under `docs/superpowers/specs/` containing a structured findings table. Each audit task reads a slice of the design doc, inspects the corresponding code area, and appends one or more rows to the findings table in the deliverable. Tasks are independent and can run in any order — the engineer should commit after each task so partial progress is recoverable.
 
-**Tech Stack:** No runtime — this is a documentation/grep/read exercise. The auditor uses `grep`, the `Read` tool, and direct inspection of `photon/src/*.ts`, `photon/index.html`, and `photon-design.md`. No tests, no build, no dev server.
+**Tech Stack:** No runtime — this is a documentation/grep/read exercise. The auditor uses `grep`, the `Read` tool, and direct inspection of `photon/src/*.ts`, `photon/index.html`, and `docs/design/photon-design.md`. No tests, no build, no dev server.
 
 **Source spec:** `docs/superpowers/specs/2026-05-12-photon-core-loop-ratification.md` §5.
 
@@ -17,7 +17,7 @@
 ## File Structure
 
 - **Create:** `docs/superpowers/specs/<AUDIT_DATE>-photon-gap-audit.md` — the deliverable. One file, one responsibility (the findings punch-list). No other files touched.
-- **Read-only reference:** `photon-design.md` (claims), `photon/src/*.ts` (evidence), `photon/index.html` (DOM hooks for HUD/death-panel inspection).
+- **Read-only reference:** `docs/design/photon-design.md` (claims), `photon/src/*.ts` (evidence), `photon/index.html` (DOM hooks for HUD/death-panel inspection).
 
 ## Findings Row Schema
 
@@ -25,8 +25,8 @@ Every row appended to the deliverable uses this schema:
 
 | Column | Allowed values |
 |---|---|
-| `Claim` | Verbatim or near-verbatim sentence from `photon-design.md` |
-| `Section` | Section header in `photon-design.md` where the claim lives (e.g. "Pillar 1", "The signature scene") |
+| `Claim` | Verbatim or near-verbatim sentence from `docs/design/photon-design.md` |
+| `Section` | Section header in `docs/design/photon-design.md` where the claim lives (e.g. "Pillar 1", "The signature scene") |
 | `Status` | `shipped` / `partial` / `missing` / `unverifiable` |
 | `Evidence` | File:line citation in `photon/src/` or `photon/index.html`, or "no match found" |
 | `Pillar` | `1` (the run IS the universe), `2` (the photon remembers), or `1+2` |
@@ -49,14 +49,14 @@ Rows for `shipped` claims should be terse (one-word Notes is fine). Rows for `pa
 # Photon Spec-vs-Shipped Gap Audit
 
 **Date:** <AUDIT_DATE>
-**Source spec:** [`photon-design.md`](../../../photon-design.md)
-**Ratification:** [`2026-05-12-photon-core-loop-ratification.md`](2026-05-12-photon-core-loop-ratification.md)
+**Source spec:** [`docs/design/photon-design.md`](../../../docs/design/photon-design.md)
+**Ratification:** [`2026-05-12-photon-core-loop-ratification.md`](../specs/2026-05-12-photon-core-loop-ratification.md)
 **Repo head at audit:** `<git rev-parse --short HEAD output>`
 **Scope:** read-only. No gameplay code is modified. Each row below cites file:line evidence.
 
 ## How to read this
 
-Each row is one concrete claim from `photon-design.md` checked against `photon/src/`. Status values:
+Each row is one concrete claim from `docs/design/photon-design.md` checked against `photon/src/`. Status values:
 - `shipped` — claim is implemented and matches the design-doc numbers/behavior.
 - `partial` — implemented but diverges from the design doc in a specific, named way.
 - `missing` — no implementation found.
@@ -92,7 +92,7 @@ git commit -m "docs: scaffold photon gap audit"
 ## Task 2: Audit Heat Death visual fade numerics
 
 **Files:**
-- Read: `photon-design.md` §"The signature scene"
+- Read: `docs/design/photon-design.md` §"The signature scene"
 - Read: `photon/src/game.ts:202-221` (`heatDeathTick`), `photon/src/scene.ts`
 - Modify: `docs/superpowers/specs/<AUDIT_DATE>-photon-gap-audit.md` (append rows)
 
@@ -140,7 +140,7 @@ git commit -m "docs(audit): Heat Death visual fade numerics"
 ## Task 3: Audit Heat Death audio collapse
 
 **Files:**
-- Read: `photon-design.md` §"The signature scene" (audio paragraph)
+- Read: `docs/design/photon-design.md` §"The signature scene" (audio paragraph)
 - Read: `photon/src/audio.ts` around `startHeatDeath` (line 343) and the synth implementation it calls
 - Modify: deliverable
 
@@ -176,7 +176,7 @@ git commit -m "docs(audit): Heat Death audio collapse"
 ## Task 4: Audit the witness ending sequence
 
 **Files:**
-- Read: `photon-design.md` §"The signature scene" (final paragraph)
+- Read: `docs/design/photon-design.md` §"The signature scene" (final paragraph)
 - Read: `photon/src/witness.ts`, `photon/src/game.ts` around `triggerWitness` (line 453), `photon/index.html` (witness-hint / credits DOM)
 - Modify: deliverable
 
@@ -218,7 +218,7 @@ git commit -m "docs(audit): witness ending sequence"
 ## Task 5: Audit cosmic-time HUD overlay
 
 **Files:**
-- Read: `photon-design.md` §"Pillar 1" (HUD overlay paragraph) and §"The signature scene" (cosmic time during Heat Death)
+- Read: `docs/design/photon-design.md` §"Pillar 1" (HUD overlay paragraph) and §"The signature scene" (cosmic time during Heat Death)
 - Read: `photon/src/utils.ts` (`cosmicTimeLabel`), `photon/src/hud.ts`, `photon/index.html`
 - Modify: deliverable
 
@@ -252,7 +252,7 @@ git commit -m "docs(audit): cosmic-time HUD overlay"
 ## Task 6: Audit the non-monotonic difficulty curve and epoch durations
 
 **Files:**
-- Read: `photon-design.md` §"Pillar 1" (pacing arc list)
+- Read: `docs/design/photon-design.md` §"Pillar 1" (pacing arc list)
 - Read: `photon/src/cosmology.ts` (EPOCHS array), `photon/src/hazards.ts` (hazard density logic)
 - Modify: deliverable
 
@@ -286,7 +286,7 @@ git commit -m "docs(audit): epoch durations and difficulty curve"
 ## Task 7: Audit death-panel reframe and memory surfacing
 
 **Files:**
-- Read: `photon-design.md` §"Pillar 2" (death-panel paragraph)
+- Read: `docs/design/photon-design.md` §"Pillar 2" (death-panel paragraph)
 - Read: `photon/src/game.ts` around line 393 (death-card tint) and the death-panel DOM in `photon/index.html`, `photon/src/ui.ts`
 - Modify: deliverable
 
@@ -328,7 +328,7 @@ git commit -m "docs(audit): death panel reframe and memory surfacing"
 ## Task 8: Audit chapter cards, codex/memories tabs, and upgrade reframe
 
 **Files:**
-- Read: `photon-design.md` §"Pillar 2" (existing-systems table) and §"Phase D"
+- Read: `docs/design/photon-design.md` §"Pillar 2" (existing-systems table) and §"Phase D"
 - Read: `photon/src/hud.ts` (`showEpochToast`), `photon/src/cosmology.ts` (epoch `chapter` strings), `photon/src/ui.ts`, `photon/index.html`, `photon/src/meta.ts`
 - Modify: deliverable
 
@@ -370,7 +370,7 @@ git commit -m "docs(audit): chapter cards, tabs, upgrade copy"
 ## Task 9: Audit between-epoch save points
 
 **Files:**
-- Read: `photon-design.md` §"Risks and tradeoffs" (mobile-length mitigation paragraph)
+- Read: `docs/design/photon-design.md` §"Risks and tradeoffs" (mobile-length mitigation paragraph)
 - Read: `photon/src/state.ts`, `photon/src/storage.ts`, `photon/src/game.ts` (`startRun` Checkpoint handling)
 - Modify: deliverable
 
@@ -404,7 +404,7 @@ git commit -m "docs(audit): between-epoch save points"
 ## Task 10: Audit variant unlocks, tagline, and the witness-count surface
 
 **Files:**
-- Read: `photon-design.md` §"Pillar 1" (title-screen counter), §"Pillar 2" (variants with Memory-themed unlocks), §"Marketing positioning" (tagline)
+- Read: `docs/design/photon-design.md` §"Pillar 1" (title-screen counter), §"Pillar 2" (variants with Memory-themed unlocks), §"Marketing positioning" (tagline)
 - Read: `photon/src/cosmology.ts` (VARIANTS array), `photon/src/game.ts` (variant unlock wiring), `photon/index.html` (title-screen DOM), `photon/src/meta.ts`
 - Modify: deliverable
 

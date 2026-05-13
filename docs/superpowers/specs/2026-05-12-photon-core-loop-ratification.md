@@ -10,9 +10,9 @@ The Photon core gameplay loop — auto-forward photon flight through a procedura
 
 ## 2. Authoritative source
 
-The canonical design document is [photon-design.md](../../../photon-design.md), committed at the repo root. Its two pillars — *the run IS the universe* and *the photon remembers* — and its phased roadmap (A–F) are the source of truth for all Photon feature, copy, audio, and tuning decisions.
+The canonical design document is [docs/design/photon-design.md](../../../docs/design/photon-design.md). Its two pillars — *the run IS the universe* and *the photon remembers* — and its phased roadmap (A–F) are the source of truth for all Photon feature, copy, audio, and tuning decisions.
 
-This ratification adds nothing to that document. It does not re-litigate the pillars, the 30-minute target run length, the non-monotonic difficulty curve, the removal of endless mode, or the Heat Death signature scene. Anyone disagreeing with those decisions edits `photon-design.md` directly and proposes a revision; they do not work around them in code.
+This ratification adds nothing to that document. It does not re-litigate the pillars, the 30-minute target run length, the non-monotonic difficulty curve, the removal of endless mode, or the Heat Death signature scene. Anyone disagreeing with those decisions edits `docs/design/photon-design.md` directly and proposes a revision; they do not work around them in code.
 
 ## 3. Shipped-vs-open snapshot (2026-05-12)
 
@@ -24,7 +24,7 @@ Evidence cited by file:line so a future session can verify quickly.
 | **B — Memory system** | Shipped | 33 memory entries defined in [cosmology.ts](../../../photon/src/cosmology.ts) (design called for ~30). All three types (`narrative`, `resonance`, `threshold`) present. Evolved-copy mechanic via `memoryBody` in [memories.ts:8](../../../photon/src/memories.ts#L8). Trigger wiring in [memories.ts:31](../../../photon/src/memories.ts#L31) `checkMemoryTriggers`. Resonance bonuses applied in [memories.ts:66](../../../photon/src/memories.ts#L66). |
 | **C — Remaining epochs** | Defined; play-tuning unverified | All 9 epochs declared in [cosmology.ts](../../../photon/src/cosmology.ts) with palette, duration, hazardKinds, and second-person `chapter` strings. Whether each epoch *plays* at the design-doc difficulty curve (Stellar Era as the longest peak, Black Hole Era's thinning emptiness) is the open question for the gap audit. |
 | **D — Reframe pass** | Mostly shipped | Per-epoch chapter cards render via [hud.ts:38](../../../photon/src/hud.ts#L38) `showEpochToast` with 5.2s duration when a chapter is present. User-facing combo label is "RESONANCE" at [hud.ts:297](../../../photon/src/hud.ts#L297). Internal identifier `comboMultiplier` is still named "combo" but is not user-visible. Codex + Memories surfaced as **sibling title-screen entry points (`#btn-codex` + `#btn-memories`), not a top-of-panel tab strip** — corrected on 2026-05-12 after the gap audit observed the design-doc "tabs at top" spec is not literally met. Death-panel copy presence not fully verified — listed as an audit item below. |
-| **E — Production values** | Partial | Procedural drones + studio-music keys exist (`startStudioMusic`). Per-epoch authored music tracks for Recombination / Stellar / Black Hole / Heat Death, and the hand-tuned shader pass on the heat-death fade described in `photon-design.md` §"The signature scene", are not confirmed complete. |
+| **E — Production values** | Partial | Procedural drones + studio-music keys exist (`startStudioMusic`). Per-epoch authored music tracks for Recombination / Stellar / Black Hole / Heat Death, and the hand-tuned shader pass on the heat-death fade described in `docs/design/photon-design.md` §"The signature scene", are not confirmed complete. |
 | **F — Telemetry & achievements** | Not shipped | The global "N photons have witnessed the heat death" title-screen counter backed by a server endpoint, and a formal achievement system, were not found by grep on `witness` / `telemetry` / `achievement`. |
 
 ## 4. Out of scope
@@ -39,7 +39,7 @@ The following are explicitly *not* what the next session should plan or build:
 
 ## 5. Next slice — Spec-vs-shipped gap audit
 
-The only honest design-adjacent work remaining is a careful, evidence-first audit comparing every concrete claim in `photon-design.md` against the live behavior in `photon/src/`.
+The only honest design-adjacent work remaining is a careful, evidence-first audit comparing every concrete claim in `docs/design/photon-design.md` against the live behavior in `photon/src/`.
 
 **Deliverable:** A punch-list document under `docs/superpowers/specs/` named `YYYY-MM-DD-photon-gap-audit.md` (dated on the day the audit ships) enumerating each design-doc claim, marking it as `shipped` / `partial` / `missing`, citing file:line evidence, and ranking each gap by leverage on the two pillars.
 

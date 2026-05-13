@@ -47,13 +47,14 @@ export class FunLabRuntime {
       summary: analysis.summary,
       fingerprint: analysis.fingerprint,
       recommendations: analysis.recommendations,
+      dopamineEngine: analysis.dopamineEngine,
     };
     saveRunRecord(record);
     this.lastRecordId = id;
     this.currentRunId = '';
     this.currentStartedAt = 0;
     this.events = [];
-    if (this.shouldAskVibe(record)) this.pendingVibeRunId = id;
+    this.pendingVibeRunId = '';
     return record;
   }
 

@@ -1,7 +1,6 @@
 import type { Epoch } from './cosmology';
 import type * as THREE from 'three';
 import audioManifest from './audio-manifest.json';
-import { ProceduralSynth } from './procedural';
 
 const bundledAudioAssets = import.meta.glob<string>('./audio-assets/**/*.ogg', {
   eager: true,
@@ -115,13 +114,7 @@ class AudioEngine {
   assetsReady = false;
   _boostCurrent = 0;
 
-  // Procedural synthesis layer. Default mode — the bundled .ogg assets are
-  // 5 KB director-temp placeholders (see docs/audio/director-temp-audio.md);
-  // rich procedural synthesis runs through ProceduralSynth instead. Set
-  // useProcedural = false to A/B against the studio asset path.
-  synth: ProceduralSynth | null = null;
-  useProcedural = true;
-  proceduralEpoch: Epoch | null = null;
+  readonly mode = 'asset' as const;
 
   ensure() {
     if (this.ctx) return;
@@ -131,42 +124,14 @@ class AudioEngine {
     this.master = this.ctx!.createGain();
     this.master.gain.value = 0.7;
     this.master.connect(this.ctx!.destination);
-    this.synth = new ProceduralSynth(this.ctx!, this.master);
     this.manifestPromise = this.loadStudioAssets();
   }
 
-  setUseProcedural(on: boolean) {
-    if (this.useProcedural === on) return;
-    this.useProcedural = on;
-    if (on) {
-      this.stopStudioMusic(0.4);
-      if (this.engineNodes && this.ctx) {
-        const t = this.ctx.currentTime;
-        this.engineNodes.hum.gain.cancelScheduledValues(t);
-        this.engineNodes.hum.gain.linearRampToValueAtTime(0, t + 0.4);
-        const e = this.engineNodes;
-        setTimeout(() => stopAudioSource(e.source), 500);
-        this.engineNodes = null;
-      }
-      if (this.proceduralEpoch) this.synth?.startDrone(this.proceduralEpoch);
-      if (this.pendingEngine) this.synth?.startEngine();
-    } else {
-      this.synth?.stopDrone(0.4);
-      this.synth?.stopEngine();
-      if (this.proceduralEpoch) this.startStudioMusic(this.proceduralEpoch.name, 0.6);
-      if (this.pendingEngine) this.startAssetEngineLoop(0.4);
-    }
-  }
+  /** Reserved for future manifest-stem automation. No generated Web Audio fallback is invoked. */
+  setRedshift(_amount: number) {}
 
-  /** 0..1 cosmological redshift forwarded to the procedural drone. */
-  setRedshift(amount: number) {
-    this.synth?.setRedshift(amount);
-  }
-
-  /** 0..1 hidden flow signal — opens drone filter + reverb send when in the zone. */
-  setFlow(amount: number) {
-    this.synth?.setIntensity(amount);
-  }
+  /** Reserved for future manifest-stem automation. No generated Web Audio fallback is invoked. */
+  setFlow(_amount: number) {}
 
   resume() {
     if (this.ctx && this.ctx.state === 'suspended') void this.ctx.resume().catch(() => {});
@@ -325,12 +290,7 @@ class AudioEngine {
   startDrone(epoch: Epoch) {
     this.ensure();
     if (!this.ctx) return;
-    this.proceduralEpoch = epoch;
-    if (this.useProcedural) {
-      this.synth?.startDrone(epoch);
-      return;
-    }
-    this.stopDrone();
+    this.stopStudioMusic(0.2);
     this.pendingMusicKey = epoch.name;
     if (this.startStudioMusic(epoch.name)) return;
     this.manifestPromise?.then(() => {
@@ -340,20 +300,13 @@ class AudioEngine {
 
   stopDrone() {
     this.pendingMusicKey = null;
-    this.proceduralEpoch = null;
-    this.synth?.stopDrone();
     this.stopStudioMusic();
   }
 
   startHeatDeath() {
     this.ensure();
     if (!this.ctx) return;
-    this.proceduralEpoch = null;
-    if (this.useProcedural) {
-      this.synth?.startHeatDeath();
-      return;
-    }
-    this.stopDrone();
+    this.stopStudioMusic(0.4);
     this.pendingMusicKey = 'Heat Death';
     if (this.startStudioMusic('Heat Death', 8)) return;
     this.manifestPromise?.then(() => {
@@ -362,61 +315,49 @@ class AudioEngine {
   }
 
   pickup() {
-    if (this.useProcedural) { this.ensure(); this.synth?.pickup(); return; }
     this.playSfx('pickup');
   }
 
   speedPad() {
-    if (this.useProcedural) { this.ensure(); this.synth?.speedPad(); return; }
     this.playSfx('speedPad');
   }
 
   lineGate(streak: number) {
-    if (this.useProcedural) { this.ensure(); this.synth?.lineGate(streak); return; }
     const streakLift = Math.min(9, Math.max(0, streak));
     this.playSfx('lineGate', { rate: 1 + streakLift * 0.025, gain: 0.78 + streakLift * 0.035 });
   }
 
   gateMiss() {
-    if (this.useProcedural) { this.ensure(); this.synth?.gateMiss(); return; }
     this.playSfx('gateMiss');
   }
 
   railScrape() {
-    if (this.useProcedural) { this.ensure(); this.synth?.railScrape(); return; }
     this.playSfx('railScrape');
   }
 
   hit() {
-    if (this.useProcedural) { this.ensure(); this.synth?.hit(); return; }
     this.playSfx('damageHit');
   }
 
   shift(idx: number) {
-    if (this.useProcedural) { this.ensure(); this.synth?.shift(idx); return; }
     const shiftRates = [1.12, 1.0, 0.88];
     this.playSfx('wavelengthShift', { rate: shiftRates[idx] || 1 });
   }
 
-  /** Procedural-only clean-phase chime (FM bell tuned to wavelength). */
   phaseChime(idx: number) {
-    if (!this.useProcedural) return;
-    this.ensure();
-    this.synth?.phaseChime(idx);
+    const shiftRates = [1.12, 1.0, 0.88];
+    this.playSfx('wavelengthShift', { rate: shiftRates[idx] || 1, gain: 0.45, cooldownMs: 80 });
   }
 
   death() {
-    if (this.useProcedural) { this.ensure(); this.synth?.death(); return; }
     this.playSfx('death');
   }
 
   witnessChime() {
-    if (this.useProcedural) { this.ensure(); this.synth?.witnessChime(); return; }
     this.playSfx('witnessChime');
   }
 
   memoryUnlock() {
-    if (this.useProcedural) { this.ensure(); this.synth?.memoryUnlock(); return; }
     this.playSfx('memoryUnlock', { cooldownMs: 900 });
   }
 
@@ -450,7 +391,6 @@ class AudioEngine {
     this.ensure();
     if (!this.ctx) return;
     this.pendingEngine = true;
-    if (this.useProcedural) { this.synth?.startEngine(); return; }
     if (this.engineNodes) return;
     if (this.startAssetEngineLoop()) return;
     this.manifestPromise?.then(() => {
@@ -460,7 +400,6 @@ class AudioEngine {
 
   stopEngine() {
     this.pendingEngine = false;
-    this.synth?.stopEngine();
     if (!this.engineNodes || !this.ctx) return;
     const t = this.ctx.currentTime;
     const nodes = this.engineNodes;
@@ -471,7 +410,6 @@ class AudioEngine {
   }
 
   updateEngine(speedFactor: number, boosting: boolean) {
-    if (this.useProcedural) { this.synth?.updateEngine(speedFactor, boosting); return; }
     if (!this.engineNodes || !this.ctx) return;
     const nodes = this.engineNodes;
     const rate = Math.min(1.45, Math.max(0.76, 0.84 + (speedFactor - 1) * 0.34 + (boosting ? 0.16 : 0)));
@@ -490,25 +428,12 @@ class AudioEngine {
       l.positionY.value = p.y;
       l.positionZ.value = p.z;
     } else {
-      const legacyListener = l as AudioListener & { setPosition?: (x: number, y: number, z: number) => void };
-      legacyListener.setPosition?.(p.x, p.y, p.z);
+      const fallbackListener = l as AudioListener & { setPosition?: (x: number, y: number, z: number) => void };
+      fallbackListener.setPosition?.(p.x, p.y, p.z);
     }
   }
 
   whoosh(pos: THREE.Vector3, intensity = 1, kind = 'generic') {
-    if (this.useProcedural) {
-      this.ensure();
-      const k: 'well' | 'generic' = kind === 'well' ? 'well' : 'generic';
-      const cooldownMs = k === 'well' ? 520 : 360;
-      const now = performance.now();
-      const cueKey = `proc-whoosh-${k}`;
-      if (now - (this.lastCueAt.get(cueKey) || 0) < cooldownMs) return;
-      this.lastCueAt.set(cueKey, now);
-      // Distance is encoded only via intensity here — caller already attenuates.
-      const distanceProxy = Math.max(0, Math.min(80, 40 * (1 - intensity)));
-      this.synth?.whoosh(distanceProxy, intensity, k);
-      return;
-    }
     const cue = kind === 'well' ? 'gravityWellWhoosh' : 'hazardWhoosh';
     const cueGain = kind === 'well' ? 0.46 : 0.28;
     const cooldownMs = kind === 'well' ? 520 : 360;
@@ -516,22 +441,18 @@ class AudioEngine {
   }
 
   uiTick() {
-    if (this.useProcedural) { this.ensure(); this.synth?.uiTick(); return; }
     this.playSfx('uiTick');
   }
 
   uiClick() {
-    if (this.useProcedural) { this.ensure(); this.synth?.uiClick(); return; }
     this.playSfx('uiClick');
   }
 
   uiSwoosh() {
-    if (this.useProcedural) { this.ensure(); this.synth?.uiSwoosh(); return; }
     this.playSfx('uiSwoosh');
   }
 
   epochRiser() {
-    if (this.useProcedural) { this.ensure(); this.synth?.epochRiser(); return; }
     this.playSfx('epochRiser');
   }
 }
