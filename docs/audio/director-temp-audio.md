@@ -26,6 +26,7 @@ python3 tools/generate_director_audio.py
 Then validate:
 
 ```bash
+node tools/audit_audio_manifest.mjs
 cd photon
 npm run typecheck
 npm test

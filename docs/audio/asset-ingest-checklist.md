@@ -28,6 +28,7 @@ Use this every time a purchased, commissioned, or generated audio asset enters t
 - Add or update entries in `photon/src/audio-manifest.json`.
 - Keep `enabled: false` until the file exists and license is clear, unless it is covered by the director-temp generated-audio notice.
 - Enable one cue group at a time.
+- Run `node tools/audit_audio_manifest.mjs` from the repository root and fix missing enabled paths or decode failures before playtesting.
 - Run `npm run typecheck`.
 - Run `npm run build`.
 - Playtest with headphones and laptop speakers.

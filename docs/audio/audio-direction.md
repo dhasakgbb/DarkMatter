@@ -104,6 +104,8 @@ Photon has two runtime audio paths:
 
 Runtime assets are declared in `photon/src/audio-manifest.json`. Small shipped assets that must survive the single-file build live under `photon/src/audio-assets/`; larger externally hosted assets can live under `photon/public/audio/` for dev/server builds.
 
+For the current implementation audit, cue map, asset coverage, verification commands, and known risks, use `docs/audio/audio-pipeline-audit.md` as the canonical pipeline document.
+
 Rules:
 
 - Keep source WAVs outside the browser build or in a separate source archive.
