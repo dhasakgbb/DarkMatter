@@ -39,7 +39,7 @@ Each row is one concrete claim from `photon-design.md` checked against `photon/s
 
 | Inflation duration = 45s | Pillar 1 | partial | `photon/src/cosmology.ts:31` | 1 | medium | XS | Design target 45s; live value 35s — −10s drift (~22% short). |
 | Quark Plasma duration = 90s | Pillar 1 | partial | `photon/src/cosmology.ts:40` | 1 | high | XS | Design target 90s; live value 40s — −50s drift (~56% short, more than halved). |
-| Recombination duration = 90s | Pillar 1 | partial | `photon/src/cosmology.ts:49` | 1 | medium | XS | Design target 90s; live value 50s — −40s drift (~44% short). |
+| Recombination duration = 90s | Pillar 1 | partial | `photon/src/cosmology.ts:49` | 1 | high | XS | Design target 90s; live value 50s — −40s drift (~44% short). Early-universe pacing is materially compressed; combined with Quark Plasma (−56%) and Inflation (−22%), the first ~270s of the design is delivered in ~125s, breaking the design-doc's onboarding pacing arc. |
 | First Stars duration = 180s | Pillar 1 | partial | `photon/src/cosmology.ts:58` | 1 | low | XS | Design target 180s; live value 190s — +10s drift (~5% long). |
 | Galactic Era duration = 240s | Pillar 1 | partial | `photon/src/cosmology.ts:67` | 1 | low | XS | Design target 240s; live value 230s — −10s drift (~4% short). |
 | Stellar Era duration = 360s | Pillar 1 | shipped | `photon/src/cosmology.ts:76` | 1 | low | XS | Design target 360s; live value 360s — exact match. |
