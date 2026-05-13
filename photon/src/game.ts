@@ -49,6 +49,13 @@ interface HazardLensCandidate {
 
 const hazardLensCandidates: HazardLensCandidate[] = [];
 
+declare global {
+  interface Window {
+    render_game_to_text?: () => string;
+    advanceTime?: (ms: number) => string;
+  }
+}
+
 export function setState(s: GameStateName) {
   const prev = game.state;
   game.state = s;
@@ -496,7 +503,10 @@ function loop() {
   let realDt = (now - last) / 1000;
   if (realDt > 0.05) realDt = 0.05;
   last = now;
+  stepFrame(realDt, true);
+}
 
+function stepFrame(realDt: number, scheduleNext: boolean) {
   if (game.hitStopTime > 0) {
     game.hitStopTime -= realDt;
     if (game.hitStopTime <= 0) game.timeScale = 1;
@@ -527,7 +537,7 @@ function loop() {
   if (game.state === 'pause') {
     composer.render();
     drawHud();
-    requestAnimationFrame(loop);
+    if (scheduleNext) requestAnimationFrame(loop);
     return;
   }
 
@@ -643,7 +653,7 @@ function loop() {
 
   composer.render();
   drawHud();
-  requestAnimationFrame(loop);
+  if (scheduleNext) requestAnimationFrame(loop);
 }
 
 function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
@@ -739,3 +749,63 @@ function updateHazardLensing(visualMul: number) {
 }
 
 export function startLoop() { last = performance.now(); requestAnimationFrame(loop); }
+
+export function advanceTime(ms: number) {
+  const steps = Math.max(1, Math.min(600, Math.round(ms / (1000 / 60))));
+  for (let i = 0; i < steps; i++) stepFrame(1 / 60, false);
+  return renderGameToText();
+}
+
+export function renderGameToText() {
+  const epoch = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
+  const nearHazards = hazards.list
+    .filter((h) => !h.hit && h.dist >= photon.distance - 8 && h.dist <= photon.distance + 130)
+    .slice(0, 8)
+    .map((h) => ({
+      type: h.type,
+      dz: Math.round(h.dist - photon.distance),
+      lateral: Math.round(h.lateral * 10) / 10,
+      vertical: Math.round(h.vertical * 10) / 10,
+      radius: h.hitRadius,
+      wavelength: h.wlIdx,
+    }));
+  const racing = racingLine.list
+    .filter((e) => !e.hit && !e.missed && e.dist >= photon.distance - 8 && e.dist <= photon.distance + 150)
+    .slice(0, 8)
+    .map((e) => ({
+      kind: e.kind,
+      dz: Math.round(e.dist - photon.distance),
+      lateral: Math.round(e.lateral * 10) / 10,
+      vertical: Math.round(e.vertical * 10) / 10,
+      radius: e.radius,
+    }));
+  return JSON.stringify({
+    coordinateSystem: 'track-relative: dz is units ahead of photon, lateral is right positive, vertical is up positive',
+    state: game.state,
+    epoch: { index: game.epochIndex, name: epoch.name, timer: Math.round(game.epochTimer * 10) / 10 },
+    photon: {
+      distance: Math.round(photon.distance),
+      lateral: Math.round(photon.lateral * 10) / 10,
+      vertical: Math.round(photon.vertical * 10) / 10,
+      wavelength: WAVELENGTHS[photon.wavelength]?.key,
+      energy: Math.round(photon.energy),
+      boost: Math.round(photon.boost),
+      speed: Math.round(game._speed || 0),
+      alive: photon.alive,
+      boosting: photon.boosting,
+    },
+    run: {
+      energy: Math.round(game.runEnergy),
+      lineStreak: game.lineStreak || 0,
+      phaseStreak: game.phaseStreak || 0,
+      lineEvent: game.lineEventText || '',
+      dying: game.dying,
+      tutorialStep: game.tutorialActive ? game.tutorialStep : null,
+    },
+    inputs: { ...input },
+    nearby: { hazards: nearHazards, racing },
+  });
+}
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = advanceTime;

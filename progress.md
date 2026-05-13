@@ -3,3 +3,4 @@ Original prompt: 10 more passes [$ralph-marathon](/Users/damian/.codex/skills/ra
 ## Notes
 
 - 2026-05-12: Started Ralph Marathon passes 9-18. Current mission is concrete tech-debt removal plus browser/playtest evidence for Photon.
+- Pass 9: Added `window.render_game_to_text` and `window.advanceTime(ms)` in `photon/src/game.ts` so the web-game Playwright client can inspect and deterministically step the game.
