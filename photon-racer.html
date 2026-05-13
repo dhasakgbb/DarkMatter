@@ -726,10 +726,79 @@ class AudioEngine {
     const noiseGain = ctx.createGain(); noiseGain.gain.value = 0.4;
     noise.connect(noiseLp).connect(noiseGain).connect(lp);
     o1.connect(lp); o2.connect(lp); o3.connect(lp);
-    lp.connect(out);
+
+    // ----- AudioEngine v2 -----
+    // (1) RING-MOD path on the drone, gated by boost.
+    //     Dry path goes lp -> dryGain -> out (always at unity).
+    //     Wet path goes lp -> ringMod -> out, where ringMod.gain is driven
+    //     audio-rate by ringOsc * ringDepth. ringDepth controls boost wetness.
+    const dryGain = ctx.createGain(); dryGain.gain.value = 1.0;
+    const ringMod  = ctx.createGain(); ringMod.gain.value = 0; // bipolar, fed by osc
+    const ringOsc  = ctx.createOscillator(); ringOsc.type = 'sine';
+    ringOsc.frequency.value = baseFreq * 4.7; // inharmonic carrier
+    const ringDepth = ctx.createGain(); ringDepth.gain.value = 0; // 0..~0.6 in updateEngine
+    ringOsc.connect(ringDepth).connect(ringMod.gain);
+    lp.connect(dryGain).connect(out);
+    lp.connect(ringMod).connect(out);
+
+    // (2) REDSHIFT layer — brown-ish noise through a bandpass that drifts
+    //     downward and louder as the universe expands. Gain is set via setRedshift().
+    const rsBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const rsData = rsBuf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < rsData.length; i++) {
+      const w = Math.random() * 2 - 1;
+      last = (last + 0.02 * w) / 1.02;
+      rsData[i] = last * 3.5;
+    }
+    const rsNoise = ctx.createBufferSource(); rsNoise.buffer = rsBuf; rsNoise.loop = true;
+    const rsFilt = ctx.createBiquadFilter(); rsFilt.type = 'bandpass';
+    rsFilt.frequency.value = 220; rsFilt.Q.value = 0.9;
+    const rsGain = ctx.createGain(); rsGain.gain.value = 0;
+    rsNoise.connect(rsFilt).connect(rsGain).connect(out);
+
     o1.start(); o2.start(); o3.start(); lfo.start(); noise.start();
+    ringOsc.start(); rsNoise.start();
     out.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 2.5);
-    this.droneNodes = { o1, o2, o3, lfo, noise, out };
+    this.droneNodes = { o1, o2, o3, lfo, noise, out,
+                        ringOsc, ringMod, ringDepth, dryGain,
+                        rsNoise, rsFilt, rsGain, baseFreq };
+    // Re-apply any redshift level the world has already accumulated.
+    if (typeof this._redshift === 'number') this.setRedshift(this._redshift);
+  }
+  // v2: drive the redshift drone layer. amount is 0..1 (idx/EPOCHS.length).
+  setRedshift(amount) {
+    this._redshift = Math.max(0, Math.min(1, amount || 0));
+    if (!this.droneNodes || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    const a = this._redshift;
+    // Cutoff drifts down (220 → ~55 Hz); gain rises (0 → 0.22).
+    const cutoff = 220 * Math.pow(0.25, a);
+    const gain = 0.22 * a;
+    this.droneNodes.rsFilt.frequency.setTargetAtTime(cutoff, t, 0.6);
+    this.droneNodes.rsGain.gain.setTargetAtTime(gain, t, 0.6);
+  }
+  // v2: wavelength-specific clean-phase chime. Quick FM cascade — modulator
+  // tracks the matched wavelength's carrier; feels like the universe ringing
+  // back at you in tune.
+  phaseChime(wlIdx) {
+    this.ensure(); if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const carriers = [1320, 880, 440]; // gamma / visible / radio
+    const carrier = carriers[wlIdx] || 660;
+    const c = this.ctx.createOscillator(); c.type = 'sine'; c.frequency.value = carrier;
+    const m = this.ctx.createOscillator(); m.type = 'sine'; m.frequency.value = carrier * 1.5;
+    const mGain = this.ctx.createGain(); mGain.gain.value = carrier * 0.9;
+    m.connect(mGain).connect(c.frequency); // FM
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    c.connect(g); g.connect(this.master);
+    g.gain.linearRampToValueAtTime(0.12, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    // Modulator index decays so the chime "settles" into a clean tone.
+    mGain.gain.setValueAtTime(carrier * 0.9, t);
+    mGain.gain.exponentialRampToValueAtTime(carrier * 0.05, t + 0.4);
+    m.start(t); c.start(t);
+    m.stop(t + 0.5); c.stop(t + 0.5);
   }
   stopDrone() {
     this.stopMelody();
@@ -738,7 +807,11 @@ class AudioEngine {
     this.droneNodes.out.gain.cancelScheduledValues(t);
     this.droneNodes.out.gain.linearRampToValueAtTime(0, t + 1.4);
     const nodes = this.droneNodes;
-    setTimeout(() => { try { nodes.o1.stop(); nodes.o2.stop(); nodes.o3.stop(); nodes.lfo.stop(); nodes.noise.stop(); } catch(e){} }, 1600);
+    setTimeout(() => { try {
+      nodes.o1.stop(); nodes.o2.stop(); nodes.o3.stop(); nodes.lfo.stop(); nodes.noise.stop();
+      if (nodes.ringOsc) nodes.ringOsc.stop();
+      if (nodes.rsNoise) nodes.rsNoise.stop();
+    } catch(e){} }, 1600);
     this.droneNodes = null;
   }
   pickup() {
@@ -832,6 +905,15 @@ class AudioEngine {
     // Boost filter sweeps higher when sustained
     const boostCut = boosting ? 1800 : 800;
     n.boostFilt.frequency.setTargetAtTime(boostCut, this.ctx.currentTime, 0.1);
+    // v2: ring-modulate the drone when boosting — fold the cosmic carrier
+    // into a metallic, slightly alien sheen. ringDepth controls wet level.
+    if (this.droneNodes && this.droneNodes.ringDepth) {
+      const ringTarget = boosting ? 0.55 : 0.0;
+      this.droneNodes.ringDepth.gain.setTargetAtTime(ringTarget, this.ctx.currentTime, 0.12);
+      // Drift the ring carrier slightly with speed for motion.
+      const ringFreq = (this.droneNodes.baseFreq || 60) * (4.7 + (speedFactor - 1) * 1.6);
+      this.droneNodes.ringOsc.frequency.setTargetAtTime(ringFreq, this.ctx.currentTime, 0.2);
+    }
   }
   death() {
     this.ensure(); if (!this.ctx) return;
@@ -1746,6 +1828,7 @@ class HazardManager {
           // Tiny pickup bonus for clean phase + visual flash on photon
           onCollect(6);
           photon.phaseFlash();
+          audio.phaseChime(h.wlIdx);
           // JUICE: phase-success burst in the matched wavelength color (smaller for readability)
           particleManager.emitBurst(h.mesh.position.clone(), 'phase', 14, WAVELENGTHS[h.wlIdx].color);
           // CHAIN: phasing one gluon in a strand opens up the rest
@@ -1999,6 +2082,7 @@ function setEpoch(idx) {
   skyMat.uniforms.uColorB.value.copy(e.paletteB);
   skyMat.uniforms.uPoint.value.copy(e.palettePoint);
   skyMat.uniforms.uRedshift.value = idx / Math.max(1, EPOCHS.length); // gentle redshift accumulation
+  audio.setRedshift(skyMat.uniforms.uRedshift.value);
   scene.fog.color.copy(e.fogColor);
   scene.fog.near = e.fogNear; scene.fog.far = e.fogFar;
   scene.background = e.fogColor.clone().multiplyScalar(0.4);
