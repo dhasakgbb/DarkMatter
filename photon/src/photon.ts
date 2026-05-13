@@ -296,6 +296,7 @@ class Photon {
     game.hitStopTime = 0.085;
     game.hitCount++;
     game.phaseStreak = 0;
+    game.cleanRunTime = 0;
     game.perfectEpochThisRun = false;
     if (this.energy <= 0) { this.energy = 0; this.alive = false; }
     return true;
@@ -308,9 +309,14 @@ class Photon {
   }
 
   phaseFlash() {
-    this.phaseFlashTime = 0.45;
     game.phaseCount++;
     game.phaseStreak = (game.phaseStreak || 0) + 1;
+    // Chain reward: longer flash + brighter audio cue on streak milestones.
+    const streakBoost = Math.min(8, game.phaseStreak);
+    this.phaseFlashTime = 0.45 * (1 + streakBoost * 0.08);
+    if (game.phaseStreak === 3 || game.phaseStreak === 6 || game.phaseStreak === 10) {
+      audio.lineGate(game.phaseStreak);
+    }
     meta.phasesLifetime = (meta.phasesLifetime || 0) + 1;
     if (meta.colorPhases) meta.colorPhases[this.wavelength] = (meta.colorPhases[this.wavelength] || 0) + 1;
     if ((game.phaseStreak || 0) > (meta.bestStreak || 0)) meta.bestStreak = game.phaseStreak;

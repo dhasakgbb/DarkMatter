@@ -10,9 +10,11 @@ import type { Epoch } from './cosmology';
 
 interface DroneHandle {
   sources: AudioScheduledSourceNode[];
+  pitchVoices: Array<{ osc: OscillatorNode; multiplier: number }>;
   out: GainNode;
   filter?: BiquadFilterNode;
   baseFreq: number;
+  baseFilterFreq: number;
 }
 
 interface EngineHandle {
@@ -55,6 +57,8 @@ export class ProceduralSynth {
   droneHandle: DroneHandle | null = null;
   engineHandle: EngineHandle | null = null;
   redshift = 0;                // 0..1, drives global pitch droop
+  intensity = 0;               // 0..1 hidden flow signal — opens drone filter + reverb send
+  baseWetGain = 0.32;
 
   constructor(ctx: AudioContext, destination: GainNode) {
     this.ctx = ctx;
@@ -76,7 +80,7 @@ export class ProceduralSynth {
     this.dry.connect(this.master);
 
     this.wet = ctx.createGain();
-    this.wet.gain.value = 0.32;
+    this.wet.gain.value = this.baseWetGain;
     this.reverb = ctx.createConvolver();
     this.reverb.buffer = this.makeImpulseResponse(2.6, 2.0);
     this.wet.connect(this.reverb).connect(this.master);
@@ -135,16 +139,28 @@ export class ProceduralSynth {
 
   /** Plug a node into both dry and wet sends with given wet ratio (0..1). */
   private send(node: AudioNode, wetMix = 0.35) {
+    const taps: AudioNode[] = [];
     if (wetMix > 0) {
       const wetTap = this.ctx.createGain();
       wetTap.gain.value = wetMix;
+      taps.push(wetTap);
       node.connect(wetTap).connect(this.wet);
     }
     if (wetMix < 1) {
       const dryTap = this.ctx.createGain();
       dryTap.gain.value = 1 - wetMix;
+      taps.push(dryTap);
       node.connect(dryTap).connect(this.dry);
     }
+    return () => {
+      safeDisconnect(node);
+      for (const tap of taps) safeDisconnect(tap);
+    };
+  }
+
+  private sendTransient(node: AudioNode, wetMix: number, seconds: number) {
+    const cleanup = this.send(node, wetMix);
+    setTimeout(cleanup, Math.ceil(seconds * 1000));
   }
 
   // ---- public state -------------------------------------------------------
@@ -155,12 +171,22 @@ export class ProceduralSynth {
     if (this.droneHandle) {
       const droop = 1 - this.redshift * 0.28;
       const t = this.ctx.currentTime;
-      for (const src of this.droneHandle.sources) {
-        const osc = src as OscillatorNode & { frequency?: AudioParam };
-        if (osc.frequency) {
-          osc.frequency.setTargetAtTime(this.droneHandle.baseFreq * droop * (osc.frequency.value > this.droneHandle.baseFreq * 1.2 ? 2 : osc.frequency.value < this.droneHandle.baseFreq * 0.8 ? 0.5 : 1), t, 0.5);
-        }
+      for (const voice of this.droneHandle.pitchVoices) {
+        voice.osc.frequency.setTargetAtTime(this.droneHandle.baseFreq * voice.multiplier * droop, t, 0.5);
       }
+    }
+  }
+
+  /** 0..1 hidden flow signal. Opens drone lowpass + boosts reverb send. */
+  setIntensity(amount: number) {
+    const next = Math.max(0, Math.min(1, amount));
+    if (Math.abs(next - this.intensity) < 0.005) return;
+    this.intensity = next;
+    const t = this.ctx.currentTime;
+    this.wet.gain.setTargetAtTime(this.baseWetGain + next * 0.32, t, 0.4);
+    if (this.droneHandle?.filter) {
+      const target = this.droneHandle.baseFilterFreq * (1 + next * 0.6);
+      this.droneHandle.filter.frequency.setTargetAtTime(target, t, 0.5);
     }
   }
 
@@ -221,12 +247,24 @@ export class ProceduralSynth {
 
     this.droneHandle = {
       sources: [o1, o2, o3, o4, lfo, noise],
+      pitchVoices: [
+        { osc: o1, multiplier: 1 },
+        { osc: o2, multiplier: 1.0055 },
+        { osc: o3, multiplier: 0.5 },
+        { osc: o4, multiplier: 1.4983 },
+      ],
       out,
       filter: lp,
       baseFreq,
+      baseFilterFreq: lp.frequency.value,
     };
 
     if (this.redshift > 0) this.setRedshift(this.redshift);
+    if (this.intensity > 0) {
+      // Re-apply intensity to the freshly-built drone filter + wet bus.
+      const target = this.droneHandle.baseFilterFreq * (1 + this.intensity * 0.6);
+      lp.frequency.setTargetAtTime(target, ctx.currentTime, 0.5);
+    }
   }
 
   stopDrone(fade = 1.4) {
@@ -274,9 +312,15 @@ export class ProceduralSynth {
 
     this.droneHandle = {
       sources: [sub, sub2, ghost],
+      pitchVoices: [
+        { osc: sub, multiplier: 1 },
+        { osc: sub2, multiplier: 36.7 / 36 },
+        { osc: ghost, multiplier: 4 },
+      ],
       out,
       filter: lp,
       baseFreq: 36,
+      baseFilterFreq: lp.frequency.value,
     };
   }
 
@@ -338,6 +382,10 @@ export class ProceduralSynth {
     handle.boostGain.gain.linearRampToValueAtTime(0, t + 0.4);
     setTimeout(() => {
       for (const s of handle.sources) safeStop(s);
+      safeDisconnect(handle.hum);
+      safeDisconnect(handle.filter);
+      safeDisconnect(handle.boostGain);
+      safeDisconnect(handle.boostFilter);
     }, 800);
   }
 
@@ -367,7 +415,7 @@ export class ProceduralSynth {
     o2.frequency.exponentialRampToValueAtTime(baseHi * 1.5, t + 0.18);
     const g = ctx.createGain(); g.gain.value = 0;
     o1.connect(g); o2.connect(g);
-    this.send(g, 0.45);
+    this.sendTransient(g, 0.45, 0.45);
     g.gain.linearRampToValueAtTime(0.22, t + 0.012);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
     o1.start(t); o2.start(t);
@@ -395,7 +443,7 @@ export class ProceduralSynth {
 
     const g = ctx.createGain(); g.gain.value = 0;
     carrier.connect(g);
-    this.send(g, 0.55);
+    this.sendTransient(g, 0.55, 0.55);
     g.gain.linearRampToValueAtTime(0.18, t + 0.015);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
     carrier.start(t); modulator.start(t);
@@ -415,7 +463,7 @@ export class ProceduralSynth {
     nGain.gain.setValueAtTime(0.55, t);
     nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
     noise.connect(nFilter).connect(nGain);
-    this.send(nGain, 0.4);
+    this.sendTransient(nGain, 0.4, 0.45);
 
     const sub = ctx.createOscillator(); sub.type = 'sine';
     sub.frequency.setValueAtTime(140, t);
@@ -424,9 +472,10 @@ export class ProceduralSynth {
     subGain.gain.setValueAtTime(0.5, t);
     subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.34);
     sub.connect(subGain);
-    this.send(subGain, 0.25);
+    this.sendTransient(subGain, 0.25, 0.5);
 
     noise.start(t); sub.start(t);
+    setTimeout(() => safeStop(noise), 260);
     sub.stop(t + 0.36);
   }
 
@@ -444,7 +493,7 @@ export class ProceduralSynth {
     g.gain.setValueAtTime(0.5, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 1.7);
     noise.connect(filter).connect(g);
-    this.send(g, 0.6);
+    this.sendTransient(g, 0.6, 1.9);
 
     const sub = ctx.createOscillator(); sub.type = 'sine';
     sub.frequency.setValueAtTime(110, t);
@@ -453,7 +502,7 @@ export class ProceduralSynth {
     subGain.gain.setValueAtTime(0.4, t);
     subGain.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
     sub.connect(subGain);
-    this.send(subGain, 0.3);
+    this.sendTransient(subGain, 0.3, 1.9);
 
     noise.start(t); sub.start(t);
     setTimeout(() => safeStop(noise), 1900);
@@ -474,7 +523,7 @@ export class ProceduralSynth {
       g.gain.linearRampToValueAtTime(0.10 / (i + 1), t + 0.012);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.55 - i * 0.08);
       o.connect(g);
-      this.send(g, 0.5);
+      this.sendTransient(g, 0.5, 0.75);
       o.start(t); o.stop(t + 0.6);
     });
   }
@@ -493,7 +542,7 @@ export class ProceduralSynth {
     g.gain.linearRampToValueAtTime(0.18, t + 0.02);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
     o.connect(f).connect(g);
-    this.send(g, 0.45);
+    this.sendTransient(g, 0.45, 0.6);
     o.start(t); o.stop(t + 0.5);
   }
 
@@ -515,7 +564,7 @@ export class ProceduralSynth {
     g.gain.linearRampToValueAtTime(0.22, t + 0.04);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
     o.connect(f); o2.connect(f); f.connect(g);
-    this.send(g, 0.5);
+    this.sendTransient(g, 0.5, 0.65);
     o.start(t); o2.start(t);
     o.stop(t + 0.5); o2.stop(t + 0.5);
   }
@@ -533,7 +582,7 @@ export class ProceduralSynth {
     g.gain.linearRampToValueAtTime(0.22, t + 0.02);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
     noise.connect(f).connect(g);
-    this.send(g, 0.35);
+    this.sendTransient(g, 0.35, 0.45);
     noise.start(t);
     setTimeout(() => safeStop(noise), 360);
   }
@@ -548,7 +597,7 @@ export class ProceduralSynth {
       o2.frequency.value = freq * 2.001;
       const g = ctx.createGain(); g.gain.value = 0;
       o.connect(g); o2.connect(g);
-      this.send(g, 0.65);
+      this.sendTransient(g, 0.65, 6.2);
       const start = t + i * 0.32;
       g.gain.linearRampToValueAtTime(0.09, start + 0.4);
       g.gain.linearRampToValueAtTime(0, start + 4.6);
@@ -566,7 +615,7 @@ export class ProceduralSynth {
       o.frequency.value = root * mult;
       const g = ctx.createGain(); g.gain.value = 0;
       o.connect(g);
-      this.send(g, 0.6);
+      this.sendTransient(g, 0.6, 2.0);
       const start = t + i * 0.05;
       g.gain.linearRampToValueAtTime(0.10 / (i + 1), start + 0.04);
       g.gain.exponentialRampToValueAtTime(0.001, start + 1.6);
@@ -584,7 +633,7 @@ export class ProceduralSynth {
     g.gain.linearRampToValueAtTime(0.06, t + 0.005);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
     o.connect(g);
-    this.send(g, 0.15);
+    this.sendTransient(g, 0.15, 0.12);
     o.start(t); o.stop(t + 0.08);
   }
 
@@ -599,7 +648,7 @@ export class ProceduralSynth {
     g.gain.linearRampToValueAtTime(0.12, t + 0.006);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
     o.connect(g);
-    this.send(g, 0.25);
+    this.sendTransient(g, 0.25, 0.25);
     o.start(t); o.stop(t + 0.18);
   }
 
@@ -617,7 +666,7 @@ export class ProceduralSynth {
     g.gain.linearRampToValueAtTime(0.16, t + 0.06);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
     noise.connect(f).connect(g);
-    this.send(g, 0.45);
+    this.sendTransient(g, 0.45, 0.55);
     noise.start(t);
     setTimeout(() => safeStop(noise), 480);
   }
@@ -636,7 +685,7 @@ export class ProceduralSynth {
     g.gain.linearRampToValueAtTime(0.22, t + 1.6);
     g.gain.exponentialRampToValueAtTime(0.001, t + 2.6);
     noise.connect(f).connect(g);
-    this.send(g, 0.7);
+    this.sendTransient(g, 0.7, 2.8);
 
     const tone = ctx.createOscillator(); tone.type = 'sine';
     tone.frequency.setValueAtTime(110, t);
@@ -646,7 +695,7 @@ export class ProceduralSynth {
     toneGain.gain.linearRampToValueAtTime(0.14, t + 1.6);
     toneGain.gain.exponentialRampToValueAtTime(0.001, t + 2.6);
     tone.connect(toneGain);
-    this.send(toneGain, 0.5);
+    this.sendTransient(toneGain, 0.5, 2.8);
 
     noise.start(t); tone.start(t);
     setTimeout(() => safeStop(noise), 2700);
@@ -670,7 +719,7 @@ export class ProceduralSynth {
     g.gain.linearRampToValueAtTime(peak, t + 0.05);
     g.gain.exponentialRampToValueAtTime(0.001, t + (kind === 'well' ? 0.7 : 0.4));
     noise.connect(f).connect(g);
-    this.send(g, kind === 'well' ? 0.65 : 0.4);
+    this.sendTransient(g, kind === 'well' ? 0.65 : 0.4, kind === 'well' ? 0.9 : 0.6);
     noise.start(t);
     setTimeout(() => safeStop(noise), kind === 'well' ? 800 : 480);
   }

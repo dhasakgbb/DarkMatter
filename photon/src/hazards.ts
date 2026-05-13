@@ -43,6 +43,10 @@ const PICKUP_COLOR = new THREE.Color(0xfff3a0);
 const WORMHOLE_COLOR = new THREE.Color(0x66ffcc);
 const DEFAULT_HIT_COLOR = new THREE.Color(0xff5566);
 
+function rand() {
+  return runRng ? runRng() : Math.random();
+}
+
 interface HazardUserData {
   spinSpeed?: number;
   wellLens?: THREE.Mesh;
@@ -181,16 +185,21 @@ class HazardManager {
     const tutorialEase = (game.tutorialActive && game.tutorialStep < 2) ? 2.0 : 1.0;
     if (epoch.isHeatDeath) {
       while (this.lastSpawnDist < horizon) {
-        this.lastSpawnDist += 40 + Math.random() * 50;
+        this.lastSpawnDist += 40 + rand() * 50;
         this.spawnAt(epoch, this.lastSpawnDist);
       }
     } else {
+      // Adaptive difficulty: skill bias derived from flow signal nudges hazard
+      // gap shorter when player is in the zone, wider when struggling.
+      // Tutorial epoch (idx 0) is exempt so onboarding stays in the easy lane.
+      const skillBias = game.epochIndex === 0 ? 0 : ((game.flowLevel || 0) - 0.5) * 0.4;
+      const flowDensityScale = THREE.MathUtils.clamp(1 - skillBias, 0.74, 1.30);
       while (this.lastSpawnDist < horizon) {
-        const gap = (12 + Math.random() * 22) / epoch.hazardDensity * tutorialEase;
+        const gap = (12 + rand() * 22) / epoch.hazardDensity * tutorialEase * flowDensityScale;
         this.lastSpawnDist += gap;
         this.spawnAt(epoch, this.lastSpawnDist);
         const just = this.list[this.list.length - 1];
-        if (just && just.kind === 'gluon' && Math.random() < 0.45) {
+        if (just && just.kind === 'gluon' && rand() < 0.45) {
           const chainId = ++this.chainCounter;
           just.chainId = chainId;
           for (let i = 1; i <= 2; i++) {
@@ -198,8 +207,8 @@ class HazardManager {
           }
           this.lastSpawnDist += 11;
         }
-        if (Math.random() < 0.55 * epoch.pickupDensity) {
-          this.spawnPickup(epoch, this.lastSpawnDist + 2 + Math.random() * 6);
+        if (rand() < 0.55 * epoch.pickupDensity) {
+          this.spawnPickup(epoch, this.lastSpawnDist + 2 + rand() * 6);
         }
       }
     }
@@ -220,13 +229,13 @@ class HazardManager {
       const kinds = epoch.hazardKinds;
       const weights = kinds.map(k => k === params?.dominantKind ? 2 : 1);
       const total = weights.reduce((a, b) => a + b, 0);
-      const r = (runRng ? runRng() : Math.random()) * total;
+      const r = rand() * total;
       let acc = 0;
       kind = kinds[kinds.length - 1];
       for (let i = 0; i < kinds.length; i++) { acc += weights[i]; if (r <= acc) { kind = kinds[i]; break; } }
     }
     let geo: THREE.BufferGeometry, hex: number, wlIdx: number, dmg: number, type: string;
-    const wl = chainOpts?.forceWl ?? Math.floor(Math.random() * 3);
+    const wl = chainOpts?.forceWl ?? Math.floor(rand() * 3);
     let hitRadius = 2.6;
     let isFrontFacing = false;
     let cannotPhase = false;
@@ -243,8 +252,8 @@ class HazardManager {
     const mesh = new THREE.Mesh(geo, mat);
     if (type === 'well') this.decorateGravityWell(mesh);
     else this.addHazardGlow(mesh, type, hex);
-    const lat = isFrontFacing ? 0 : (Math.random() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.7;
-    const ver = isFrontFacing ? 0 : (Math.random() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.7;
+    const lat = isFrontFacing ? 0 : (rand() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.7;
+    const ver = isFrontFacing ? 0 : (rand() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.7;
     const p = track.pointAt(dist, this.scratchPoint);
     const frame = track.frameAt(dist, this.scratchFrame);
     mesh.position.copy(p).addScaledVector(frame.right, lat).addScaledVector(frame.up, ver);
@@ -253,17 +262,17 @@ class HazardManager {
       mesh.quaternion.setFromRotationMatrix(mtx);
       hazardUserData(mesh).spinSpeed = type === 'supernova' ? 0.4 : 0;
     } else {
-      hazardUserData(mesh).spinSpeed = (Math.random() - 0.5) * 2;
+      hazardUserData(mesh).spinSpeed = (rand() - 0.5) * 2;
     }
     this.group.add(mesh);
     const hazard: Hazard = { kind, type, dist, lateral: lat, vertical: ver, baseLateral: lat, baseVertical: ver, hex, wlIdx, dmg, mesh, hit: false, hitRadius, isFrontFacing, cannotPhase };
     if (chainOpts?.chainId != null) hazard.chainId = chainOpts.chainId;
-    if (!hazard.chainId && (type === 'fluct' || type === 'plasma') && Math.random() < 0.35) {
+    if (!hazard.chainId && (type === 'fluct' || type === 'plasma') && rand() < 0.35) {
       hazard.movement = {
-        amp: 4 + Math.random() * 7,
-        freq: 0.5 + Math.random() * 0.7,
-        phase: Math.random() * Math.PI * 2,
-        axis: Math.random() < 0.5 ? 'lateral' : 'vertical',
+        amp: 4 + rand() * 7,
+        freq: 0.5 + rand() * 0.7,
+        phase: rand() * Math.PI * 2,
+        axis: rand() < 0.5 ? 'lateral' : 'vertical',
       };
     }
     this.list.push(hazard);
@@ -284,8 +293,8 @@ class HazardManager {
       mesh.add(ring);
       hazardUserData(mesh).pickupRing = ring;
     }
-    const lat = (Math.random() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.55;
-    const ver = (Math.random() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.55;
+    const lat = (rand() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.55;
+    const ver = (rand() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.55;
     const p = track.pointAt(dist, this.scratchPoint);
     const frame = track.frameAt(dist, this.scratchFrame);
     mesh.position.copy(p).addScaledVector(frame.right, lat).addScaledVector(frame.up, ver);
@@ -439,7 +448,7 @@ class HazardManager {
           if (!meta.firstChainPhased) { meta.firstChainPhased = true; saveMeta(meta); checkMemoryTriggers(); }
         }
         if (h.type === 'well') {
-          photon.distance += 95 + Math.random() * 55;
+          photon.distance += 95 + rand() * 55;
           photon.invulnTimer = Math.max(photon.invulnTimer, 1.15);
           photon.energy = Math.min(photon.maxEnergy(), photon.energy + 12);
           particleManager.emitBurst(h.mesh.position, 'death', 22, WORMHOLE_COLOR);

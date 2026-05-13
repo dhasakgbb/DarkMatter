@@ -140,10 +140,15 @@ class Track {
 
   ensureAhead(targetSegIdx: number) {
     let changed = false;
+    // Adaptive twist: amplify (or relax) curvature for upcoming segments based
+    // on flow signal. Tutorial epoch is exempt to protect onboarding.
+    const skillBias = game.epochIndex === 0 ? 0 : ((game.flowLevel || 0) - 0.5) * 0.4;
+    const twistScale = 1 + skillBias * 0.6;
     while (this.segIndex < targetSegIdx + SEGMENTS_AHEAD) {
       const i = this.segIndex;
-      const x = Math.sin(i * this.twistFreq) * this.twistAmp + Math.sin(i * this.twistFreq * 0.31 + 1.7) * this.twistAmp * 0.7;
-      const y = Math.cos(i * this.twistFreq * 0.83) * this.twistAmp * 0.6 + Math.sin(i * this.twistFreq * 0.27) * this.twistAmp * 0.4;
+      const amp = this.twistAmp * twistScale;
+      const x = Math.sin(i * this.twistFreq) * amp + Math.sin(i * this.twistFreq * 0.31 + 1.7) * amp * 0.7;
+      const y = Math.cos(i * this.twistFreq * 0.83) * amp * 0.6 + Math.sin(i * this.twistFreq * 0.27) * amp * 0.4;
       const z = i * SEGMENT_LEN;
       this.points.push(new THREE.Vector3(x, y, z));
       this.segIndex++;

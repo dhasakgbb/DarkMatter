@@ -31,6 +31,13 @@ export interface RunState {
   phaseCount: number;
   hitCount: number;
   phaseStreak: number;
+  // Flow-state signal (Csikszentmihalyi-style hidden meter): smoothed 0..1
+  // derived from streak + clean time + activity. Drives adaptive difficulty,
+  // chain-reward amplification, audio/lensing intensity, and memory unlocks.
+  flowLevel: number;
+  flowPeak: number;
+  flowPeakDwell: number;
+  cleanRunTime: number;
   perfectEpochThisRun: boolean;
   lastRunWasPerfect: boolean;
   newMemoriesThisRun: string[];
@@ -94,6 +101,10 @@ export const game: RunState = {
   phaseCount: 0,
   hitCount: 0,
   phaseStreak: 0,
+  flowLevel: 0,
+  flowPeak: 0,
+  flowPeakDwell: 0,
+  cleanRunTime: 0,
   perfectEpochThisRun: true,
   lastRunWasPerfect: false,
   newMemoriesThisRun: [],

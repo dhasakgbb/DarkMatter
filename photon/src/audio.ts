@@ -163,6 +163,11 @@ class AudioEngine {
     this.synth?.setRedshift(amount);
   }
 
+  /** 0..1 hidden flow signal — opens drone filter + reverb send when in the zone. */
+  setFlow(amount: number) {
+    this.synth?.setIntensity(amount);
+  }
+
   resume() {
     if (this.ctx && this.ctx.state === 'suspended') void this.ctx.resume().catch(() => {});
   }
