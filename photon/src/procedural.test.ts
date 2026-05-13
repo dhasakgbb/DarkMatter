@@ -81,10 +81,12 @@ describe('ProceduralSynth', () => {
     synth.startDrone(EPOCHS[0]);
     synth.setRedshift(0.5);
 
-    expect(ctx.oscillators).toHaveLength(5);
+    expect(ctx.oscillators).toHaveLength(6);
     for (const osc of ctx.oscillators.slice(0, 4)) {
       expect(osc.frequency.setTargetAtTime).toHaveBeenCalled();
     }
+    // LFO and ring-mod carrier are not pitch voices — setRedshift must leave them alone.
     expect(ctx.oscillators[4].frequency.setTargetAtTime).not.toHaveBeenCalled();
+    expect(ctx.oscillators[5].frequency.setTargetAtTime).not.toHaveBeenCalled();
   });
 });

@@ -398,6 +398,13 @@ class AudioEngine {
     this.playSfx('wavelengthShift', { rate: shiftRates[idx] || 1 });
   }
 
+  /** Procedural-only clean-phase chime (FM bell tuned to wavelength). */
+  phaseChime(idx: number) {
+    if (!this.useProcedural) return;
+    this.ensure();
+    this.synth?.phaseChime(idx);
+  }
+
   death() {
     if (this.useProcedural) { this.ensure(); this.synth?.death(); return; }
     this.playSfx('death');

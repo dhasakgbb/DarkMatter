@@ -15,6 +15,8 @@ interface DroneHandle {
   filter?: BiquadFilterNode;
   baseFreq: number;
   baseFilterFreq: number;
+  ringDepth?: GainNode;     // audio-rate gain into ringMod.gain — sets wet level
+  ringOsc?: OscillatorNode; // inharmonic carrier; drifts with speed in updateEngine
 }
 
 interface EngineHandle {
@@ -235,6 +237,17 @@ export class ProceduralSynth {
 
     // Sum into filter
     o1.connect(lp); o2.connect(lp); o3.connect(lp); o4Gain.connect(lp); noiseGain.connect(lp);
+
+    // Boost ring-mod path. Dry sum stays at unity through `out`. A parallel
+    // wet branch multiplies the drone by an inharmonic carrier — opening
+    // ringDepth in updateEngine() blooms a metallic, slightly alien sheen
+    // while the photon is boosting.
+    const ringMod = ctx.createGain(); ringMod.gain.value = 0;
+    const ringOsc = ctx.createOscillator(); ringOsc.type = 'sine';
+    ringOsc.frequency.value = baseFreq * 4.7;
+    const ringDepth = ctx.createGain(); ringDepth.gain.value = 0;
+    ringOsc.connect(ringDepth).connect(ringMod.gain);
+    lp.connect(ringMod).connect(out);
     lp.connect(out);
 
     this.send(out, 0.5);
@@ -244,9 +257,10 @@ export class ProceduralSynth {
     out.gain.linearRampToValueAtTime(conf.mood === 'dark' ? 0.22 : 0.28, t + 2.4);
 
     o1.start(); o2.start(); o3.start(); o4.start(); lfo.start(); noise.start();
+    ringOsc.start();
 
     this.droneHandle = {
-      sources: [o1, o2, o3, o4, lfo, noise],
+      sources: [o1, o2, o3, o4, lfo, noise, ringOsc],
       pitchVoices: [
         { osc: o1, multiplier: 1 },
         { osc: o2, multiplier: 1.0055 },
@@ -257,6 +271,8 @@ export class ProceduralSynth {
       filter: lp,
       baseFreq,
       baseFilterFreq: lp.frequency.value,
+      ringDepth,
+      ringOsc,
     };
 
     if (this.redshift > 0) this.setRedshift(this.redshift);
@@ -398,6 +414,40 @@ export class ProceduralSynth {
     this.engineHandle.hum.gain.setTargetAtTime(humTarget, t, 0.1);
     this.engineHandle.boostGain.gain.setTargetAtTime(boosting ? 0.11 : 0, t, 0.06);
     this.engineHandle.boostFilter.frequency.setTargetAtTime(boosting ? 1700 : 700, t, 0.1);
+    // Ring-mod the drone while boosting; carrier frequency drifts with speed
+    // for a sense of acceleration.
+    if (this.droneHandle && this.droneHandle.ringDepth && this.droneHandle.ringOsc) {
+      this.droneHandle.ringDepth.gain.setTargetAtTime(boosting ? 0.55 : 0, t, 0.12);
+      const ringFreq = this.droneHandle.baseFreq * (4.7 + (speedFactor - 1) * 1.6);
+      this.droneHandle.ringOsc.frequency.setTargetAtTime(ringFreq, t, 0.2);
+    }
+  }
+
+  /**
+   * Wavelength-matched clean-phase chime. Triggered on every successful
+   * phase-through (matched wavelength clears a hazard). FM cascade whose
+   * carrier is tuned to the wavelength index — the universe ringing back
+   * in tune. Distinct from shift(), which fires on player-initiated
+   * wavelength changes.
+   */
+  phaseChime(wlIdx: number) {
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const carriers = [1320, 880, 440];
+    const carrier = carriers[wlIdx] ?? 660;
+    const c = ctx.createOscillator(); c.type = 'sine'; c.frequency.value = carrier;
+    const m = ctx.createOscillator(); m.type = 'sine'; m.frequency.value = carrier * 1.5;
+    const mGain = ctx.createGain();
+    mGain.gain.setValueAtTime(carrier * 0.9, t);
+    mGain.gain.exponentialRampToValueAtTime(carrier * 0.05, t + 0.4);
+    m.connect(mGain).connect(c.frequency);
+    const g = ctx.createGain(); g.gain.value = 0;
+    c.connect(g);
+    this.sendTransient(g, 0.4, 0.5);
+    g.gain.linearRampToValueAtTime(0.12, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    m.start(t); c.start(t);
+    m.stop(t + 0.5); c.stop(t + 0.5);
   }
 
   // ---- short cues -----------------------------------------------------------

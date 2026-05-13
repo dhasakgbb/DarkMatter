@@ -488,6 +488,7 @@ class HazardManager {
         (h.mesh.material as THREE.MeshBasicMaterial).opacity = 0.18;
         onCollect(6);
         photon.phaseFlash();
+        audio.phaseChime(h.wlIdx);
         particleManager.emitBurst(h.mesh.position, 'phase', 14, WAVELENGTHS[h.wlIdx].color);
         if (h.chainId != null) {
           for (const other of this.list) {
@@ -517,6 +518,7 @@ class HazardManager {
         (h.mesh.material as THREE.MeshBasicMaterial).opacity = 0.14;
         onCollect(3);
         photon.phaseFlash();
+        audio.phaseChime(2);
         game.lineEventText = 'RADIO TRANSMISSION';
         game.lineEventTime = 0.85;
         particleManager.emitBurst(h.mesh.position, 'phase', 12, WAVELENGTHS[2].color);
