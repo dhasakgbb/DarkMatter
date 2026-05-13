@@ -25,6 +25,7 @@ export interface MetaState {
   bestLineStreak: number;
   speedPadsHit: number;
   gatesThreaded: number;
+  flowDwellLifetime: number;
 }
 
 export const defaultMeta = (): MetaState => ({
@@ -51,6 +52,7 @@ export const defaultMeta = (): MetaState => ({
   bestLineStreak: 0,
   speedPadsHit: 0,
   gatesThreaded: 0,
+  flowDwellLifetime: 0,
 });
 
 export function loadMeta(): MetaState {

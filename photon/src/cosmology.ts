@@ -176,6 +176,8 @@ export interface MemoryCondition {
   firstWormhole?: boolean;
   firstChainPhased?: boolean;
   perfectEpoch?: boolean;
+  flowPeakDwell?: number;
+  flowDwellLifetime?: number;
 }
 export interface MemoryResonance {
   startEnergyBonus?: number;
@@ -275,6 +277,14 @@ export const MEMORIES: Memory[] = [
     body: 'You remember the silence. Not the kind that was waiting at the end. The other kind. The chosen kind.' },
   { id: 'the-end',         type: 'threshold', when: { reachedEpoch: 8, runs: 5 },
     body: 'You remember knowing where this was going. Five times. Each time you went anyway.',
+    threshold: { unlockVariant: 'gamma' } },
+  { id: 'flow-veil',       type: 'narrative', when: { flowPeakDwell: 6 },
+    body: 'You remember a stretch where deciding stopped. Steering, phasing, breathing — one motion. The veil between you and the road thinned.' },
+  { id: 'flow-resonant',   type: 'resonance', when: { flowDwellLifetime: 30 },
+    body: 'You remember the long resonance. Many runs of it now. The universe began to expect your shape.',
+    resonance: { startBoostBonus: 12 } },
+  { id: 'flow-absorbed',   type: 'threshold', when: { flowDwellLifetime: 120 },
+    body: 'You remember being so much in the moving that the moving became you. You were not the photon. You were the wave the photon kept catching.',
     threshold: { unlockVariant: 'gamma' } },
 ];
 

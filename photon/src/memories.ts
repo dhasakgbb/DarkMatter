@@ -51,6 +51,8 @@ export function checkMemoryTriggers() {
     if (w.firstWormhole && !meta.firstWormhole) ok = false;
     if (w.firstChainPhased && !meta.firstChainPhased) ok = false;
     if (w.perfectEpoch && !game.perfectEpochThisRun) ok = false;
+    if (w.flowPeakDwell != null && (game.flowPeakDwell || 0) < w.flowPeakDwell) ok = false;
+    if (w.flowDwellLifetime != null && (meta.flowDwellLifetime || 0) < w.flowDwellLifetime) ok = false;
     if (ok) unlockMemory(m.id);
   }
 }

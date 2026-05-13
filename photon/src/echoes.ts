@@ -19,6 +19,8 @@ interface Echo {
   life: number;
   maxLife: number;
   history: THREE.Vector3[];
+  historyIndex: number;
+  historyCount: number;
   color: THREE.Color;
 }
 
@@ -54,14 +56,17 @@ class EchoSystem {
     trail.frustumCulled = false;
     this.group.add(grp);
     this.group.add(trail);
+    const life = 14 + Math.random() * 8;
     this.echoes.push({
       grp, core, halo, coreMat, haloMat, trail, trailMat,
       dist: dist + (Math.random() - 0.5) * 30,
       offset, verticalOff,
       vel: BASE_SPEED * 0.55 * (0.85 + Math.random() * 0.3),
-      life: 14 + Math.random() * 8,
-      maxLife: 14 + Math.random() * 8,
-      history: [],
+      life,
+      maxLife: life,
+      history: Array.from({ length: this.trailLen }, () => new THREE.Vector3()),
+      historyIndex: 0,
+      historyCount: 0,
       color,
     });
   }
@@ -81,12 +86,15 @@ class EchoSystem {
       const alpha = Math.min(fadeIn, fadeOut) * 0.55;
       e.coreMat.opacity = alpha * 0.9;
       e.haloMat.opacity = alpha * 0.6;
-      e.history.unshift(pos.clone());
-      if (e.history.length > this.trailLen) e.history.length = this.trailLen;
+      e.history[e.historyIndex].copy(pos);
+      e.historyIndex = (e.historyIndex + 1) % this.trailLen;
+      e.historyCount = Math.min(this.trailLen, e.historyCount + 1);
       const posArr = e.trail.geometry.attributes.position.array as Float32Array;
       const colArr = e.trail.geometry.attributes.color.array as Float32Array;
       for (let j = 0; j < this.trailLen; j++) {
-        const h = e.history[Math.min(j, e.history.length - 1)] || pos;
+        const sampleOffset = Math.min(j, Math.max(0, e.historyCount - 1));
+        const sampleIndex = (e.historyIndex - 1 - sampleOffset + this.trailLen) % this.trailLen;
+        const h = e.historyCount > 0 ? e.history[sampleIndex] : pos;
         posArr[j*3+0] = h.x; posArr[j*3+1] = h.y; posArr[j*3+2] = h.z;
         const k = (1 - j / this.trailLen) * alpha;
         colArr[j*3+0] = e.color.r * k;

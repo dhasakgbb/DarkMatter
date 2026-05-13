@@ -31,6 +31,14 @@ export interface RunState {
   phaseCount: number;
   hitCount: number;
   phaseStreak: number;
+  // Flow-state signal (Csikszentmihalyi-style hidden meter): smoothed 0..1
+  // derived from streak + clean time + activity. Drives adaptive difficulty,
+  // chain-reward amplification, audio intensity, and memory unlocks.
+  flowLevel: number;
+  flowPeak: number;
+  flowPeakDwell: number;
+  cleanRunTime: number;
+  timeSincePhase: number;
   perfectEpochThisRun: boolean;
   lastRunWasPerfect: boolean;
   newMemoriesThisRun: string[];
@@ -65,8 +73,6 @@ export interface RunState {
   epochParams: Record<number, { twistFreqMul: number; twistAmpMul: number; hueShift: number; dominantKind: string }>;
   // MULTIVERSE: per-run physical constant modulations (only active after first witness)
   cosmicConstants: { speedMul: number; agilityMul: number; coherenceThreshold: number };
-  // Endless scaffolding (deprecated by Heat Death; kept for safety)
-  endlessLoop: number;
   // Misc HUD/debug
   _speed: number;
   _shiftedThisRun: boolean;
@@ -96,6 +102,11 @@ export const game: RunState = {
   phaseCount: 0,
   hitCount: 0,
   phaseStreak: 0,
+  flowLevel: 0,
+  flowPeak: 0,
+  flowPeakDwell: 0,
+  cleanRunTime: 0,
+  timeSincePhase: 0,
   perfectEpochThisRun: true,
   lastRunWasPerfect: false,
   newMemoriesThisRun: [],
@@ -122,7 +133,6 @@ export const game: RunState = {
   runSeed: 0,
   epochParams: {},
   cosmicConstants: { speedMul: 1, agilityMul: 1, coherenceThreshold: 14 },
-  endlessLoop: 0,
   _speed: 0,
   _shiftedThisRun: false,
 };

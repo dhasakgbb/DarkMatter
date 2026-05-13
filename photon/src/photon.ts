@@ -71,13 +71,13 @@ class Photon {
     this.coreMat = new THREE.MeshBasicMaterial({ color: 0xccd8e8 });
     this.core = new THREE.Mesh(coreGeo, this.coreMat);
     const haloGeo = new THREE.SphereGeometry(1.8, 24, 16);
-    this.haloMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.32, depthWrite: false });
+    this.haloMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.18, depthWrite: false });
     this.halo = new THREE.Mesh(haloGeo, this.haloMat);
     const coronaGeo = new THREE.SphereGeometry(2.55, 32, 18);
     this.coronaMat = new THREE.MeshBasicMaterial({
       color: 0x88e0ff,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.055,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
@@ -228,13 +228,12 @@ class Photon {
     if (!wasBoosting && this.boosting) funLab.record('boost-start', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: this.distance });
     if (wasBoosting && !this.boosting) funLab.record(this.boost <= 0 ? 'boost-depleted' : 'boost-end', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: this.distance });
 
-    const endlessMul = 1 + (game.endlessLoop || 0) * 0.10;
     // MULTIVERSE: this universe's effective speed-of-light multiplier
     const cosmicSpeed = game.cosmicConstants.speedMul;
     const padBoost = game.padBoostTime > 0
       ? 1 + 0.42 * Math.min(1, game.padBoostTime / Math.max(0.1, game.padBoostTotal || 1.35))
       : 1;
-    const speed = BASE_SPEED * this.speedBonus * currentEpoch.speedMul * (variant.mods.speedMul || 1) * (this.boosting ? BOOST_MUL : 1) * endlessMul * cosmicSpeed * padBoost;
+    const speed = BASE_SPEED * this.speedBonus * currentEpoch.speedMul * (variant.mods.speedMul || 1) * (this.boosting ? BOOST_MUL : 1) * cosmicSpeed * padBoost;
     this.distance += speed * dt;
 
     if (this.invulnTimer > 0) this.invulnTimer -= dt;
@@ -262,9 +261,9 @@ class Photon {
     const pulse = 1 + Math.sin(performance.now() * 0.012) * 0.05 + (this.boosting ? 0.18 : 0) + flashBoost * 0.35;
     this.halo.scale.setScalar(pulse);
     this.corona.scale.setScalar(1.02 + (pulse - 1) * 0.48 + flashBoost * 0.22);
-    const rawHalo = 0.22 + (this.boosting ? 0.12 : 0) + (this.phaseTimer > 0 ? 0.18 : 0) + flashBoost * 0.22;
-    this.haloMat.opacity = Math.min(0.55, rawHalo);
-    this.coronaMat.opacity = Math.min(0.26, 0.08 + (this.boosting ? 0.05 : 0) + flashBoost * 0.10 + (this.phaseTimer > 0 ? 0.04 : 0));
+    const rawHalo = 0.14 + (this.boosting ? 0.07 : 0) + (this.phaseTimer > 0 ? 0.10 : 0) + flashBoost * 0.12;
+    this.haloMat.opacity = Math.min(0.34, rawHalo);
+    this.coronaMat.opacity = Math.min(0.14, 0.045 + (this.boosting ? 0.03 : 0) + flashBoost * 0.05 + (this.phaseTimer > 0 ? 0.025 : 0));
 
     this.trailCursor = (this.trailCursor + this.trailLen - 1) % this.trailLen;
     this.trailHistory[this.trailCursor].copy(this.group.position);
@@ -297,6 +296,7 @@ class Photon {
     game.hitStopTime = 0.085;
     game.hitCount++;
     game.phaseStreak = 0;
+    game.cleanRunTime = 0;
     game.perfectEpochThisRun = false;
     if (this.energy <= 0) { this.energy = 0; this.alive = false; }
     return true;
@@ -309,9 +309,15 @@ class Photon {
   }
 
   phaseFlash() {
-    this.phaseFlashTime = 0.45;
     game.phaseCount++;
     game.phaseStreak = (game.phaseStreak || 0) + 1;
+    game.timeSincePhase = 0;
+    // Chain reward: longer flash + brighter audio cue every 3 phases.
+    const streakBoost = Math.min(8, game.phaseStreak);
+    this.phaseFlashTime = 0.45 * (1 + streakBoost * 0.08);
+    if (game.phaseStreak >= 3 && game.phaseStreak % 3 === 0) {
+      audio.lineGate(game.phaseStreak);
+    }
     meta.phasesLifetime = (meta.phasesLifetime || 0) + 1;
     if (meta.colorPhases) meta.colorPhases[this.wavelength] = (meta.colorPhases[this.wavelength] || 0) + 1;
     if ((game.phaseStreak || 0) > (meta.bestStreak || 0)) meta.bestStreak = game.phaseStreak;

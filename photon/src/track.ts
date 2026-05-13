@@ -3,6 +3,8 @@ import { GUIDE_ARC_RADIUS, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGMENT_
 import { scene } from './scene';
 import type { Epoch } from './cosmology';
 import { game } from './state';
+import { skillBias } from './flow';
+import { getActiveRenderProfile } from './renderProfile';
 
 export interface TrackFrame {
   fwd: THREE.Vector3;
@@ -36,8 +38,10 @@ function routeLineData(line: THREE.Line): RouteLineUserData {
 }
 
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
-const ROUTE_SAMPLES = IS_MOBILE ? 42 : 54;
-const RING_POOL_SIZE = IS_MOBILE ? 32 : 42;
+const INITIAL_PROFILE = getActiveRenderProfile();
+const ROUTE_SAMPLES = INITIAL_PROFILE.routeSamples;
+const RING_POOL_SIZE = INITIAL_PROFILE.ringPoolSize;
+const ROUTE_LANES = INITIAL_PROFILE.quality === 'mobile' ? [-1, 0, 1] : [-2, -1, 0, 1, 2];
 
 class Track {
   points: THREE.Vector3[] = [];
@@ -67,7 +71,7 @@ class Track {
     scene.add(this.routeGroup);
     scene.add(this.dustGroup);
     const ringGeo = new THREE.RingGeometry(GUIDE_ARC_RADIUS - 0.22, GUIDE_ARC_RADIUS + 0.22, IS_MOBILE ? 48 : 72, 1, 0, Math.PI * 0.72);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.30, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.14, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
     for (let i = 0; i < RING_POOL_SIZE; i++) {
       const m = new THREE.Mesh(ringGeo, ringMat.clone());
       m.frustumCulled = false;
@@ -77,13 +81,14 @@ class Track {
       this.ringGroup.add(m);
       this.ringPool.push(m);
     }
-    for (let i = -1; i <= 1; i++) {
+    for (const i of ROUTE_LANES) {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ROUTE_SAMPLES * 3), 3));
+      const side = Math.abs(i);
       const m = new THREE.LineBasicMaterial({
         color: i === 0 ? 0x88e0ff : 0xff7ad9,
         transparent: true,
-        opacity: i === 0 ? 0.22 : 0.13,
+        opacity: i === 0 ? 0.26 : side > 1 ? 0.08 : 0.15,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       });
@@ -93,7 +98,7 @@ class Track {
       this.routeGroup.add(line);
       this.routeLines.push(line);
     }
-    const beadCount = IS_MOBILE ? 42 : 88;
+    const beadCount = INITIAL_PROFILE.quality === 'mobile' ? 42 : INITIAL_PROFILE.quality === 'balanced' ? 92 : 132;
     const beadGeo = new THREE.BufferGeometry();
     beadGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(beadCount * 3), 3));
     const beadMat = new THREE.PointsMaterial({
@@ -109,7 +114,7 @@ class Track {
     this.routeBeads.frustumCulled = false;
     this.routeGroup.add(this.routeBeads);
 
-    const N = IS_MOBILE ? 160 : 480;
+    const N = INITIAL_PROFILE.trackDustCount;
     const g = new THREE.BufferGeometry();
     const positions = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
@@ -140,10 +145,14 @@ class Track {
 
   ensureAhead(targetSegIdx: number) {
     let changed = false;
+    // Adaptive twist: amplify (or relax) curvature for upcoming segments based
+    // on flow signal. Tutorial epoch is exempt to protect onboarding.
+    const twistScale = 1 + skillBias(game.flowLevel || 0, game.epochIndex) * 0.6;
     while (this.segIndex < targetSegIdx + SEGMENTS_AHEAD) {
       const i = this.segIndex;
-      const x = Math.sin(i * this.twistFreq) * this.twistAmp + Math.sin(i * this.twistFreq * 0.31 + 1.7) * this.twistAmp * 0.7;
-      const y = Math.cos(i * this.twistFreq * 0.83) * this.twistAmp * 0.6 + Math.sin(i * this.twistFreq * 0.27) * this.twistAmp * 0.4;
+      const amp = this.twistAmp * twistScale;
+      const x = Math.sin(i * this.twistFreq) * amp + Math.sin(i * this.twistFreq * 0.31 + 1.7) * amp * 0.7;
+      const y = Math.cos(i * this.twistFreq * 0.83) * amp * 0.6 + Math.sin(i * this.twistFreq * 0.27) * amp * 0.4;
       const z = i * SEGMENT_LEN;
       this.points.push(new THREE.Vector3(x, y, z));
       this.segIndex++;
@@ -196,7 +205,7 @@ class Track {
       const t = THREE.MathUtils.smoothstep(distToPhoton, -20, 60);
       const farFade = 1 - THREE.MathUtils.clamp((distToPhoton - 200) / 200, 0, 1);
       const shimmer = 0.86 + 0.10 * Math.sin(time * 2.7 + d * 0.09) + 0.06 * Math.sin(time * 7.3 + d * 0.31);
-      (m.material as THREE.MeshBasicMaterial).opacity = (0.055 + 0.255 * t * farFade) * shimmer;
+      (m.material as THREE.MeshBasicMaterial).opacity = (0.018 + 0.118 * t * farFade) * shimmer;
       const sc = 1 + Math.sin(d * 0.21 + time * 3.3) * 0.018;
       m.scale.set(sc, sc, 1);
       const ring = trackRingData(m);
@@ -220,14 +229,15 @@ class Track {
         const frame = this.frameAt(d, this.routeFrame);
         const wave = Math.sin(d * 0.018 + this._ringSeed + lane * 1.9);
         const slow = Math.cos(d * 0.011 + lane * 2.4);
-        const lateral = lane * PLAYFIELD_HALF_WIDTH * 0.25 + wave * PLAYFIELD_HALF_WIDTH * 0.20;
-        const vertical = slow * PLAYFIELD_HALF_HEIGHT * 0.18;
+        const laneOuter = Math.abs(lane) > 1;
+        const lateral = lane * PLAYFIELD_HALF_WIDTH * (laneOuter ? 0.17 : 0.25) + wave * PLAYFIELD_HALF_WIDTH * (laneOuter ? 0.11 : 0.20);
+        const vertical = slow * PLAYFIELD_HALF_HEIGHT * (laneOuter ? 0.25 : 0.18) + (laneOuter ? Math.sin(d * 0.006 + lane) * 4.5 : 0);
         const q = p.addScaledVector(frame.right, lateral).addScaledVector(frame.up, vertical);
         arr[i*3+0] = q.x; arr[i*3+1] = q.y; arr[i*3+2] = q.z;
       }
       line.geometry.attributes.position.needsUpdate = true;
       const mat = line.material as THREE.LineBasicMaterial;
-      mat.opacity = lane === 0 ? 0.26 : 0.16;
+      mat.opacity = lane === 0 ? 0.30 : Math.abs(lane) > 1 ? 0.09 : 0.17;
       line.visible = true;
     }
     const beads = this.routeBeads.geometry.attributes.position.array as Float32Array;
@@ -249,7 +259,7 @@ class Track {
     }
     this.routeBeads.geometry.attributes.position.needsUpdate = true;
     const beadMat = this.routeBeads.material as THREE.PointsMaterial;
-    beadMat.opacity = 0.56 + 0.22 * Math.sin(time * 2.6);
+    beadMat.opacity = 0.36 + 0.14 * Math.sin(time * 2.6);
     this.routeBeads.visible = true;
   }
 

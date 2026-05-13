@@ -122,7 +122,9 @@ export function refreshSettingsUI() {
   document.getElementById('set-fov-val')!.textContent = String(settings.fov);
   (document.getElementById('set-sens') as HTMLInputElement).value = String(settings.sensitivity);
   document.getElementById('set-sens-val')!.textContent = settings.sensitivity.toFixed(2);
+  (document.getElementById('set-visual-quality') as HTMLSelectElement).value = settings.visualQuality;
   document.getElementById('set-mute')!.classList.toggle('on', settings.muted);
+  document.getElementById('set-procedural-audio')!.classList.toggle('on', settings.proceduralAudio);
   document.getElementById('set-contrast')!.classList.toggle('on', settings.highContrast);
   document.getElementById('set-reduced')!.classList.toggle('on', settings.reducedMotion);
 }
@@ -183,6 +185,12 @@ export function bindUI() {
     applySettings(); saveSettings(settings);
   });
   document.getElementById('set-mute')!.addEventListener('click', () => { settings.muted = !settings.muted; applySettings(); saveSettings(settings); refreshSettingsUI(); });
+  document.getElementById('set-procedural-audio')!.addEventListener('click', () => { settings.proceduralAudio = !settings.proceduralAudio; applySettings(); saveSettings(settings); refreshSettingsUI(); });
+  document.getElementById('set-visual-quality')!.addEventListener('change', (e) => {
+    const value = (e.currentTarget as HTMLSelectElement).value;
+    settings.visualQuality = value === 'mobile' || value === 'balanced' || value === 'ultra' ? value : settings.visualQuality;
+    applySettings(); saveSettings(settings); refreshSettingsUI();
+  });
   document.getElementById('set-contrast')!.addEventListener('click', () => { settings.highContrast = !settings.highContrast; applySettings(); saveSettings(settings); refreshSettingsUI(); });
   document.getElementById('set-reduced')!.addEventListener('click', () => { settings.reducedMotion = !settings.reducedMotion; applySettings(); saveSettings(settings); refreshSettingsUI(); });
   document.getElementById('btn-pause-resume')!.addEventListener('click', resume);

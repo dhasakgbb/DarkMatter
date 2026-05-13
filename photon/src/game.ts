@@ -4,9 +4,11 @@ import { BASE_SPEED, BOOST_MAX, IS_MOBILE, SEGMENT_LEN } from './constants';
 import { game, type GameStateName } from './state';
 import { meta, saveMeta, saveCheckpoint, clearCheckpoint, type Checkpoint } from './meta';
 import { settings, applySettings } from './settings';
-import { newSeed, setRunSeed, computeEpochParams, computeCosmicConstants } from './seed';
+import { newSeed, setRunSeed, computeEpochParams, computeCosmicConstants, seedToLabel, parseSeedLabel } from './seed';
 import { audio } from './audio';
-import { scene, camera, composer, lensingPass, skyMat, stars, starMat, cosmicWeb, cosmicWebMat, bloom } from './scene';
+import { flowTarget, stepFlow } from './flow';
+import { scene, camera, composer, lensingPass, skyMat, stars, starMat, parallaxStarMat, starShells, nebulaDust, nebulaDustMat, cosmicWeb, cosmicWebMat, bloom } from './scene';
+import { getActiveRenderProfile, renderPixelRatio } from './renderProfile';
 import { track } from './track';
 import { particleManager } from './particles';
 import { echoSystem, spawnEchoPhoton } from './echoes';
@@ -23,8 +25,14 @@ import { funLab } from './funlab/runtime';
 import { renderVibePrompt } from './funlab/ui';
 
 const FOAM_COLOR = new THREE.Color(0x99ddff);
+const BACKGROUND_COLOR = new THREE.Color();
+const DEATH_CORE_COLOR = new THREE.Color(0xff5566);
+const SPEED_PAD_COLOR = new THREE.Color(0xff7ad9);
+const LINE_GATE_COLOR = new THREE.Color(0x88e0ff);
+const LINE_GATE_HOT_COLOR = new THREE.Color(0xff7ad9);
 const foamPoint = new THREE.Vector3();
 const foamOffset = new THREE.Vector3();
+const deathPoint = new THREE.Vector3();
 const idlePoint = new THREE.Vector3();
 const idleFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
 const idleLookPoint = new THREE.Vector3();
@@ -38,6 +46,7 @@ const lensProjectPoint = new THREE.Vector3();
 const MAX_ACTIVE_HAZARD_LENSES = 4;
 const HAZARD_LENS_BACK_DISTANCE = 22;
 const HAZARD_LENS_FORWARD_DISTANCE = 132;
+const GRAVITY_LENSING_ENABLED = false;
 
 interface HazardLensCandidate {
   score: number;
@@ -48,11 +57,13 @@ interface HazardLensCandidate {
 }
 
 const hazardLensCandidates: HazardLensCandidate[] = [];
+type UpgradeOption = (typeof UPGRADES)[number];
 
 declare global {
   interface Window {
     render_game_to_text?: () => string;
     advanceTime?: (ms: number) => string;
+    startSeededRun?: (seed: number | string) => string;
   }
 }
 
@@ -110,11 +121,13 @@ export function setEpoch(idx: number) {
   setSkyRedshift(baseRedshiftForEpoch(idx));
   skyMat.uniforms.uMix.value = 0.6;
   starMat.uniforms.uOpacity.value = 0.9;
+  parallaxStarMat.uniforms.uOpacity.value = 0.68;
+  nebulaDustMat.uniforms.uOpacity.value = e.isHeatDeath ? 0.06 : 0.18 + getActiveRenderProfile().skyDetail * 0.08;
   cosmicWebMat.color.copy(e.palettePoint).lerp(e.paletteB, 0.28);
   cosmicWebMat.opacity = e.isHeatDeath ? 0.035 : 0.10 + Math.min(0.05, idx * 0.006);
   scene.fog!.color.copy(e.fogColor);
   (scene.fog as THREE.Fog).near = e.fogNear; (scene.fog as THREE.Fog).far = e.fogFar;
-  scene.background = e.fogColor.clone().multiplyScalar(0.4);
+  scene.background = BACKGROUND_COLOR.copy(e.fogColor).multiplyScalar(0.4);
   track.setEpoch(e);
   if (e.isHeatDeath) {
     audio.startHeatDeath();
@@ -158,6 +171,12 @@ function runStartChapter() {
 }
 
 function absorptionLineFor(e: Epoch) {
+  const inFlow = (game.flowPeak || 0) >= 0.85;
+  if (inFlow) {
+    if (e.isHeatDeath) return 'You did not stop. You became the background, and the background kept going.';
+    if (e.name === 'Black Hole') return 'You folded yourself into the curve so well the curve kept you.';
+    return 'You were so much in the moving that matter mistook you for itself.';
+  }
   if (e.isHeatDeath) return 'Nothing stops you. That is the wound.';
   if (e.name === 'Black Hole') return 'You are gathered, folded, and made difficult to remember.';
   if (e.name === 'Stellar') return 'An eye catches you. For one instant, you are seen.';
@@ -174,6 +193,7 @@ function baseRedshiftForEpoch(idx: number) {
 function setSkyRedshift(amount: number) {
   game.redshiftAmount = THREE.MathUtils.clamp(amount, 0, 1);
   skyMat.uniforms.uRedshift.value = game.redshiftAmount;
+  audio.setRedshift(game.redshiftAmount);
 }
 
 function updateLateEpochRedshift(dt: number, e: Epoch) {
@@ -198,7 +218,11 @@ function heatDeathTick(dt: number, photonDist: number) {
   updateLateEpochRedshift(dt, e);
   const visFade = THREE.MathUtils.clamp(1 - (t / 90), 0.05, 1);
   game.heatDeathFade = 1 - visFade;
-  if (stars && stars.material) starMat.uniforms.uOpacity.value = 0.9 * visFade;
+  if (stars && stars.material) {
+    starMat.uniforms.uOpacity.value = 0.9 * visFade;
+    parallaxStarMat.uniforms.uOpacity.value = 0.68 * visFade;
+    nebulaDustMat.uniforms.uOpacity.value = (0.14 + getActiveRenderProfile().skyDetail * 0.06) * visFade;
+  }
   if (skyMat && skyMat.uniforms.uMix) skyMat.uniforms.uMix.value = 0.6 * visFade;
   if ((meta.witnessedHeatDeath || 0) >= 1) {
     game._echoTime = (game._echoTime || 0) + dt;
@@ -227,6 +251,7 @@ export function resume() {
 }
 
 export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
+  input.left = input.right = input.up = input.down = input.boost = false;
   audio.ensure(); audio.resume();
   audio.startEngine();
   hazards.reset();
@@ -255,7 +280,6 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   game.perfectEpochThisRun = true;
   game.lastRunWasPerfect = false;
   game.phaseStreak = 0;
-  game.endlessLoop = 0;
   game.witnessing = false;
   game.heatDeathFade = 0;
   game.redshiftAmount = 0;
@@ -280,6 +304,11 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   game.startTime = performance.now() - ((resumeSnapshot && resumeSnapshot.startTimeOffset) || 0);
   game.phaseCount = 0;
   game.hitCount = 0;
+  game.flowLevel = 0;
+  game.flowPeak = 0;
+  game.flowPeakDwell = 0;
+  game.cleanRunTime = 0;
+  game.timeSincePhase = 0;
   game._shiftedThisRun = false;
   if (!resumeSnapshot && (!meta.tutorialDone || meta.totalRuns < 2)) {
     game.tutorialActive = true; game.tutorialStep = 0; game.tutorialTime = 0;
@@ -317,8 +346,9 @@ export function beginDeath() {
   audio.stopEngine();
   game.trauma = Math.min(1, game.trauma + 0.9);
   game.timeScale = 1; game.hitStopTime = 0;
-  particleManager.emitBurst(photon.group.position.clone(), 'death', 90, new THREE.Color(0xff5566));
-  particleManager.emitBurst(photon.group.position.clone(), 'death', 50, WAVELENGTHS[photon.wavelength].color);
+  deathPoint.copy(photon.group.position);
+  particleManager.emitBurst(deathPoint, 'death', 90, DEATH_CORE_COLOR);
+  particleManager.emitBurst(deathPoint, 'death', 50, WAVELENGTHS[photon.wavelength].color);
 }
 
 function finalizeDeath() {
@@ -344,6 +374,8 @@ export function endRun() {
     value: game.runEnergy,
   });
   game.lastRunWasPerfect = !!game.perfectEpochThisRun;
+  // Cumulative flow dwell persists across runs and gates flow-themed memories.
+  if ((game.flowPeakDwell || 0) > 0) meta.flowDwellLifetime = (meta.flowDwellLifetime || 0) + game.flowPeakDwell;
   checkMemoryTriggers();
   if (reachedIdx > meta.bestEpoch) meta.bestEpoch = reachedIdx;
   if (game.runDistance > meta.bestDistance) meta.bestDistance = game.runDistance;
@@ -406,7 +438,7 @@ export function epochCleared() {
   if (game.perfectEpochThisRun) checkMemoryTriggers();
   game.perfectEpochThisRun = true;
   const pool = UPGRADES.filter(u => (meta.upgrades[u.key] || 0) < u.max);
-  const shuffled = pool.sort(() => Math.random() - 0.5).slice(0, 3);
+  const shuffled = pickUpgradeOptions(pool, 3);
   if (shuffled.length === 0) { game.runEnergy += 30; advanceEpoch(); return; }
   const e = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
   funLab.record('upgrade-options', { epochIndex: game.epochIndex, epochName: e.name, distance: game.runDistance, value: shuffled.length });
@@ -428,6 +460,16 @@ export function epochCleared() {
     wrap.appendChild(card);
   }
   setState('upgrade');
+}
+
+function pickUpgradeOptions(pool: UpgradeOption[], count: number) {
+  const options = pool.slice();
+  const take = Math.min(count, options.length);
+  for (let i = 0; i < take; i++) {
+    const j = i + Math.floor(Math.random() * (options.length - i));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
+  return options.slice(0, take);
 }
 
 export function advanceEpoch() {
@@ -463,7 +505,7 @@ function activateSpeedPad(pos: THREE.Vector3) {
   checkMemoryTriggers();
   setLineEvent('SPEED PAD', 1.15);
   audio.speedPad();
-  particleManager.emitBurst(pos, 'pickup', 34, new THREE.Color(0xff7ad9));
+  particleManager.emitBurst(pos, 'pickup', 34, SPEED_PAD_COLOR);
 }
 
 function threadRacingGate(pos: THREE.Vector3) {
@@ -481,7 +523,7 @@ function threadRacingGate(pos: THREE.Vector3) {
   game.runEnergy += reward;
   setLineEvent(`LINE ×${game.lineStreak}`, 1.2);
   audio.lineGate(game.lineStreak);
-  particleManager.emitBurst(pos, 'phase', 26, new THREE.Color(game.lineStreak >= 5 ? 0xff7ad9 : 0x88e0ff));
+  particleManager.emitBurst(pos, 'phase', 26, game.lineStreak >= 5 ? LINE_GATE_HOT_COLOR : LINE_GATE_COLOR);
 }
 
 function missRacingGate() {
@@ -515,12 +557,20 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
 
   skyMat.uniforms.uTime.value += realDt;
   starMat.uniforms.uTime.value += realDt;
+  parallaxStarMat.uniforms.uTime.value += realDt;
+  nebulaDustMat.uniforms.uTime.value += realDt;
   const visualSpeed = game.state === 'run'
     ? THREE.MathUtils.clamp(((game._speed || BASE_SPEED) - BASE_SPEED) / BASE_SPEED, 0, 1.8)
     : 0;
   starMat.uniforms.uSpeed.value += (visualSpeed - starMat.uniforms.uSpeed.value) * Math.min(1, realDt * 3.2);
+  parallaxStarMat.uniforms.uSpeed.value += (visualSpeed * 1.45 - parallaxStarMat.uniforms.uSpeed.value) * Math.min(1, realDt * 3.2);
   lensingPass.uniforms.uTime.value += realDt;
-  stars.rotation.y += realDt * 0.003;
+  for (let i = 0; i < starShells.length; i++) {
+    starShells[i].rotation.y += realDt * (i === 0 ? 0.003 : 0.0075);
+    starShells[i].rotation.x += realDt * (i === 0 ? 0.0004 : -0.0011);
+  }
+  nebulaDust.rotation.y += realDt * 0.0012;
+  nebulaDust.rotation.z += realDt * 0.00045;
   cosmicWeb.rotation.y += realDt * 0.0018;
   cosmicWeb.rotation.x += realDt * 0.0007;
 
@@ -593,6 +643,22 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
       );
       game.epochTimer += dt;
       game.runDistance = photon.distance;
+      // Flow signal: streak × clean-dwell (gated by recent engagement) × activity.
+      // Smoothed so a single hit's streak reset doesn't snap the meter to zero.
+      // See src/flow.ts for the pure compute (covered by flow.test.ts).
+      game.cleanRunTime = (game.cleanRunTime || 0) + dt;
+      game.timeSincePhase = (game.timeSincePhase || 0) + dt;
+      const target = flowTarget({
+        phaseStreak: game.phaseStreak || 0,
+        cleanRunTime: game.cleanRunTime,
+        timeSincePhase: game.timeSincePhase,
+        energyRatio: photon.energy / Math.max(1, photon.maxEnergy()),
+        boosting: photon.boosting,
+      });
+      game.flowLevel = stepFlow(game.flowLevel, target, dt);
+      if (game.flowLevel > game.flowPeak) game.flowPeak = game.flowLevel;
+      if (game.flowLevel >= 0.85) game.flowPeakDwell += dt;
+      audio.setFlow(game.flowLevel);
       if (e.isHeatDeath) heatDeathTick(dt, photon.distance);
       else if (e.name === 'Black Hole') blackHoleTick(dt, e);
       if (e.isHeatDeath || e.name === 'Black Hole') {
@@ -673,17 +739,26 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
     .addScaledVector(lookFrame.up, photon.vertical * 0.30);
   camera.lookAt(lookPoint);
   const speedFactor = Math.max(0, (currentSpeed - BASE_SPEED) / BASE_SPEED);
-  const fovTarget = (settings.fov || 72) + (photon.boosting ? 9 : 0) + Math.max(0, currentSpeed - BASE_SPEED) * 0.03;
+  // Flow breathe: subliminal fov dilation (±0.4°) when in the zone.
+  const flowFovBreathe = ((game.flowLevel || 0) - 0.5) * 0.8;
+  const fovTarget = (settings.fov || 72) + (photon.boosting ? 9 : 0) + Math.max(0, currentSpeed - BASE_SPEED) * 0.03 + flowFovBreathe;
   camera.fov += (fovTarget - camera.fov) * Math.min(1, realDt * 8);
   camera.updateProjectionMatrix();
-  const motionMul = settings.reducedMotion ? 0 : 1;
-  const mobileVisualMul = IS_MOBILE ? 0.78 : 1;
-  lensingPass.uniforms.uIntensity.value = (0.0016 + (photon.boosting ? 0.0024 : 0) + Math.min(0.0014, speedFactor * 0.0007)) * motionMul * mobileVisualMul;
-  lensingPass.uniforms.uBarrel.value    = (0.024 + (photon.boosting ? 0.066 : 0) + Math.min(0.032, speedFactor * 0.016)) * motionMul * mobileVisualMul;
-  lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * (IS_MOBILE ? 0.86 : 1);
-  updateHazardLensing(motionMul * mobileVisualMul);
-  const bloomTarget = (IS_MOBILE ? 0.46 : 0.54) + Math.min(IS_MOBILE ? 0.10 : 0.14, speedFactor * (IS_MOBILE ? 0.06 : 0.08)) + (photon.boosting ? (IS_MOBILE ? 0.07 : 0.10) : 0) + game.trauma * (IS_MOBILE ? 0.04 : 0.06);
-  const bloomRadiusTarget = (IS_MOBILE ? 0.54 : 0.62) + Math.min(IS_MOBILE ? 0.09 : 0.12, speedFactor * (IS_MOBILE ? 0.05 : 0.07)) + (photon.boosting ? (IS_MOBILE ? 0.04 : 0.06) : 0);
+  const renderProfile = getActiveRenderProfile();
+  // Gravity lensing disabled — was overwhelming gameplay. Re-enable by
+  // flipping GRAVITY_LENSING_ENABLED and restoring nonzero shader defaults / profile multipliers.
+  const lensMul = GRAVITY_LENSING_ENABLED ? renderProfile.lensingMul : 0;
+  lensingPass.uniforms.uIntensity.value = 0;
+  lensingPass.uniforms.uBarrel.value    = 0;
+  lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * renderProfile.glowMul;
+  updateHazardLensing(lensMul);
+  const bloomTarget = renderProfile.bloomBase
+    + Math.min(0.16, speedFactor * renderProfile.bloomSpeedAdd)
+    + (photon.boosting ? renderProfile.bloomBoostAdd : 0)
+    + game.trauma * (IS_MOBILE ? 0.04 : 0.07);
+  const bloomRadiusTarget = renderProfile.bloomRadius
+    + Math.min(IS_MOBILE ? 0.09 : 0.14, speedFactor * (IS_MOBILE ? 0.05 : 0.08))
+    + (photon.boosting ? (IS_MOBILE ? 0.04 : 0.07) : 0);
   bloom.strength += (bloomTarget - bloom.strength) * Math.min(1, realDt * 3.5);
   bloom.radius += (bloomRadiusTarget - bloom.radius) * Math.min(1, realDt * 2.8);
   if (game.trauma > 0 && !settings.reducedMotion) {
@@ -700,7 +775,7 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
 function updateHazardLensing(visualMul: number) {
   const lensUniforms = lensingPass.uniforms;
   const lensData = lensUniforms.uLenses.value as THREE.Vector4[];
-  if (visualMul <= 0 || game.state !== 'run') {
+  if (!GRAVITY_LENSING_ENABLED || visualMul <= 0 || game.state !== 'run') {
     lensUniforms.uLensCount.value = 0;
     for (const lens of lensData) lens.set(0.5, 0.5, 0, 0);
     return;
@@ -726,7 +801,7 @@ function updateHazardLensing(visualMul: number) {
     const screenY = 0.5 - lensProjectPoint.y * 0.5;
     const depthProximity = 1 - THREE.MathUtils.clamp(Math.max(0, dz) / HAZARD_LENS_FORWARD_DISTANCE, 0, 1);
     const edgeFade = 1 - THREE.MathUtils.clamp(Math.max(Math.abs(lensProjectPoint.x), Math.abs(lensProjectPoint.y)) - 0.82, 0, 0.34) / 0.34;
-    const baseStrength = hazard.type === 'eventHorizon' ? 0.028 : 0.012;
+    const baseStrength = hazard.type === 'eventHorizon' ? 0.009 : 0.0035;
     const strength = baseStrength * (0.58 + depthProximity * 0.42) * edgeFade * epochLensMul * visualMul;
     const radius = THREE.MathUtils.clamp(
       (hazard.type === 'eventHorizon' ? 0.35 : 0.25) + depthProximity * (hazard.type === 'eventHorizon' ? 0.12 : 0.09),
@@ -756,10 +831,19 @@ export function advanceTime(ms: number) {
   return renderGameToText();
 }
 
+export function startSeededRun(seed: number | string) {
+  const parsed = typeof seed === 'number' ? seed >>> 0 : parseSeedLabel(seed);
+  if (parsed == null) throw new Error(`Invalid seed: ${seed}`);
+  clearCheckpoint();
+  startRun(undefined, parsed);
+  return renderGameToText();
+}
+
 export function renderGameToText() {
   const epoch = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
   const nearHazards = hazards.list
     .filter((h) => !h.hit && h.dist >= photon.distance - 8 && h.dist <= photon.distance + 130)
+    .sort((a, b) => a.dist - b.dist)
     .slice(0, 8)
     .map((h) => ({
       type: h.type,
@@ -771,6 +855,7 @@ export function renderGameToText() {
     }));
   const racing = racingLine.list
     .filter((e) => !e.hit && !e.missed && e.dist >= photon.distance - 8 && e.dist <= photon.distance + 150)
+    .sort((a, b) => a.dist - b.dist)
     .slice(0, 8)
     .map((e) => ({
       kind: e.kind,
@@ -783,6 +868,7 @@ export function renderGameToText() {
     coordinateSystem: 'track-relative: dz is units ahead of photon, lateral is right positive, vertical is up positive',
     state: game.state,
     epoch: { index: game.epochIndex, name: epoch.name, timer: Math.round(game.epochTimer * 10) / 10 },
+    seed: { value: game.runSeed >>> 0, label: seedToLabel(game.runSeed) },
     photon: {
       distance: Math.round(photon.distance),
       lateral: Math.round(photon.lateral * 10) / 10,
@@ -802,6 +888,25 @@ export function renderGameToText() {
       dying: game.dying,
       tutorialStep: game.tutorialActive ? game.tutorialStep : null,
     },
+    audio: {
+      mode: audio.useProcedural ? 'procedural' : 'asset',
+      assetsReady: audio.assetsReady,
+      engineActive: audio.useProcedural ? !!audio.synth?.engineHandle : !!audio.engineNodes,
+      droneActive: audio.useProcedural ? !!audio.synth?.droneHandle : !!audio.studioMusicNodes,
+    },
+    counts: {
+      activeHazards: hazards.list.filter((h) => !h.hit).length,
+      activeRacing: racingLine.list.filter((e) => !e.hit && !e.missed).length,
+      activeEchoes: echoSystem.echoes.length,
+    },
+    viewport: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      fullscreen: !!document.fullscreenElement,
+      pixelRatio: window.devicePixelRatio || 1,
+      renderPixelRatio: Math.round(renderPixelRatio() * 100) / 100,
+      visualQuality: getActiveRenderProfile().quality,
+    },
     inputs: { ...input },
     nearby: { hazards: nearHazards, racing },
   });
@@ -809,3 +914,4 @@ export function renderGameToText() {
 
 window.render_game_to_text = renderGameToText;
 window.advanceTime = advanceTime;
+window.startSeededRun = startSeededRun;
