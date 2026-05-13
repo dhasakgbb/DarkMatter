@@ -7,7 +7,8 @@ import { settings, applySettings } from './settings';
 import { newSeed, setRunSeed, computeEpochParams, computeCosmicConstants, seedToLabel, parseSeedLabel } from './seed';
 import { audio } from './audio';
 import { flowTarget, stepFlow } from './flow';
-import { scene, camera, composer, lensingPass, skyMat, stars, starMat, cosmicWeb, cosmicWebMat, bloom } from './scene';
+import { scene, camera, composer, lensingPass, skyMat, stars, starMat, parallaxStarMat, starShells, nebulaDust, nebulaDustMat, cosmicWeb, cosmicWebMat, bloom } from './scene';
+import { getActiveRenderProfile, renderPixelRatio } from './renderProfile';
 import { track } from './track';
 import { particleManager } from './particles';
 import { echoSystem, spawnEchoPhoton } from './echoes';
@@ -119,6 +120,8 @@ export function setEpoch(idx: number) {
   setSkyRedshift(baseRedshiftForEpoch(idx));
   skyMat.uniforms.uMix.value = 0.6;
   starMat.uniforms.uOpacity.value = 0.9;
+  parallaxStarMat.uniforms.uOpacity.value = 0.68;
+  nebulaDustMat.uniforms.uOpacity.value = e.isHeatDeath ? 0.06 : 0.18 + getActiveRenderProfile().skyDetail * 0.08;
   cosmicWebMat.color.copy(e.palettePoint).lerp(e.paletteB, 0.28);
   cosmicWebMat.opacity = e.isHeatDeath ? 0.035 : 0.10 + Math.min(0.05, idx * 0.006);
   scene.fog!.color.copy(e.fogColor);
@@ -214,7 +217,11 @@ function heatDeathTick(dt: number, photonDist: number) {
   updateLateEpochRedshift(dt, e);
   const visFade = THREE.MathUtils.clamp(1 - (t / 90), 0.05, 1);
   game.heatDeathFade = 1 - visFade;
-  if (stars && stars.material) starMat.uniforms.uOpacity.value = 0.9 * visFade;
+  if (stars && stars.material) {
+    starMat.uniforms.uOpacity.value = 0.9 * visFade;
+    parallaxStarMat.uniforms.uOpacity.value = 0.68 * visFade;
+    nebulaDustMat.uniforms.uOpacity.value = (0.14 + getActiveRenderProfile().skyDetail * 0.06) * visFade;
+  }
   if (skyMat && skyMat.uniforms.uMix) skyMat.uniforms.uMix.value = 0.6 * visFade;
   if ((meta.witnessedHeatDeath || 0) >= 1) {
     game._echoTime = (game._echoTime || 0) + dt;
@@ -549,12 +556,20 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
 
   skyMat.uniforms.uTime.value += realDt;
   starMat.uniforms.uTime.value += realDt;
+  parallaxStarMat.uniforms.uTime.value += realDt;
+  nebulaDustMat.uniforms.uTime.value += realDt;
   const visualSpeed = game.state === 'run'
     ? THREE.MathUtils.clamp(((game._speed || BASE_SPEED) - BASE_SPEED) / BASE_SPEED, 0, 1.8)
     : 0;
   starMat.uniforms.uSpeed.value += (visualSpeed - starMat.uniforms.uSpeed.value) * Math.min(1, realDt * 3.2);
+  parallaxStarMat.uniforms.uSpeed.value += (visualSpeed * 1.45 - parallaxStarMat.uniforms.uSpeed.value) * Math.min(1, realDt * 3.2);
   lensingPass.uniforms.uTime.value += realDt;
-  stars.rotation.y += realDt * 0.003;
+  for (let i = 0; i < starShells.length; i++) {
+    starShells[i].rotation.y += realDt * (i === 0 ? 0.003 : 0.0075);
+    starShells[i].rotation.x += realDt * (i === 0 ? 0.0004 : -0.0011);
+  }
+  nebulaDust.rotation.y += realDt * 0.0012;
+  nebulaDust.rotation.z += realDt * 0.00045;
   cosmicWeb.rotation.y += realDt * 0.0018;
   cosmicWeb.rotation.x += realDt * 0.0007;
 
@@ -729,13 +744,19 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
   camera.fov += (fovTarget - camera.fov) * Math.min(1, realDt * 8);
   camera.updateProjectionMatrix();
   const motionMul = settings.reducedMotion ? 0 : 1;
-  const mobileVisualMul = IS_MOBILE ? 0.78 : 1;
-  lensingPass.uniforms.uIntensity.value = (0.0004 + (photon.boosting ? 0.0007 : 0) + Math.min(0.0004, speedFactor * 0.0002)) * motionMul * mobileVisualMul;
-  lensingPass.uniforms.uBarrel.value    = (0.005 + (photon.boosting ? 0.016 : 0) + Math.min(0.008, speedFactor * 0.004)) * motionMul * mobileVisualMul;
-  lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * (IS_MOBILE ? 0.86 : 1);
-  updateHazardLensing(motionMul * mobileVisualMul);
-  const bloomTarget = (IS_MOBILE ? 0.46 : 0.54) + Math.min(IS_MOBILE ? 0.10 : 0.14, speedFactor * (IS_MOBILE ? 0.06 : 0.08)) + (photon.boosting ? (IS_MOBILE ? 0.07 : 0.10) : 0) + game.trauma * (IS_MOBILE ? 0.04 : 0.06);
-  const bloomRadiusTarget = (IS_MOBILE ? 0.54 : 0.62) + Math.min(IS_MOBILE ? 0.09 : 0.12, speedFactor * (IS_MOBILE ? 0.05 : 0.07)) + (photon.boosting ? (IS_MOBILE ? 0.04 : 0.06) : 0);
+  const renderProfile = getActiveRenderProfile();
+  const lensMul = motionMul * renderProfile.lensingMul;
+  lensingPass.uniforms.uIntensity.value = (0.0004 + (photon.boosting ? 0.0007 : 0) + Math.min(0.0004, speedFactor * 0.0002)) * lensMul;
+  lensingPass.uniforms.uBarrel.value    = (0.005 + (photon.boosting ? 0.016 : 0) + Math.min(0.008, speedFactor * 0.004)) * lensMul;
+  lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * renderProfile.glowMul;
+  updateHazardLensing(lensMul);
+  const bloomTarget = renderProfile.bloomBase
+    + Math.min(0.16, speedFactor * renderProfile.bloomSpeedAdd)
+    + (photon.boosting ? renderProfile.bloomBoostAdd : 0)
+    + game.trauma * (IS_MOBILE ? 0.04 : 0.07);
+  const bloomRadiusTarget = renderProfile.bloomRadius
+    + Math.min(IS_MOBILE ? 0.09 : 0.14, speedFactor * (IS_MOBILE ? 0.05 : 0.08))
+    + (photon.boosting ? (IS_MOBILE ? 0.04 : 0.07) : 0);
   bloom.strength += (bloomTarget - bloom.strength) * Math.min(1, realDt * 3.5);
   bloom.radius += (bloomRadiusTarget - bloom.radius) * Math.min(1, realDt * 2.8);
   if (game.trauma > 0 && !settings.reducedMotion) {
@@ -881,6 +902,8 @@ export function renderGameToText() {
       height: window.innerHeight,
       fullscreen: !!document.fullscreenElement,
       pixelRatio: window.devicePixelRatio || 1,
+      renderPixelRatio: Math.round(renderPixelRatio() * 100) / 100,
+      visualQuality: getActiveRenderProfile().quality,
     },
     inputs: { ...input },
     nearby: { hazards: nearHazards, racing },

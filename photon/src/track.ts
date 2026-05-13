@@ -4,6 +4,7 @@ import { scene } from './scene';
 import type { Epoch } from './cosmology';
 import { game } from './state';
 import { skillBias } from './flow';
+import { getActiveRenderProfile } from './renderProfile';
 
 export interface TrackFrame {
   fwd: THREE.Vector3;
@@ -37,8 +38,10 @@ function routeLineData(line: THREE.Line): RouteLineUserData {
 }
 
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
-const ROUTE_SAMPLES = IS_MOBILE ? 42 : 54;
-const RING_POOL_SIZE = IS_MOBILE ? 32 : 42;
+const INITIAL_PROFILE = getActiveRenderProfile();
+const ROUTE_SAMPLES = INITIAL_PROFILE.routeSamples;
+const RING_POOL_SIZE = INITIAL_PROFILE.ringPoolSize;
+const ROUTE_LANES = INITIAL_PROFILE.quality === 'mobile' ? [-1, 0, 1] : [-2, -1, 0, 1, 2];
 
 class Track {
   points: THREE.Vector3[] = [];
@@ -78,13 +81,14 @@ class Track {
       this.ringGroup.add(m);
       this.ringPool.push(m);
     }
-    for (let i = -1; i <= 1; i++) {
+    for (const i of ROUTE_LANES) {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ROUTE_SAMPLES * 3), 3));
+      const side = Math.abs(i);
       const m = new THREE.LineBasicMaterial({
         color: i === 0 ? 0x88e0ff : 0xff7ad9,
         transparent: true,
-        opacity: i === 0 ? 0.22 : 0.13,
+        opacity: i === 0 ? 0.26 : side > 1 ? 0.08 : 0.15,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       });
@@ -94,7 +98,7 @@ class Track {
       this.routeGroup.add(line);
       this.routeLines.push(line);
     }
-    const beadCount = IS_MOBILE ? 42 : 88;
+    const beadCount = INITIAL_PROFILE.quality === 'mobile' ? 42 : INITIAL_PROFILE.quality === 'balanced' ? 92 : 132;
     const beadGeo = new THREE.BufferGeometry();
     beadGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(beadCount * 3), 3));
     const beadMat = new THREE.PointsMaterial({
@@ -110,7 +114,7 @@ class Track {
     this.routeBeads.frustumCulled = false;
     this.routeGroup.add(this.routeBeads);
 
-    const N = IS_MOBILE ? 160 : 480;
+    const N = INITIAL_PROFILE.trackDustCount;
     const g = new THREE.BufferGeometry();
     const positions = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
@@ -225,14 +229,15 @@ class Track {
         const frame = this.frameAt(d, this.routeFrame);
         const wave = Math.sin(d * 0.018 + this._ringSeed + lane * 1.9);
         const slow = Math.cos(d * 0.011 + lane * 2.4);
-        const lateral = lane * PLAYFIELD_HALF_WIDTH * 0.25 + wave * PLAYFIELD_HALF_WIDTH * 0.20;
-        const vertical = slow * PLAYFIELD_HALF_HEIGHT * 0.18;
+        const laneOuter = Math.abs(lane) > 1;
+        const lateral = lane * PLAYFIELD_HALF_WIDTH * (laneOuter ? 0.17 : 0.25) + wave * PLAYFIELD_HALF_WIDTH * (laneOuter ? 0.11 : 0.20);
+        const vertical = slow * PLAYFIELD_HALF_HEIGHT * (laneOuter ? 0.25 : 0.18) + (laneOuter ? Math.sin(d * 0.006 + lane) * 4.5 : 0);
         const q = p.addScaledVector(frame.right, lateral).addScaledVector(frame.up, vertical);
         arr[i*3+0] = q.x; arr[i*3+1] = q.y; arr[i*3+2] = q.z;
       }
       line.geometry.attributes.position.needsUpdate = true;
       const mat = line.material as THREE.LineBasicMaterial;
-      mat.opacity = lane === 0 ? 0.26 : 0.16;
+      mat.opacity = lane === 0 ? 0.30 : Math.abs(lane) > 1 ? 0.09 : 0.17;
       line.visible = true;
     }
     const beads = this.routeBeads.geometry.attributes.position.array as Float32Array;

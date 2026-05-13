@@ -46,3 +46,10 @@ Original prompt: 10 more passes [$ralph-marathon](/Users/damian/.codex/skills/ra
 - Pass 28: Made mobile HUD/tutorial prompts teach touch steering, touch wavelength, and two-finger boost.
 - Pass 29: Moved wavelength HUD/touch geometry into a shared layout helper so rendering and hit testing stay in sync.
 - Pass 30: Ran final precommit/cadence gates, rebuilt and synced `photon-racer-v2.html`, and smoke-tested the standalone file artifact.
+
+## Visual Fidelity Marathon
+
+- Added explicit visual quality tiers (`mobile`, `balanced`, `ultra`) with desktop defaulting to `ultra`, mobile defaulting to `mobile`, and a pause-menu selector wired through persisted settings.
+- Centralized render-budget knobs in `photon/src/renderProfile.ts` so scenery density, pixel-ratio caps, bloom, lensing, star fields, cosmic web, track dust, and hazard detail come from one profile helper.
+- Rebuilt the visual layer around richer procedural sky detail, parallax star shells, nebula dust volumes, denser cosmic-web depth, stronger track corridor materials, and higher-fidelity hazard silhouettes.
+- Browser evidence captured desktop, mobile, Inflationary, Recombination, and Heat Death states with procedural audio still active and `render_game_to_text` counts populated.

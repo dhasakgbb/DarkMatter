@@ -5,6 +5,7 @@ import { scene } from './scene';
 import { track } from './track';
 import { game } from './state';
 import { runRng } from './seed';
+import { getActiveRenderProfile } from './renderProfile';
 
 type RacingKind = 'gate' | 'pad';
 
@@ -43,6 +44,7 @@ class RacingLineManager {
   private readonly linePoint = new THREE.Vector3();
   private readonly lineAhead = new THREE.Vector3();
   private readonly lineFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
+  private readonly detail = getActiveRenderProfile().hazardDetail;
 
   constructor() {
     scene.add(this.group);
@@ -140,6 +142,15 @@ class RacingLineManager {
   private spawnGate(dist: number, lateral: number, vertical: number) {
     const group = new THREE.Group();
     group.name = 'racing-line-gate';
+    const outerMat = !IS_MOBILE && this.detail >= 0.8 ? new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }) : null;
+    const outer = outerMat ? new THREE.Mesh(this.gateGeo, outerMat) : null;
+    if (outer) outer.scale.setScalar(1.34);
     const glowMat = IS_MOBILE ? null : new THREE.MeshBasicMaterial({
       color: 0x88e0ff,
       transparent: true,
@@ -165,6 +176,7 @@ class RacingLineManager {
       blending: THREE.AdditiveBlending,
     });
     const inner = new THREE.Mesh(this.gateInnerGeo, innerMat);
+    if (outer) group.add(outer);
     if (glow) group.add(glow);
     group.add(ring, inner);
     this.group.add(group);
@@ -176,6 +188,7 @@ class RacingLineManager {
       radius: 7.0,
       object: group,
       materialLayers: [
+        ...(outerMat ? [{ material: outerMat, opacityScale: 0.42 }] : []),
         ...(glowMat ? [{ material: glowMat, opacityScale: 0.34 }] : []),
         { material: ringMat, opacityScale: 1.0 },
         { material: innerMat, opacityScale: 0.68 },
@@ -190,6 +203,16 @@ class RacingLineManager {
   private spawnPad(dist: number, lateral: number, vertical: number) {
     const group = new THREE.Group();
     group.name = 'speed-pad';
+    const fieldMat = !IS_MOBILE && this.detail >= 0.8 ? new THREE.MeshBasicMaterial({
+      color: 0xff7ad9,
+      transparent: true,
+      opacity: 0.16,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }) : null;
+    const field = fieldMat ? new THREE.Mesh(this.padGeo, fieldMat) : null;
+    if (field) field.scale.setScalar(1.48);
     const glowMat = IS_MOBILE ? null : new THREE.MeshBasicMaterial({
       color: 0xff7ad9,
       transparent: true,
@@ -219,6 +242,7 @@ class RacingLineManager {
     });
     const stripe = new THREE.Mesh(this.padStripeGeo, stripeMat);
     stripe.position.z = 0.04;
+    if (field) group.add(field);
     if (glow) group.add(glow);
     group.add(pad, stripe);
     this.group.add(group);
@@ -230,6 +254,7 @@ class RacingLineManager {
       radius: 4.6,
       object: group,
       materialLayers: [
+        ...(fieldMat ? [{ material: fieldMat, opacityScale: 0.42 }] : []),
         ...(glowMat ? [{ material: glowMat, opacityScale: 0.34 }] : []),
         { material: padMat, opacityScale: 0.92 },
         { material: stripeMat, opacityScale: 0.82 },

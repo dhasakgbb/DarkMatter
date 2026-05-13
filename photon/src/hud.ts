@@ -4,10 +4,11 @@ import { game } from './state';
 import { meta } from './meta';
 import { EPOCHS, WAVELENGTHS, TUTORIAL_STEPS } from './cosmology';
 import { photon } from './photon';
-import { BASE_SPEED, BOOST_MAX, IS_MOBILE, PIXEL_RATIO } from './constants';
+import { BASE_SPEED, BOOST_MAX, IS_MOBILE } from './constants';
 import { cosmicTimeLabel, comboMultiplier } from './utils';
 import { seedToLabel } from './seed';
 import { WAVELENGTH_SEGMENT_GAP, WAVELENGTH_SEGMENT_HEIGHT, WAVELENGTH_SEGMENT_WIDTH, wavelengthStartX, wavelengthTotalWidth } from './hudLayout';
+import { renderPixelRatio } from './renderProfile';
 
 const HEAT_DEATH_MICRO_LINES = [
   { at: 72, text: 'THE LIGHT THINS' },
@@ -78,7 +79,7 @@ export function drawHud() {
   const W = hudCanvas.width, H = hudCanvas.height;
   hud.clearRect(0, 0, W, H);
   if (game.state !== 'run') return;
-  const PR = PIXEL_RATIO;
+  const PR = renderPixelRatio();
   hud.save();
   hud.scale(PR, PR);
   const w = window.innerWidth, h = window.innerHeight;

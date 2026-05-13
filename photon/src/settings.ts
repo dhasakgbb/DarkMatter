@@ -4,6 +4,7 @@ import { audio } from './audio';
 import { game } from './state';
 import * as scene from './scene';
 import { readJsonStorage, writeStorage } from './storage';
+import { defaultVisualQuality, normalizeVisualQuality, type VisualQuality } from './renderProfile';
 
 export interface SettingsState {
   masterVol: number;
@@ -13,6 +14,7 @@ export interface SettingsState {
   highContrast: boolean;
   reducedMotion: boolean;
   proceduralAudio: boolean;
+  visualQuality: VisualQuality;
 }
 
 export const defaultSettings = (): SettingsState => ({
@@ -23,10 +25,13 @@ export const defaultSettings = (): SettingsState => ({
   highContrast: false,
   reducedMotion: false,
   proceduralAudio: true,
+  visualQuality: defaultVisualQuality(),
 });
 
 export function loadSettings(): SettingsState {
-  return Object.assign(defaultSettings(), readJsonStorage<Partial<SettingsState>>(SETTINGS_KEY, {}));
+  const loaded = Object.assign(defaultSettings(), readJsonStorage<Partial<SettingsState>>(SETTINGS_KEY, {}));
+  loaded.visualQuality = normalizeVisualQuality(loaded.visualQuality);
+  return loaded;
 }
 export function saveSettings(s: SettingsState) {
   writeStorage(SETTINGS_KEY, JSON.stringify(s));
@@ -38,6 +43,7 @@ export const settings: SettingsState = loadSettings();
 export function applySettings() {
   if (audio.master) audio.master.gain.value = settings.muted ? 0 : settings.masterVol;
   audio.setUseProcedural(settings.proceduralAudio);
+  scene.applyVisualQuality(settings.visualQuality);
   if (scene.camera) {
     scene.camera.fov = settings.fov;
     scene.camera.updateProjectionMatrix();

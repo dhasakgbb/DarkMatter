@@ -13,6 +13,7 @@ import { audio } from './audio';
 import { checkMemoryTriggers, maybeUnlockCodex as maybeUnlockCodexFn } from './memories';
 import { triggerWitness } from './witness';
 import { funLab } from './funlab/runtime';
+import { getActiveRenderProfile } from './renderProfile';
 
 export interface HazardMovement { amp: number; freq: number; phase: number; axis: 'lateral' | 'vertical'; }
 export interface Hazard {
@@ -56,6 +57,9 @@ interface HazardUserData {
   hazardGlowBaseScale?: number;
   hazardGlowBaseOpacity?: number;
   pickupRing?: THREE.Mesh;
+  detailRings?: THREE.Mesh[];
+  detailShell?: THREE.Mesh;
+  orbiters?: THREE.Mesh[];
 }
 
 function hazardUserData(mesh: THREE.Mesh): HazardUserData {
@@ -74,14 +78,15 @@ class HazardManager {
 
   constructor() {
     scene.add(this.group);
+    const detail = getActiveRenderProfile().hazardDetail;
     this.geos = {
-      asteroid: new THREE.IcosahedronGeometry(2.2, IS_MOBILE ? 0 : 1),
-      gluon:    new THREE.TorusGeometry(3.4, 0.45, IS_MOBILE ? 6 : 8, IS_MOBILE ? 18 : 24),
-      well:     new THREE.SphereGeometry(2.6, IS_MOBILE ? 16 : 20, IS_MOBILE ? 10 : 14),
-      plasma:   new THREE.SphereGeometry(1.8, IS_MOBILE ? 10 : 12, IS_MOBILE ? 8 : 10),
-      fluct:    new THREE.OctahedronGeometry(1.6, 0),
-      supernova: new THREE.TorusGeometry(8.5, 1.4, IS_MOBILE ? 8 : 10, IS_MOBILE ? 28 : 36),
-      horizon:   new THREE.CircleGeometry(12, IS_MOBILE ? 28 : 36),
+      asteroid: new THREE.IcosahedronGeometry(2.2, IS_MOBILE ? 0 : detail >= 0.9 ? 2 : 1),
+      gluon:    new THREE.TorusGeometry(3.4, 0.45, IS_MOBILE ? 6 : 10, IS_MOBILE ? 18 : detail >= 0.9 ? 42 : 28),
+      well:     new THREE.SphereGeometry(2.6, IS_MOBILE ? 16 : detail >= 0.9 ? 32 : 22, IS_MOBILE ? 10 : detail >= 0.9 ? 20 : 14),
+      plasma:   new THREE.SphereGeometry(1.8, IS_MOBILE ? 10 : detail >= 0.9 ? 20 : 14, IS_MOBILE ? 8 : detail >= 0.9 ? 14 : 10),
+      fluct:    new THREE.OctahedronGeometry(1.6, detail >= 0.9 && !IS_MOBILE ? 1 : 0),
+      supernova: new THREE.TorusGeometry(8.5, 1.4, IS_MOBILE ? 8 : 12, IS_MOBILE ? 28 : detail >= 0.9 ? 64 : 42),
+      horizon:   new THREE.CircleGeometry(12, IS_MOBILE ? 28 : detail >= 0.9 ? 72 : 44),
     };
   }
 
@@ -116,13 +121,111 @@ class HazardManager {
         depthWrite: false,
       }),
     );
+    const detail = getActiveRenderProfile().hazardDetail;
+    const shearRing = detail >= 0.8 ? new THREE.Mesh(
+      new THREE.TorusGeometry(9.8, 0.045, IS_MOBILE ? 6 : 8, IS_MOBILE ? 38 : 84),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.11 * detail,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    ) : null;
     innerRing.rotation.x = Math.PI * 0.5;
     outerRing.rotation.x = Math.PI * 0.5;
     outerRing.rotation.y = Math.PI * 0.18;
+    if (shearRing) {
+      shearRing.rotation.x = Math.PI * 0.5;
+      shearRing.rotation.z = Math.PI * 0.12;
+    }
     mesh.add(lens, innerRing, outerRing);
+    if (shearRing) mesh.add(shearRing);
     const data = hazardUserData(mesh);
     data.wellLens = lens;
-    data.wellRings = [innerRing, outerRing];
+    data.wellRings = shearRing ? [innerRing, outerRing, shearRing] : [innerRing, outerRing];
+  }
+
+  private addMaterialDetail(mesh: THREE.Mesh, type: string, hex: number) {
+    const detail = getActiveRenderProfile().hazardDetail;
+    if (detail < 0.7 && type !== 'supernova' && type !== 'eventHorizon') return;
+    const data = hazardUserData(mesh);
+    if (type === 'plasma' || type === 'fluct') {
+      const shell = new THREE.Mesh(
+        new THREE.SphereGeometry(type === 'plasma' ? 2.9 : 2.35, IS_MOBILE ? 10 : 18, IS_MOBILE ? 8 : 12),
+        new THREE.MeshBasicMaterial({
+          color: hex,
+          transparent: true,
+          opacity: 0.14 * detail,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          wireframe: type === 'fluct',
+        }),
+      );
+      mesh.add(shell);
+      data.detailShell = shell;
+      return;
+    }
+    if (type === 'gluon') {
+      const rings = [0, 1].map((i) => {
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(2.2 + i * 1.2, 0.045, IS_MOBILE ? 5 : 7, IS_MOBILE ? 24 : 44),
+          new THREE.MeshBasicMaterial({
+            color: i === 0 ? 0xffffff : hex,
+            transparent: true,
+            opacity: (i === 0 ? 0.24 : 0.18) * detail,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+          }),
+        );
+        ring.rotation.x = Math.PI * (0.28 + i * 0.21);
+        ring.rotation.y = Math.PI * (0.14 + i * 0.19);
+        mesh.add(ring);
+        return ring;
+      });
+      data.detailRings = rings;
+      return;
+    }
+    if (type === 'supernova') {
+      const rings = [0, 1, 2].map((i) => {
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(9.7 + i * 2.4, 0.07, IS_MOBILE ? 6 : 8, IS_MOBILE ? 32 : 72),
+          new THREE.MeshBasicMaterial({
+            color: i === 0 ? 0xfff0b0 : i === 1 ? 0xff7a28 : 0xff245c,
+            transparent: true,
+            opacity: (0.22 - i * 0.045) * detail,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+          }),
+        );
+        ring.rotation.x = Math.PI * 0.5;
+        ring.rotation.z = i * Math.PI * 0.18;
+        mesh.add(ring);
+        return ring;
+      });
+      data.detailRings = rings;
+      return;
+    }
+    if (type === 'eventHorizon') {
+      const rings = [0, 1].map((i) => {
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(9.2 + i * 2.5, 0.08, IS_MOBILE ? 6 : 8, IS_MOBILE ? 38 : 84),
+          new THREE.MeshBasicMaterial({
+            color: i === 0 ? hex : 0xff7ad9,
+            transparent: true,
+            opacity: (0.30 - i * 0.08) * detail,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+          }),
+        );
+        ring.rotation.x = Math.PI * 0.5;
+        ring.rotation.y = i * Math.PI * 0.13;
+        mesh.add(ring);
+        return ring;
+      });
+      data.detailRings = rings;
+    }
   }
 
   private addHazardGlow(mesh: THREE.Mesh, type: string, hex: number) {
@@ -253,6 +356,7 @@ class HazardManager {
     const mesh = new THREE.Mesh(geo, mat);
     if (type === 'well') this.decorateGravityWell(mesh);
     else this.addHazardGlow(mesh, type, hex);
+    this.addMaterialDetail(mesh, type, hex);
     const lat = isFrontFacing ? 0 : (rand() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.7;
     const ver = isFrontFacing ? 0 : (rand() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.7;
     const p = track.pointAt(dist, this.scratchPoint);
@@ -318,9 +422,11 @@ class HazardManager {
           if (rings) {
             rings[0].rotation.z += dt * 1.85;
             rings[1].rotation.z -= dt * 1.15;
+            if (rings[2]) rings[2].rotation.z += dt * 0.42;
             const pulse = 1 + Math.sin(animTime * 4.2 + h.dist * 0.03) * 0.045;
             rings[0].scale.setScalar(pulse);
             rings[1].scale.setScalar(1.04 - (pulse - 1) * 0.75);
+            if (rings[2]) rings[2].scale.setScalar(1.02 + (pulse - 1) * 0.35);
           }
           if (lens) {
             const lensMat = lens.material as THREE.MeshBasicMaterial;
@@ -329,6 +435,18 @@ class HazardManager {
         }
       } else if (h.type === 'supernova') {
         h.mesh.rotateZ(dt * (data.spinSpeed || 0));
+      }
+      if (data.detailShell) {
+        const shellMat = data.detailShell.material as THREE.MeshBasicMaterial;
+        data.detailShell.scale.setScalar(1.0 + Math.sin(animTime * 5.8 + h.dist * 0.05) * 0.055);
+        shellMat.opacity = (h.hit ? 0.04 : 0.12) * getActiveRenderProfile().hazardDetail;
+      }
+      if (data.detailRings) {
+        data.detailRings.forEach((ring, i) => {
+          ring.rotation.z += dt * (0.9 + i * 0.42) * (i % 2 ? -1 : 1);
+          const ringMat = ring.material as THREE.MeshBasicMaterial;
+          ringMat.opacity *= h.hit ? 0.96 : 1;
+        });
       }
       const hazardGlow = data.hazardGlow;
       if (hazardGlow) {

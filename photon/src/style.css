@@ -49,6 +49,8 @@ button.primary { background: linear-gradient(90deg, rgba(136,224,255,0.18), rgba
 .settings-row input[type=range] { -webkit-appearance: none; appearance: none; width: 160px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; outline: none; }
 .settings-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; background: #88e0ff; border-radius: 50%; cursor: pointer; box-shadow: 0 0 8px rgba(136,224,255,0.5); }
 .settings-row input[type=range]::-moz-range-thumb { width: 14px; height: 14px; background: #88e0ff; border-radius: 50%; cursor: pointer; border: none; }
+.settings-row select { min-width: 148px; background: rgba(255,255,255,0.05); color: #dff8ff; border: 1px solid rgba(180,200,255,0.28); border-radius: 2px; padding: 7px 9px; font-family: inherit; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; outline: none; }
+.settings-row select:focus { border-color: #88e0ff; box-shadow: 0 0 0 1px rgba(136,224,255,0.18); }
 .settings-row .val { font-size: 11px; opacity: 0.6; min-width: 32px; text-align: right; }
 .toggle { width: 38px; height: 20px; background: rgba(255,255,255,0.12); border-radius: 10px; position: relative; cursor: pointer; transition: background 0.18s; }
 .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.18s; }
