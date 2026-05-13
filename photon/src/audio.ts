@@ -164,6 +164,11 @@ class AudioEngine {
     return this.ctx!.decodeAudioData(bytes);
   }
 
+  assetCueEnabled(cue: string) {
+    const manifest = audioManifest as RuntimeAudioManifest;
+    return manifest.sfx?.[cue]?.enabled !== false;
+  }
+
   playSfx(cue: string, options: PlaySfxOptions = {}) {
     this.ensure(); if (!this.ctx) return false;
     const now = performance.now();
@@ -514,6 +519,14 @@ class AudioEngine {
     this.ensure(); if (!this.ctx) return;
     const now = performance.now();
     if (now - (this.lastCueAt.get('memoryUnlock') || 0) < 900) return;
+    if (!this.assetsReady && this.assetCueEnabled('memoryUnlock')) {
+      this.lastCueAt.set('memoryUnlock', now);
+      this.manifestPromise?.then(() => {
+        this.lastCueAt.delete('memoryUnlock');
+        this.playSfx('memoryUnlock');
+      });
+      return;
+    }
     if (this.playSfx('memoryUnlock')) return;
     this.lastCueAt.set('memoryUnlock', now);
     traceAudio('memoryUnlock', 'procedural');
@@ -688,6 +701,7 @@ class AudioEngine {
   // UI: very subtle hover tick (under-30ms blip)
   uiTick() {
     this.ensure(); if (!this.ctx) return;
+    if (!this.assetsReady && this.assetCueEnabled('uiTick')) return;
     if (this.playSfx('uiTick')) return;
     traceAudio('uiTick', 'procedural');
     const t = this.ctx.currentTime;
@@ -702,6 +716,10 @@ class AudioEngine {
   // UI: stronger button press
   uiClick() {
     this.ensure(); if (!this.ctx) return;
+    if (!this.assetsReady && this.assetCueEnabled('uiClick')) {
+      this.manifestPromise?.then(() => this.playSfx('uiClick'));
+      return;
+    }
     if (this.playSfx('uiClick')) return;
     traceAudio('uiClick', 'procedural');
     const t = this.ctx.currentTime;

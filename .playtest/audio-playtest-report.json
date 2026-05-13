@@ -5,128 +5,129 @@
     "run": "/Users/damian/GitHub/DarkMatter/.playtest/audio-run.png"
   },
   "traceSummary": {
-    "total": 48,
+    "total": 31,
     "byCue": {
-      "uiTick": 1,
-      "engineLoop": 3,
-      "Inflationary": 2,
-      "memoryUnlock": 4,
+      "engineLoop": 2,
+      "Inflationary": 1,
+      "memoryUnlock": 3,
       "uiClick": 2,
-      "gravityWellWhoosh": 8,
-      "railScrape": 3,
-      "hazardWhoosh": 3,
-      "lineGate": 4,
-      "speedPad": 4,
-      "gateMiss": 3,
+      "gravityWellWhoosh": 5,
+      "speedPad": 2,
       "Stellar": 1,
       "epochRiser": 2,
       "uiSwoosh": 1,
       "pickup": 1,
+      "lineGate": 2,
+      "gateMiss": 1,
+      "railScrape": 1,
       "wavelengthShift": 3,
       "damageHit": 1,
       "death": 1,
-      "witnessChime": 1
+      "witnessChime": 1,
+      "hazardWhoosh": 1
     },
     "bySource": {
-      "procedural": 5,
-      "asset": 41,
+      "asset": 29,
       "music": 2
     },
     "first": [
       {
-        "cue": "uiTick",
-        "source": "procedural",
-        "at": 1470
-      },
-      {
-        "cue": "engineLoop",
-        "source": "procedural",
-        "at": 1600.199999988079,
-        "detail": "preload fallback"
-      },
-      {
-        "cue": "Inflationary",
-        "source": "procedural",
-        "at": 1601.8999999761581,
-        "detail": "drone"
-      },
-      {
-        "cue": "memoryUnlock",
-        "source": "procedural",
-        "at": 1607
-      },
-      {
-        "cue": "uiClick",
-        "source": "procedural",
-        "at": 1608
-      },
-      {
         "cue": "engineLoop",
         "source": "asset",
-        "at": 1803,
+        "at": 2371.199999988079,
         "detail": "loop"
       },
       {
         "cue": "Inflationary",
         "source": "music",
-        "at": 1803.199999988079,
+        "at": 2371.2999999523163,
         "detail": "2 stems"
       },
       {
         "cue": "memoryUnlock",
         "source": "asset",
-        "at": 2829.800000011921,
-        "detail": "1 variants"
-      }
-    ],
-    "last": [
-      {
-        "cue": "death",
-        "source": "asset",
-        "at": 13599.5,
-        "detail": "2 variants"
-      },
-      {
-        "cue": "witnessChime",
-        "source": "asset",
-        "at": 13599.5,
+        "at": 2371.399999976158,
         "detail": "1 variants"
       },
       {
-        "cue": "epochRiser",
+        "cue": "uiClick",
         "source": "asset",
-        "at": 13599.5,
-        "detail": "2 variants"
+        "at": 2371.399999976158,
+        "detail": "1 variants"
       },
       {
-        "cue": "hazardWhoosh",
+        "cue": "memoryUnlock",
         "source": "asset",
-        "at": 13599.600000023842,
-        "detail": "3 variants"
+        "at": 3465.899999976158,
+        "detail": "1 variants"
       },
       {
         "cue": "gravityWellWhoosh",
         "source": "asset",
-        "at": 13599.600000023842,
-        "detail": "2 variants"
-      },
-      {
-        "cue": "gateMiss",
-        "source": "asset",
-        "at": 14306.199999988079,
-        "detail": "3 variants"
-      },
-      {
-        "cue": "gravityWellWhoosh",
-        "source": "asset",
-        "at": 14525.800000011921,
+        "at": 3972.7999999523163,
         "detail": "2 variants"
       },
       {
         "cue": "speedPad",
         "source": "asset",
-        "at": 14556.199999988079,
+        "at": 4449.599999964237,
         "detail": "4 variants"
+      },
+      {
+        "cue": "gravityWellWhoosh",
+        "source": "asset",
+        "at": 5639,
+        "detail": "2 variants"
+      }
+    ],
+    "last": [
+      {
+        "cue": "wavelengthShift",
+        "source": "asset",
+        "at": 14162.099999964237,
+        "detail": "3 variants"
+      },
+      {
+        "cue": "wavelengthShift",
+        "source": "asset",
+        "at": 14162.199999988079,
+        "detail": "3 variants"
+      },
+      {
+        "cue": "damageHit",
+        "source": "asset",
+        "at": 14162.199999988079,
+        "detail": "3 variants"
+      },
+      {
+        "cue": "death",
+        "source": "asset",
+        "at": 14162.199999988079,
+        "detail": "2 variants"
+      },
+      {
+        "cue": "witnessChime",
+        "source": "asset",
+        "at": 14162.299999952316,
+        "detail": "1 variants"
+      },
+      {
+        "cue": "epochRiser",
+        "source": "asset",
+        "at": 14162.299999952316,
+        "detail": "2 variants"
+      },
+      {
+        "cue": "hazardWhoosh",
+        "source": "asset",
+        "at": 14162.5,
+        "detail": "3 variants"
+      },
+      {
+        "cue": "gravityWellWhoosh",
+        "source": "asset",
+        "at": 14162.599999964237,
+        "detail": "2 variants"
       }
     ]
   },
@@ -143,7 +144,7 @@
     "hasContext": true,
     "sfxBuffers": 17,
     "musicBuffers": 9,
-    "traceLength": 45
+    "traceLength": 31
   },
   "cdpEvents": []
 }
