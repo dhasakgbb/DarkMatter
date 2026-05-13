@@ -743,11 +743,12 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
   const fovTarget = (settings.fov || 72) + (photon.boosting ? 9 : 0) + Math.max(0, currentSpeed - BASE_SPEED) * 0.03 + flowFovBreathe;
   camera.fov += (fovTarget - camera.fov) * Math.min(1, realDt * 8);
   camera.updateProjectionMatrix();
-  const motionMul = settings.reducedMotion ? 0 : 1;
   const renderProfile = getActiveRenderProfile();
-  const lensMul = motionMul * renderProfile.lensingMul;
-  lensingPass.uniforms.uIntensity.value = (0.0004 + (photon.boosting ? 0.0007 : 0) + Math.min(0.0004, speedFactor * 0.0002)) * lensMul;
-  lensingPass.uniforms.uBarrel.value    = (0.005 + (photon.boosting ? 0.016 : 0) + Math.min(0.008, speedFactor * 0.004)) * lensMul;
+  // Gravity lensing disabled — was overwhelming gameplay. Re-enable by
+  // restoring previous values + updateHazardLensing(motionMul * renderProfile.lensingMul).
+  const lensMul = 0;
+  lensingPass.uniforms.uIntensity.value = 0;
+  lensingPass.uniforms.uBarrel.value    = 0;
   lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * renderProfile.glowMul;
   updateHazardLensing(lensMul);
   const bloomTarget = renderProfile.bloomBase
