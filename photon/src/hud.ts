@@ -4,7 +4,7 @@ import { game } from './state';
 import { meta } from './meta';
 import { EPOCHS, WAVELENGTHS, TUTORIAL_STEPS } from './cosmology';
 import { photon } from './photon';
-import { BASE_SPEED, BOOST_MAX, IS_MOBILE } from './constants';
+import { BASE_SPEED, BOOST_MAX, IS_MOBILE, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH } from './constants';
 import { cosmicTimeLabel, comboMultiplier } from './utils';
 import { seedToLabel } from './seed';
 import { WAVELENGTH_SEGMENT_GAP, WAVELENGTH_SEGMENT_HEIGHT, WAVELENGTH_SEGMENT_WIDTH, wavelengthStartX, wavelengthTotalWidth } from './hudLayout';
@@ -19,6 +19,42 @@ const HEAT_DEATH_MICRO_LINES = [
 ];
 
 const comboProject = new THREE.Vector3();
+
+function drawRacingCue(w: number, h: number) {
+  const cue = game.nextRacingCue;
+  if (!cue || cue.dz < -4) return;
+  const lookAheadAlpha = 1 - Math.min(1, Math.max(0, cue.dz - 28) / 140);
+  const targetX = w / 2 + THREE.MathUtils.clamp((cue.lateral - photon.lateral) / PLAYFIELD_HALF_WIDTH, -1, 1) * Math.min(128, w * 0.22);
+  const targetY = h / 2 - THREE.MathUtils.clamp((cue.vertical - photon.vertical) / PLAYFIELD_HALF_HEIGHT, -1, 1) * Math.min(86, h * 0.22);
+  const pulse = 1 + Math.sin(performance.now() * 0.008) * 0.06;
+  const radius = (cue.kind === 'gate' ? 16 : 12) * pulse;
+  const alpha = Math.max(0.22, 0.38 + lookAheadAlpha * 0.42);
+  const color = cue.kind === 'gate' ? '136,224,255' : '255,122,217';
+  const label = cue.kind === 'gate' ? 'LINE' : 'PAD';
+
+  hud.save();
+  hud.translate(targetX, targetY);
+  hud.strokeStyle = `rgba(${color},${alpha})`;
+  hud.lineWidth = cue.align > 0.68 ? 2 : 1;
+  hud.beginPath();
+  hud.arc(0, 0, radius, Math.PI * 0.08, Math.PI * 0.42);
+  hud.arc(0, 0, radius, Math.PI * 0.58, Math.PI * 0.92);
+  hud.arc(0, 0, radius, Math.PI * 1.08, Math.PI * 1.42);
+  hud.arc(0, 0, radius, Math.PI * 1.58, Math.PI * 1.92);
+  hud.stroke();
+  if (cue.align > 0.72) {
+    hud.fillStyle = `rgba(${color},${0.10 + cue.align * 0.14})`;
+    hud.beginPath();
+    hud.arc(0, 0, radius * 0.44, 0, Math.PI * 2);
+    hud.fill();
+  }
+  hud.font = `${IS_MOBILE ? 8 : 9}px ui-monospace, monospace`;
+  hud.textAlign = 'center';
+  hud.textBaseline = 'middle';
+  hud.fillStyle = `rgba(255,255,255,${0.45 + cue.align * 0.32})`;
+  hud.fillText(label, 0, radius + 13);
+  hud.restore();
+}
 
 function wrapHudText(text: string, maxWidth: number) {
   const words = text.split(/\s+/);
@@ -42,8 +78,8 @@ function tutorialCopy(step: typeof TUTORIAL_STEPS[number]) {
   if (step.needs === 'steer') {
     return {
       ...step,
-      text: 'TOUCH LEFT / RIGHT / TOP / BOTTOM TO STEER',
-      hint: 'Dodge the colored shapes',
+      text: 'DRAG ONE THUMB TO STEER',
+      hint: 'The photon follows your touch',
     };
   }
   if (step.needs === 'shift') {
@@ -71,7 +107,7 @@ export function showEpochToast(numOrLabel: number | string, name: string, sub: s
   document.getElementById('epoch-sub')!.textContent = sub;
   document.getElementById('epoch-chapter')!.textContent = chapter || '';
   el.classList.add('on');
-  const dur = chapter ? 5200 : 2400;
+  const dur = chapter ? (IS_MOBILE ? 3600 : 5200) : 2400;
   setTimeout(() => el.classList.remove('on'), dur);
 }
 
@@ -202,6 +238,7 @@ export function drawHud() {
       hud.fillRect(pbx, pby, pbw * frac, pbh);
     }
   }
+  drawRacingCue(w, h);
   // Phase invuln flash
   if (photon.phaseTimer > 0) {
     hud.fillStyle = `rgba(136,224,255,${photon.phaseTimer / Math.max(0.18, photon.phaseWindowSec) * 0.15})`;

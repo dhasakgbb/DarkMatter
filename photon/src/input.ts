@@ -8,11 +8,25 @@ import { showToast } from './utils';
 import { startRun, pause, resume } from './game';
 import { endWitness } from './witness';
 import { refreshSettingsUI } from './ui';
-import { isWavelengthTouchY, wavelengthIndexAt } from './hudLayout';
+import { wavelengthIndexAt } from './hudLayout';
+import { isWavelengthTouchPoint, touchTargetForClientPoint } from './touchControls';
+import { requestLandscapeLock } from './orientation';
 
-export const input = { left: false, right: false, up: false, down: false, boost: false };
+export const input = {
+  left: false,
+  right: false,
+  up: false,
+  down: false,
+  boost: false,
+  touchTracking: false,
+  touchTargetLateral: 0,
+  touchTargetVertical: 0,
+};
 
-const keyMap: Record<string, keyof typeof input> = {
+type DigitalInputKey = 'left' | 'right' | 'up' | 'down' | 'boost';
+let steeringTouchId: number | null = null;
+
+const keyMap: Record<string, DigitalInputKey> = {
   KeyA: 'left',  ArrowLeft: 'left',
   KeyD: 'right', ArrowRight: 'right',
   KeyW: 'up',    ArrowUp: 'up',
@@ -36,24 +50,33 @@ function toggleFullscreen() {
 
 function applyTouchInput(touches: TouchList) {
   input.left = input.right = input.up = input.down = input.boost = false;
+  input.touchTracking = false;
+  input.touchTargetLateral = 0;
+  input.touchTargetVertical = 0;
   if (game.state !== 'run') return;
   let activeGameplayTouches = 0;
+  let trackingTouch: Touch | null = null;
   for (let i = 0; i < touches.length; i++) {
-    const t = touches[i];
-    const x = t.clientX / window.innerWidth;
-    const y = t.clientY / window.innerHeight;
-    if (isWavelengthTouch(t)) continue;
+    const touch = touches[i];
+    if (isWavelengthTouch(touch)) continue;
     activeGameplayTouches++;
-    if (x < 0.33) input.left = true;
-    else if (x > 0.66) input.right = true;
-    if (y < 0.4) input.up = true;
-    else if (y > 0.7) input.down = true;
+    if (touch.identifier === steeringTouchId) trackingTouch = touch;
+    trackingTouch ??= touch;
+  }
+  if (trackingTouch) {
+    steeringTouchId = trackingTouch.identifier;
+    const target = touchTargetForClientPoint(trackingTouch.clientX, trackingTouch.clientY, window.innerWidth, window.innerHeight);
+    input.touchTracking = true;
+    input.touchTargetLateral = target.lateral;
+    input.touchTargetVertical = target.vertical;
+  } else {
+    steeringTouchId = null;
   }
   if (activeGameplayTouches >= 2) input.boost = true;
 }
 
 function isWavelengthTouch(touch: Pick<Touch, 'clientX' | 'clientY'>) {
-  return isWavelengthTouchY(touch.clientY, window.innerHeight);
+  return isWavelengthTouchPoint(touch.clientX, touch.clientY, window.innerWidth, window.innerHeight);
 }
 
 function handleWavelengthTouch(touches: TouchList) {
@@ -114,6 +137,7 @@ export function bindInput() {
 
   canvas.addEventListener('touchstart', (e: TouchEvent) => {
     e.preventDefault();
+    requestLandscapeLock();
     handleWavelengthTouch(e.changedTouches);
     applyTouchInput(e.touches);
   }, { passive: false });

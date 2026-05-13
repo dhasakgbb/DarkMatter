@@ -44,7 +44,9 @@ export function cosmicTimeLabel(): string {
 // Lightweight transient toast at the bottom of the screen.
 export function showToast(msg: string) {
   const t = document.createElement('div');
-  t.style.cssText = 'position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:rgba(8,10,22,0.85);border:1px solid rgba(180,200,255,0.3);padding:10px 18px;font-size:11px;letter-spacing:0.25em;color:#88e0ff;z-index:50;text-transform:uppercase;border-radius:2px;backdrop-filter:blur(10px);transition:opacity 0.4s;pointer-events:none';
+  const shortLandscape = window.innerWidth > window.innerHeight && window.innerHeight < 460;
+  const verticalAnchor = shortLandscape ? 'top:72px' : 'bottom:96px';
+  t.style.cssText = `position:fixed;left:50%;${verticalAnchor};transform:translateX(-50%);background:rgba(8,10,22,0.85);border:1px solid rgba(180,200,255,0.3);padding:10px 18px;font-size:11px;letter-spacing:0.25em;color:#88e0ff;z-index:50;text-transform:uppercase;border-radius:2px;backdrop-filter:blur(10px);transition:opacity 0.4s;pointer-events:none`;
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 2400);

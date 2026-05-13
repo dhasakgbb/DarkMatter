@@ -8,10 +8,12 @@ import './photon';
 import './hazards';
 import './racing';
 import { applySettings } from './settings';
+import { bindOrientationPreference } from './orientation';
 import { bindUI, refreshTitleStats } from './ui';
 import { bindInput } from './input';
 import { setState, startLoop } from './game';
 
+bindOrientationPreference();
 bindUI();
 bindInput();
 applySettings();

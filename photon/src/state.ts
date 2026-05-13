@@ -3,6 +3,7 @@
 
 import { VARIANTS, type Variant } from './cosmology';
 import { meta } from './meta';
+import type { RacingCue } from './racingCue';
 
 export type GameStateName = 'title' | 'run' | 'upgrade' | 'death' | 'codex' | 'pause' | 'memories' | 'form' | 'vibe' | 'funlab';
 
@@ -66,6 +67,7 @@ export interface RunState {
   gravityShear: number;
   gravityShearX: number;
   gravityShearY: number;
+  nextRacingCue: RacingCue | null;
   // Cinematic transition guard
   _anyEpochSetThisRun: boolean;
   // Cosmic seed and per-epoch seeded params
@@ -129,6 +131,7 @@ export const game: RunState = {
   gravityShear: 0,
   gravityShearX: 0,
   gravityShearY: 0,
+  nextRacingCue: null,
   _anyEpochSetThisRun: false,
   runSeed: 0,
   epochParams: {},

@@ -10,7 +10,16 @@ import { settings } from './settings';
 import { checkMemoryTriggers } from './memories';
 import { funLab } from './funlab/runtime';
 
-export interface InputState { left: boolean; right: boolean; up: boolean; down: boolean; boost: boolean; }
+export interface InputState {
+  left: boolean;
+  right: boolean;
+  up: boolean;
+  down: boolean;
+  boost: boolean;
+  touchTracking?: boolean;
+  touchTargetLateral?: number;
+  touchTargetVertical?: number;
+}
 
 class Photon {
   group: THREE.Group;
@@ -145,11 +154,18 @@ class Photon {
     const lateralAcc = 180 * this.agilityBonus * sens * (variant.mods.agilityMul || 1) * cosmicAgi;
     const lateralMax = 52 * this.agilityBonus * Math.min(1.5, sens) * cosmicAgi;
     const verticalMax = 36 * this.agilityBonus * Math.min(1.5, sens) * cosmicAgi;
+    const edgeX = PLAYFIELD_HALF_WIDTH;
+    const edgeY = PLAYFIELD_HALF_HEIGHT;
+    const hasTouchTarget = input.touchTracking
+      && Number.isFinite(input.touchTargetLateral)
+      && Number.isFinite(input.touchTargetVertical);
     let ax = 0, ay = 0;
-    if (input.left)  ax -= lateralAcc;
-    if (input.right) ax += lateralAcc;
-    if (input.up)    ay += lateralAcc * 0.85;
-    if (input.down)  ay -= lateralAcc * 0.85;
+    if (!hasTouchTarget) {
+      if (input.left)  ax -= lateralAcc;
+      if (input.right) ax += lateralAcc;
+      if (input.up)    ay += lateralAcc * 0.85;
+      if (input.down)  ay -= lateralAcc * 0.85;
+    }
     const shear = game.gravityShear || 0;
     if (shear > 0) {
       ax += (game.gravityShearX || 0) * 118;
@@ -162,15 +178,22 @@ class Photon {
     game.gravityShearY = 0;
     this.lateralVel += ax * dt;
     this.verticalVel += ay * dt;
-    if (!input.left && !input.right) this.lateralVel *= Math.pow(0.0008, dt);
-    if (!input.up && !input.down)    this.verticalVel *= Math.pow(0.0015, dt);
+    if (hasTouchTarget) {
+      const targetLateral = THREE.MathUtils.clamp(input.touchTargetLateral!, -edgeX * 0.94, edgeX * 0.94);
+      const targetVertical = THREE.MathUtils.clamp(input.touchTargetVertical!, -edgeY * 0.92, edgeY * 0.92);
+      const desiredLateralVel = THREE.MathUtils.clamp((targetLateral - this.lateral) * 7.4, -lateralMax * 1.35, lateralMax * 1.35);
+      const desiredVerticalVel = THREE.MathUtils.clamp((targetVertical - this.vertical) * 7.4, -verticalMax * 1.45, verticalMax * 1.45);
+      const followBlend = Math.min(1, dt * (11 + sens * 4));
+      this.lateralVel += (desiredLateralVel - this.lateralVel) * followBlend;
+      this.verticalVel += (desiredVerticalVel - this.verticalVel) * followBlend;
+    }
+    if (!hasTouchTarget && !input.left && !input.right) this.lateralVel *= Math.pow(0.0008, dt);
+    if (!hasTouchTarget && !input.up && !input.down)    this.verticalVel *= Math.pow(0.0015, dt);
     this.lateralVel = THREE.MathUtils.clamp(this.lateralVel, -lateralMax, lateralMax);
     this.verticalVel = THREE.MathUtils.clamp(this.verticalVel, -verticalMax, verticalMax);
     this.lateral += this.lateralVel * dt;
     this.vertical += this.verticalVel * dt;
 
-    const edgeX = PLAYFIELD_HALF_WIDTH;
-    const edgeY = PLAYFIELD_HALF_HEIGHT;
     const xRatio = Math.abs(this.lateral) / edgeX;
     const yRatio = Math.abs(this.vertical) / edgeY;
     const xStrain = THREE.MathUtils.smoothstep(xRatio, EDGE_STRAIN_START, 1);

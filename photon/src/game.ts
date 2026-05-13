@@ -252,6 +252,9 @@ export function resume() {
 
 export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   input.left = input.right = input.up = input.down = input.boost = false;
+  input.touchTracking = false;
+  input.touchTargetLateral = 0;
+  input.touchTargetVertical = 0;
   audio.ensure(); audio.resume();
   audio.startEngine();
   hazards.reset();
@@ -298,6 +301,7 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   game.gravityShear = 0;
   game.gravityShearX = 0;
   game.gravityShearY = 0;
+  game.nextRacingCue = null;
   game._anyEpochSetThisRun = false;
   game.runDistance = 0;
   game.runEnergy = (resumeSnapshot && resumeSnapshot.runEnergy) || 0;
@@ -679,7 +683,7 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
         const step = currentTutorial.needs;
         const max = currentTutorial.max;
         let demonstrated = false;
-        const inputting = input.left || input.right || input.up || input.down;
+        const inputting = input.left || input.right || input.up || input.down || input.touchTracking;
         if (step === 'steer' && (inputting || Math.abs(photon.lateralVel) > 8)) demonstrated = true;
         if (step === 'shift' && game._shiftedThisRun) demonstrated = true;
         if (step === 'phase' && game.phaseCount > 0) demonstrated = true;
@@ -885,6 +889,15 @@ export function renderGameToText() {
       lineStreak: game.lineStreak || 0,
       phaseStreak: game.phaseStreak || 0,
       lineEvent: game.lineEventText || '',
+      racingCue: game.nextRacingCue
+        ? {
+            kind: game.nextRacingCue.kind,
+            dz: Math.round(game.nextRacingCue.dz),
+            lateral: Math.round(game.nextRacingCue.lateral * 10) / 10,
+            vertical: Math.round(game.nextRacingCue.vertical * 10) / 10,
+            align: Math.round(game.nextRacingCue.align * 100) / 100,
+          }
+        : null,
       dying: game.dying,
       tutorialStep: game.tutorialActive ? game.tutorialStep : null,
     },

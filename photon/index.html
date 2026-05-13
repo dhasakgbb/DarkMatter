@@ -6,12 +6,17 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="screen-orientation" content="landscape" />
+<meta name="x5-orientation" content="landscape" />
 <meta name="theme-color" content="#000000" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23000004'/%3E%3Ccircle cx='32' cy='32' r='16' fill='%2388e0ff'/%3E%3Ccircle cx='32' cy='32' r='7' fill='%23ff7ad9'/%3E%3C/svg%3E" />
 <title>PHOTON — A Cosmic Roguelike</title>
 <link rel="stylesheet" href="./src/style.css" />
 </head>
 <body>
+<div id="orientation-lock">
+  <div>Rotate to landscape</div>
+</div>
 <div id="boot">Initializing spacetime…</div>
 <div id="graphics-status">Graphics context lost. Restoring…</div>
 <div id="stage"><canvas id="game"></canvas></div>
@@ -34,7 +39,7 @@
     <div class="panel">
       <h1><span class="accent">P H O T O N</span></h1>
       <h2>Survive the universe</h2>
-      <p><strong style="color:#88e0ff">You are a single packet of light.</strong> One run is the entire history of physical reality, from the first pressure after the Big Bang to the last useful difference in the dark. <strong>Steer to dodge</strong> colored hazards, <strong>tune your wavelength</strong> with keys 1, 2, or 3 to resonate, ionize, or pass through matter, and <strong>thread cyan gates</strong> to hold the racing line. Magenta speed pads turn clean driving into raw velocity. Reach the end and the universe will not go unseen.</p>
+      <p class="title-intro"><strong style="color:#88e0ff">You are a single packet of light.</strong> One run is the entire history of physical reality, from the first pressure after the Big Bang to the last useful difference in the dark. <strong>Steer to dodge</strong> colored hazards, <strong>tune your wavelength</strong> with keys 1, 2, or 3 to resonate, ionize, or pass through matter, and <strong>thread cyan gates</strong> to hold the racing line. Magenta speed pads turn clean driving into raw velocity. Reach the end and the universe will not go unseen.</p>
       <div class="stats" id="title-stats"></div>
       <div class="row">
         <button class="primary" id="btn-start">▶ Begin run</button>
@@ -44,8 +49,9 @@
         <button id="btn-codex">Codex</button>
         <button id="btn-memories">Memories</button>
       </div>
-      <p style="margin-top:18px;font-size:11px;opacity:0.5;text-align:center;line-height:2">
-        <span class="key">A</span><span class="key">D</span> steer · <span class="key">W</span><span class="key">S</span> climb · <span class="key">SPACE</span> boost · <span class="key">1</span> γ · <span class="key">2</span> visible · <span class="key">3</span> radio · cyan gates build line
+      <p class="title-controls" style="margin-top:18px;font-size:11px;opacity:0.5;text-align:center;line-height:2">
+        <span class="desktop-controls"><span class="key">A/D</span> steer · <span class="key">W/S</span> climb · <span class="key">SPACE</span> boost · <span class="key">1/2/3</span> wavelength · cyan gates build line</span>
+        <span class="mobile-controls">Drag one thumb to steer · two fingers boost · tap wavelength · cyan gates build line</span>
       </p>
       <div id="multiverse-row" style="display:none;margin-top:10px;padding-top:14px;border-top:1px dotted rgba(255,255,255,0.10);text-align:center">
         <div style="font-size:10px;letter-spacing:0.3em;opacity:0.55;text-transform:uppercase;margin-bottom:8px;color:#ff7ad9">Multiverse</div>

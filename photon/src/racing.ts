@@ -6,6 +6,7 @@ import { track } from './track';
 import { game } from './state';
 import { runRng } from './seed';
 import { getActiveRenderProfile } from './renderProfile';
+import { pickNextRacingCue } from './racingCue';
 
 type RacingKind = 'gate' | 'pad';
 
@@ -54,6 +55,7 @@ class RacingLineManager {
     for (const e of this.list) this.group.remove(e.object);
     this.list.length = 0;
     this.lastSpawnDist = 42;
+    game.nextRacingCue = null;
   }
 
   ensureAhead(epoch: Epoch, photonDist: number) {
@@ -120,6 +122,7 @@ class RacingLineManager {
         onMiss();
       }
     }
+    game.nextRacingCue = pickNextRacingCue(this.list, photonDist, photonLat, photonVer);
   }
 
   private racingLineAt(dist: number) {
