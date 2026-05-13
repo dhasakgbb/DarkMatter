@@ -724,9 +724,8 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
   camera.updateProjectionMatrix();
   const motionMul = settings.reducedMotion ? 0 : 1;
   const mobileVisualMul = IS_MOBILE ? 0.78 : 1;
-  const flowLensMul = 1 + (game.flowLevel || 0) * 0.35;
-  lensingPass.uniforms.uIntensity.value = (0.0016 + (photon.boosting ? 0.0024 : 0) + Math.min(0.0014, speedFactor * 0.0007)) * motionMul * mobileVisualMul * flowLensMul;
-  lensingPass.uniforms.uBarrel.value    = (0.024 + (photon.boosting ? 0.066 : 0) + Math.min(0.032, speedFactor * 0.016)) * motionMul * mobileVisualMul;
+  lensingPass.uniforms.uIntensity.value = (0.0010 + (photon.boosting ? 0.0014 : 0) + Math.min(0.0008, speedFactor * 0.0004)) * motionMul * mobileVisualMul;
+  lensingPass.uniforms.uBarrel.value    = (0.014 + (photon.boosting ? 0.038 : 0) + Math.min(0.018, speedFactor * 0.009)) * motionMul * mobileVisualMul;
   lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * (IS_MOBILE ? 0.86 : 1);
   updateHazardLensing(motionMul * mobileVisualMul);
   const bloomTarget = (IS_MOBILE ? 0.46 : 0.54) + Math.min(IS_MOBILE ? 0.10 : 0.14, speedFactor * (IS_MOBILE ? 0.06 : 0.08)) + (photon.boosting ? (IS_MOBILE ? 0.07 : 0.10) : 0) + game.trauma * (IS_MOBILE ? 0.04 : 0.06);
@@ -773,7 +772,7 @@ function updateHazardLensing(visualMul: number) {
     const screenY = 0.5 - lensProjectPoint.y * 0.5;
     const depthProximity = 1 - THREE.MathUtils.clamp(Math.max(0, dz) / HAZARD_LENS_FORWARD_DISTANCE, 0, 1);
     const edgeFade = 1 - THREE.MathUtils.clamp(Math.max(Math.abs(lensProjectPoint.x), Math.abs(lensProjectPoint.y)) - 0.82, 0, 0.34) / 0.34;
-    const baseStrength = hazard.type === 'eventHorizon' ? 0.028 : 0.012;
+    const baseStrength = hazard.type === 'eventHorizon' ? 0.018 : 0.007;
     const strength = baseStrength * (0.58 + depthProximity * 0.42) * edgeFade * epochLensMul * visualMul;
     const radius = THREE.MathUtils.clamp(
       (hazard.type === 'eventHorizon' ? 0.35 : 0.25) + depthProximity * (hazard.type === 'eventHorizon' ? 0.12 : 0.09),
