@@ -34,6 +34,20 @@ const cameraTarget = new THREE.Vector3();
 const cameraLookBase = new THREE.Vector3();
 const cameraLookFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
 const cameraLookPoint = new THREE.Vector3();
+const lensProjectPoint = new THREE.Vector3();
+const MAX_ACTIVE_HAZARD_LENSES = 4;
+const HAZARD_LENS_BACK_DISTANCE = 22;
+const HAZARD_LENS_FORWARD_DISTANCE = 132;
+
+interface HazardLensCandidate {
+  score: number;
+  x: number;
+  y: number;
+  strength: number;
+  radius: number;
+}
+
+const hazardLensCandidates: HazardLensCandidate[] = [];
 
 export function setState(s: GameStateName) {
   const prev = game.state;
@@ -86,7 +100,7 @@ export function setEpoch(idx: number) {
   skyMat.uniforms.uColorA.value.copy(e.paletteA);
   skyMat.uniforms.uColorB.value.copy(e.paletteB);
   skyMat.uniforms.uPoint.value.copy(e.palettePoint);
-  skyMat.uniforms.uRedshift.value = idx / Math.max(1, EPOCHS.length);
+  setSkyRedshift(baseRedshiftForEpoch(idx));
   skyMat.uniforms.uMix.value = 0.6;
   starMat.uniforms.uOpacity.value = 0.9;
   cosmicWebMat.color.copy(e.palettePoint).lerp(e.paletteB, 0.28);
@@ -146,10 +160,35 @@ function absorptionLineFor(e: Epoch) {
   return 'You enter matter and do not come out.';
 }
 
+function baseRedshiftForEpoch(idx: number) {
+  return Math.min(0.20, idx * 0.022);
+}
+
+function setSkyRedshift(amount: number) {
+  game.redshiftAmount = THREE.MathUtils.clamp(amount, 0, 1);
+  skyMat.uniforms.uRedshift.value = game.redshiftAmount;
+}
+
+function updateLateEpochRedshift(dt: number, e: Epoch) {
+  const base = baseRedshiftForEpoch(game.epochIndex);
+  const progress = THREE.MathUtils.clamp(game.epochTimer / Math.max(1, e.duration), 0, 1);
+  const age = progress * progress * (3 - 2 * progress);
+  const target = e.isHeatDeath
+    ? Math.min(0.96, base + age * 0.74)
+    : Math.min(0.54, base + age * 0.34);
+  const blend = Math.min(1, dt * 1.8);
+  setSkyRedshift(game.redshiftAmount + (target - game.redshiftAmount) * blend);
+}
+
+function blackHoleTick(dt: number, e: Epoch) {
+  updateLateEpochRedshift(dt, e);
+}
+
 function heatDeathTick(dt: number, photonDist: number) {
   const e = EPOCHS[game.epochIndex];
   const t = game.epochTimer;
   const total = e.duration;
+  updateLateEpochRedshift(dt, e);
   const visFade = THREE.MathUtils.clamp(1 - (t / 90), 0.05, 1);
   game.heatDeathFade = 1 - visFade;
   if (stars && stars.material) starMat.uniforms.uOpacity.value = 0.9 * visFade;
@@ -170,13 +209,13 @@ export function pause() {
   if (game.state !== 'run') return;
   refreshSettingsUI();
   setState('pause');
-  if (audio.ctx) try { audio.ctx.suspend(); } catch (e) {}
+  audio.suspend();
   if (!meta.pausedOnce) { meta.pausedOnce = true; saveMeta(meta); checkMemoryTriggers(); }
 }
 export function resume() {
   if (game.state !== 'pause') return;
   setState('run');
-  if (audio.ctx) try { audio.ctx.resume(); } catch (e) {}
+  audio.resume();
   last = performance.now();
 }
 
@@ -212,6 +251,7 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   game.endlessLoop = 0;
   game.witnessing = false;
   game.heatDeathFade = 0;
+  game.redshiftAmount = 0;
   game.heatDeathFinalSpawned = false;
   game.padBoostTime = 0;
   game.padBoostTotal = 0;
@@ -544,6 +584,7 @@ function loop() {
       game.epochTimer += dt;
       game.runDistance = photon.distance;
       if (e.isHeatDeath) heatDeathTick(dt, photon.distance);
+      else if (e.name === 'Black Hole') blackHoleTick(dt, e);
       if (e.isHeatDeath || e.name === 'Black Hole') {
         game.coherenceTime = (game.coherenceTime || 0) + dt;
         const threshold = game.cosmicConstants.coherenceThreshold;
@@ -597,6 +638,7 @@ function loop() {
     track.updateDust(game._idleZ);
     lensingPass.uniforms.uVignettePower.value = 1;
     (lensingPass.uniforms.uVignetteColor.value as THREE.Vector3).set(0, 0, 0);
+    updateHazardLensing(0);
   }
 
   composer.render();
@@ -629,6 +671,7 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
   lensingPass.uniforms.uIntensity.value = (0.0016 + (photon.boosting ? 0.0024 : 0) + Math.min(0.0014, speedFactor * 0.0007)) * motionMul * mobileVisualMul;
   lensingPass.uniforms.uBarrel.value    = (0.024 + (photon.boosting ? 0.066 : 0) + Math.min(0.032, speedFactor * 0.016)) * motionMul * mobileVisualMul;
   lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * (IS_MOBILE ? 0.86 : 1);
+  updateHazardLensing(motionMul * mobileVisualMul);
   const bloomTarget = (IS_MOBILE ? 0.46 : 0.54) + Math.min(IS_MOBILE ? 0.10 : 0.14, speedFactor * (IS_MOBILE ? 0.06 : 0.08)) + (photon.boosting ? (IS_MOBILE ? 0.07 : 0.10) : 0) + game.trauma * (IS_MOBILE ? 0.04 : 0.06);
   const bloomRadiusTarget = (IS_MOBILE ? 0.54 : 0.62) + Math.min(IS_MOBILE ? 0.09 : 0.12, speedFactor * (IS_MOBILE ? 0.05 : 0.07)) + (photon.boosting ? (IS_MOBILE ? 0.04 : 0.06) : 0);
   bloom.strength += (bloomTarget - bloom.strength) * Math.min(1, realDt * 3.5);
@@ -642,6 +685,57 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
     camera.rotation.z += Math.sin(time * 2.1) * amp * 0.04;
   }
   if (game.trauma > 0) game.trauma = Math.max(0, game.trauma - realDt * 1.7);
+}
+
+function updateHazardLensing(visualMul: number) {
+  const lensUniforms = lensingPass.uniforms;
+  const lensData = lensUniforms.uLenses.value as THREE.Vector4[];
+  if (visualMul <= 0 || game.state !== 'run') {
+    lensUniforms.uLensCount.value = 0;
+    for (const lens of lensData) lens.set(0.5, 0.5, 0, 0);
+    return;
+  }
+
+  camera.updateMatrixWorld();
+  lensUniforms.uAspect.value = camera.aspect;
+
+  hazardLensCandidates.length = 0;
+  const epoch = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
+  const epochLensMul = epoch.isHeatDeath ? 2.2 : epoch.name === 'Black Hole' ? 1.6 : 1;
+
+  for (const hazard of hazards.list) {
+    if (hazard.hit || (hazard.type !== 'well' && hazard.type !== 'eventHorizon')) continue;
+    const dz = hazard.dist - photon.distance;
+    if (dz < -HAZARD_LENS_BACK_DISTANCE || dz > HAZARD_LENS_FORWARD_DISTANCE) continue;
+
+    lensProjectPoint.copy(hazard.mesh.position).project(camera);
+    if (lensProjectPoint.z < -1 || lensProjectPoint.z > 1) continue;
+    if (Math.abs(lensProjectPoint.x) > 1.16 || Math.abs(lensProjectPoint.y) > 1.16) continue;
+
+    const screenX = lensProjectPoint.x * 0.5 + 0.5;
+    const screenY = 0.5 - lensProjectPoint.y * 0.5;
+    const depthProximity = 1 - THREE.MathUtils.clamp(Math.max(0, dz) / HAZARD_LENS_FORWARD_DISTANCE, 0, 1);
+    const edgeFade = 1 - THREE.MathUtils.clamp(Math.max(Math.abs(lensProjectPoint.x), Math.abs(lensProjectPoint.y)) - 0.82, 0, 0.34) / 0.34;
+    const baseStrength = hazard.type === 'eventHorizon' ? 0.028 : 0.012;
+    const strength = baseStrength * (0.58 + depthProximity * 0.42) * edgeFade * epochLensMul * visualMul;
+    const radius = THREE.MathUtils.clamp(
+      (hazard.type === 'eventHorizon' ? 0.35 : 0.25) + depthProximity * (hazard.type === 'eventHorizon' ? 0.12 : 0.09),
+      hazard.type === 'eventHorizon' ? 0.30 : 0.20,
+      hazard.type === 'eventHorizon' ? 0.52 : 0.40,
+    );
+    const score = strength * (hazard.type === 'eventHorizon' ? 1.45 : 1) * (0.72 + depthProximity * 0.46);
+
+    hazardLensCandidates.push({ score, x: screenX, y: screenY, strength, radius });
+  }
+
+  hazardLensCandidates.sort((a, b) => b.score - a.score);
+  const count = Math.min(MAX_ACTIVE_HAZARD_LENSES, hazardLensCandidates.length, lensData.length);
+  lensUniforms.uLensCount.value = count;
+  for (let i = 0; i < lensData.length; i++) {
+    const lens = hazardLensCandidates[i];
+    if (i < count && lens) lensData[i].set(lens.x, lens.y, lens.strength, lens.radius);
+    else lensData[i].set(0.5, 0.5, 0, 0);
+  }
 }
 
 export function startLoop() { last = performance.now(); requestAnimationFrame(loop); }

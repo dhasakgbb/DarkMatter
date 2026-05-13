@@ -216,7 +216,7 @@ export const MEMORIES: Memory[] = [
     body: 'You remember crossing a place where nothing answered. No dust. No gas. No eyes. Only distance, clean and terrible.',
     evolved: { afterWitnesses: 1, body: 'You remember crossing a place where nothing answered. You can see the others now. They are with you. They are all of them you.' } },
   { id: 'first-tune',      type: 'resonance', when: { phasesLifetime: 5 },
-    body: 'You remember tuning yourself. One wavelength fits one obstacle exactly. The wall lets you through and you feel it as a small kindness.',
+    body: 'You remember tuning yourself. Some wavelengths resonate exactly. Some punch through. Some slip past. Matter was not a wall; it was a question.',
     resonance: { startEnergyBonus: 8 } },
   { id: 'chained',         type: 'resonance', when: { firstChainPhased: true },
     body: 'You remember being held by three at once. You remember the moment one of them let go and the rest had to as well. You learned that grip is plural.',
@@ -245,7 +245,7 @@ export const MEMORIES: Memory[] = [
     body: 'You remember a gate opening around you. Not a door. A line that was correct enough for the universe to reward it.',
     resonance: { startBoostBonus: 10 } },
   { id: 'fast-streak',     type: 'resonance', when: { peakStreak: 5 },
-    body: 'You remember chaining. One color, then another, then another, the universe revealing its key signature in real time.',
+    body: 'You remember chaining. One color, then another, then another, the universe revealing its cross-section in real time.',
     resonance: { startBoostBonus: 15 } },
   { id: 'deep-streak',     type: 'threshold', when: { peakStreak: 12 },
     body: 'You remember the resonance. Twelve obstacles in a row tuned to your wavelength. The universe was speaking your language and not the other way around.',
@@ -279,15 +279,23 @@ export const MEMORIES: Memory[] = [
 ];
 
 // ============================================================================
-// UPGRADES — permanent stat upgrades picked between epochs. Apply functions
-// mutate the Photon instance (loose typing here to avoid circular import).
+// UPGRADES — permanent stat upgrades picked between epochs.
 // ============================================================================
+export interface UpgradeTarget {
+  speedBonus: number;
+  agilityBonus: number;
+  energyMaxBonus: number;
+  damageReduction: number;
+  boostRechargeBonus: number;
+  phaseWindowSec: number;
+}
+
 export interface Upgrade {
   key: string;
   name: string;
   desc: string;
   max: number;
-  apply: (s: any, level: number) => void;
+  apply: (s: UpgradeTarget, level: number) => void;
 }
 export const UPGRADES: Upgrade[] = [
   { key: 'topSpeed',    name: 'Faster',      desc: 'The void resists you less. +8% forward speed.',          max: 5, apply: (s, l) => { s.speedBonus = 1 + 0.08 * l; } },
@@ -324,8 +332,8 @@ export const VARIANTS: Variant[] = [
 export interface TutorialStep { text: string; hint: string; max: number; needs: string | null; }
 export const TUTORIAL_STEPS: TutorialStep[] = [
   { text: 'STEER WITH  W A S D  OR  ARROW KEYS',                  hint: 'Dodge the colored shapes',                max: 7,  needs: 'steer' },
-  { text: 'PRESS  1  γ      2  VISIBLE      3  RADIO',            hint: 'Wavelength = your color',                 max: 7,  needs: 'shift' },
-  { text: 'MATCH A HAZARD’S COLOR TO PHASE THROUGH IT SAFELY',  hint: '+ small energy bonus on a clean phase',   max: 9,  needs: 'phase' },
+  { text: 'PRESS  1  γ      2  VISIBLE      3  RADIO',            hint: 'Wavelength changes how matter answers',  max: 7,  needs: 'shift' },
+  { text: 'MATCH COLORS TO RESONATE  ·  RADIO SLIPS THROUGH DIFFUSE MATTER', hint: 'Gamma phases can ionize nearby hazards', max: 9,  needs: 'phase' },
   { text: 'COLLECT YELLOW ORBS  ·  HOLD  SPACE  TO BOOST',         hint: 'Boost recharges when released',           max: 7,  needs: 'boost' },
   { text: 'THREAD CYAN GATES  ·  HIT MAGENTA SPEED PADS',          hint: 'The racing line rewards clean driving',   max: 8,  needs: 'line' },
   { text: 'SURVIVE TO RECOMBINATION TO UNLOCK MORE',              hint: 'Good luck, photon',                       max: 4,  needs: null  },

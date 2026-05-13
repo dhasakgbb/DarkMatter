@@ -28,6 +28,9 @@ class EchoSystem {
   coreGeo = new THREE.IcosahedronGeometry(0.45, 1);
   haloGeo = new THREE.SphereGeometry(1.1, 12, 8);
   trailLen = 16;
+  private readonly scratchPoint = new THREE.Vector3();
+  private readonly scratchPos = new THREE.Vector3();
+  private readonly scratchFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
 
   constructor() { scene.add(this.group); }
 
@@ -68,9 +71,9 @@ class EchoSystem {
       const e = this.echoes[i];
       e.life -= dt;
       e.dist += e.vel * dt;
-      const p = track.pointAt(e.dist);
-      const frame = track.frameAt(e.dist);
-      const pos = p.clone().addScaledVector(frame.right, e.offset).addScaledVector(frame.up, e.verticalOff);
+      const p = track.pointAt(e.dist, this.scratchPoint);
+      const frame = track.frameAt(e.dist, this.scratchFrame);
+      const pos = this.scratchPos.copy(p).addScaledVector(frame.right, e.offset).addScaledVector(frame.up, e.verticalOff);
       e.grp.position.copy(pos);
       const f = e.life / e.maxLife;
       const fadeIn = Math.min(1, (1 - f) * 4);

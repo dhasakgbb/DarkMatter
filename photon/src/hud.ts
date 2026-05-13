@@ -225,11 +225,12 @@ export function drawHud() {
     hud.textAlign = 'center';
     hud.textBaseline = 'middle';
     hud.font = 'bold 18px ui-monospace, monospace';
-    hud.fillStyle = game.lineEventText.includes('LOST') || game.lineEventText.includes('STRAIN')
-      ? `rgba(255,85,102,${0.78 * alpha})`
-      : game.lineEventText.includes('SPEED')
-        ? `rgba(255,122,217,${0.86 * alpha})`
-        : `rgba(136,224,255,${0.86 * alpha})`;
+    let eventColor = `rgba(136,224,255,${0.86 * alpha})`;
+    if (game.lineEventText.includes('LOST') || game.lineEventText.includes('STRAIN')) eventColor = `rgba(255,85,102,${0.78 * alpha})`;
+    else if (game.lineEventText.includes('IONIZATION')) eventColor = `rgba(184,136,255,${0.88 * alpha})`;
+    else if (game.lineEventText.includes('RADIO')) eventColor = `rgba(255,85,102,${0.86 * alpha})`;
+    else if (game.lineEventText.includes('SPEED')) eventColor = `rgba(255,122,217,${0.86 * alpha})`;
+    hud.fillStyle = eventColor;
     hud.fillText(game.lineEventText, w / 2, h * 0.62);
     hud.restore();
     hud.textAlign = 'left'; hud.textBaseline = 'top';

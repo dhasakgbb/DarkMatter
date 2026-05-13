@@ -3,6 +3,7 @@ import { WAVELENGTHS } from './cosmology';
 import { audio } from './audio';
 import { game } from './state';
 import * as scene from './scene';
+import { readJsonStorage, writeStorage } from './storage';
 
 export interface SettingsState {
   masterVol: number;
@@ -23,11 +24,10 @@ export const defaultSettings = (): SettingsState => ({
 });
 
 export function loadSettings(): SettingsState {
-  try { const s = localStorage.getItem(SETTINGS_KEY); if (s) return Object.assign(defaultSettings(), JSON.parse(s)); } catch (e) {}
-  return defaultSettings();
+  return Object.assign(defaultSettings(), readJsonStorage<Partial<SettingsState>>(SETTINGS_KEY, {}));
 }
 export function saveSettings(s: SettingsState) {
-  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (e) {}
+  writeStorage(SETTINGS_KEY, JSON.stringify(s));
 }
 
 export const settings: SettingsState = loadSettings();

@@ -45,21 +45,54 @@ export const lensingPass = new ShaderPass({
     uVignettePower: { value: 1.0 },
     uVignetteColor: { value: new THREE.Vector3(0, 0, 0) },
     uGlow: { value: 0.12 },
+    uAspect: { value: window.innerWidth / window.innerHeight },
+    uLensCount: { value: 0 },
+    uLenses: {
+      value: [
+        new THREE.Vector4(0.5, 0.5, 0, 0),
+        new THREE.Vector4(0.5, 0.5, 0, 0),
+        new THREE.Vector4(0.5, 0.5, 0, 0),
+        new THREE.Vector4(0.5, 0.5, 0, 0),
+      ],
+    },
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
     uniform sampler2D tDiffuse;
     uniform float uTime, uIntensity, uVignette, uBarrel, uVignettePower, uGlow;
+    uniform float uAspect;
+    uniform int uLensCount;
     uniform vec3 uVignetteColor;
+    uniform vec4 uLenses[4];
     varying vec2 vUv;
     void main(){
       vec2 uv = vUv;
       vec2 c0 = uv - 0.5;
       float r2 = dot(c0, c0);
       uv = 0.5 + c0 * (1.0 - uBarrel * r2);
+      vec2 localChroma = vec2(0.0);
+      float lensGlow = 0.0;
+      for (int i = 0; i < 4; i++) {
+        if (i >= uLensCount) break;
+        vec4 lens = uLenses[i];
+        vec2 raw = uv - lens.xy;
+        vec2 aspectRaw = vec2(raw.x * uAspect, raw.y);
+        float lensRadius = max(lens.w, 0.035);
+        float localDist = length(aspectRaw);
+        float localR2 = max(dot(aspectRaw, aspectRaw), 1e-6);
+        float influence = 1.0 - smoothstep(lensRadius * 0.36, lensRadius, localDist);
+        vec2 dir = normalize(raw + 1e-6);
+        float deform = min((lens.z * influence) / (localR2 + 0.001), lensRadius * 0.14);
+        uv -= dir * deform;
+        float ring = smoothstep(lensRadius * 0.16, lensRadius * 0.43, localDist)
+          * (1.0 - smoothstep(lensRadius * 0.43, lensRadius * 0.82, localDist))
+          * influence;
+        localChroma += dir * (ring + deform * 2.8) * lens.z * 0.20;
+        lensGlow += ring * (0.025 + lens.z * 2.4);
+      }
       vec2 c = uv - 0.5;
       float d = dot(c,c);
-      vec2 dir = normalize(c + 1e-6) * d * uIntensity * 8.0;
+      vec2 dir = normalize(c + 1e-6) * d * uIntensity * 8.0 + localChroma;
       float r = texture2D(tDiffuse, uv - dir).r;
       float g = texture2D(tDiffuse, uv).g;
       float b = texture2D(tDiffuse, uv + dir).b;
@@ -69,6 +102,7 @@ export const lensingPass = new ShaderPass({
         col = mix(uVignetteColor, col, v);
         float rim = smoothstep(0.18, 0.92, d) * (1.0 - smoothstep(0.92, 1.15, d));
         col += vec3(0.02, 0.07, 0.14) * rim * uGlow;
+        col += vec3(0.35, 0.75, 1.0) * lensGlow;
         col = pow(max(col, vec3(0.0)), vec3(0.94));
       gl_FragColor = vec4(col, 1.0);
     }
@@ -98,6 +132,7 @@ export const skyMat = new THREE.ShaderMaterial({
     uniform vec3 uColorA, uColorB, uPoint;
     varying vec3 vWorld;
     float hash(vec3 p){ p = fract(p*0.3183099+vec3(0.71,0.113,0.419)); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+    vec3 desaturate(vec3 color, float amount){ float l = dot(color, vec3(0.299, 0.587, 0.114)); return mix(color, vec3(l), amount); }
     float noise(vec3 p){
       vec3 i = floor(p); vec3 f = fract(p);
       vec3 u = f*f*(3.0-2.0*f);
@@ -119,25 +154,35 @@ export const skyMat = new THREE.ShaderMaterial({
     }
     void main(){
         vec3 d = normalize(vWorld);
+        float red = clamp(uRedshift, 0.0, 1.0);
+        float radial = length(d.xy);
+        vec3 stretchedD = normalize(vec3(d.xy * (1.0 + red * (0.10 + radial * 0.30)), d.z));
+        float detailDesat = smoothstep(0.12, 0.88, red);
         float t = uTime * 0.012;
-        float n1 = fbm(d * 1.45 + vec3(t, t*0.7, -t*0.5));
-        float n2 = fbm(d * 4.6 + vec3(-t*1.3, t*0.9, t*0.4));
-        float n3 = fbm(d * 9.0 + vec3(t*0.35, -t*0.6, t*0.25));
+        float n1 = fbm(mix(d, stretchedD, red * 0.35) * 1.45 + vec3(t, t*0.7, -t*0.5));
+        float n2 = fbm(stretchedD * mix(4.6, 3.45, red) + vec3(-t*1.3, t*0.9, t*0.4));
+        float n3 = fbm(stretchedD * mix(9.0, 5.85, red) + vec3(t*0.35, -t*0.6, t*0.25));
         float nebula = smoothstep(0.38, 0.86, n1);
         float wisps  = smoothstep(0.50, 0.95, n2);
         float filament = pow(max(0.0, 1.0 - abs(n2 - 0.56) * 4.2), 2.2);
         float coldDust = smoothstep(0.46, 0.88, n3) * (1.0 - nebula * 0.35);
         vec3 deep = mix(vec3(0.006, 0.009, 0.025), uColorA * 0.18, 0.42 + n1 * 0.28);
         vec3 col = mix(deep, mix(uColorA, uColorB, n1), nebula * (0.65 + uMix * 0.35));
-        col += uPoint * wisps * (0.32 + 0.34 * uMix);
-        col += mix(uColorB, uPoint, 0.55) * filament * 0.20;
-        col += vec3(0.04, 0.055, 0.095) * coldDust * 0.35;
-        float starHash = fract(sin(dot(d.xyz, vec3(127.1,311.7,74.7))) * 43758.5453);
+        vec3 wispColor = uPoint * wisps * (0.32 + 0.34 * uMix);
+        vec3 filamentColor = mix(uColorB, uPoint, 0.55) * filament * 0.20;
+        vec3 dustColor = vec3(0.04, 0.055, 0.095) * coldDust * 0.35;
+        col += desaturate(wispColor, detailDesat * 0.72);
+        col += desaturate(filamentColor, detailDesat * 0.82);
+        col += desaturate(dustColor, detailDesat * 0.52);
+        vec3 starDir = normalize(vec3(d.xy * (1.0 + red * (0.16 + radial * 0.42)), d.z));
+        float starHash = fract(sin(dot(starDir.xyz, vec3(127.1,311.7,74.7))) * 43758.5453);
         float stars = smoothstep(0.988, 0.999, starHash);
-        col += vec3(1.0, 0.96, 0.84) * stars * (1.0 + 0.35 * sin(uTime * 0.9 + starHash * 18.0));
-        col.r += uRedshift * 0.30;
-        col.b *= 1.0 - uRedshift * 0.42;
-        col.g *= 1.0 - uRedshift * 0.16;
+        float starBrightness = 1.0 - red * 0.34;
+        col += vec3(1.0, 0.96, 0.84) * stars * starBrightness * (1.0 + 0.35 * sin(uTime * 0.9 + starHash * 18.0));
+        col = desaturate(col, detailDesat * 0.12);
+        col.r += red * 0.30;
+        col.b *= 1.0 - red * 0.42;
+        col.g *= 1.0 - red * 0.16;
         col *= 0.48 + uMix * 0.20;
       gl_FragColor = vec4(col, 1.0);
     }
@@ -276,6 +321,7 @@ window.addEventListener('resize', () => {
   renderer.setSize(w, h);
   composer.setSize(w, h);
   camera.aspect = w / h; camera.updateProjectionMatrix();
+  lensingPass.uniforms.uAspect.value = camera.aspect;
   bloom.setSize(w, h);
   hudResize();
 });

@@ -1,4 +1,5 @@
 import { META_KEY, RUN_KEY } from './constants';
+import { readJsonStorage, removeStorage, writeStorage } from './storage';
 
 export interface MetaState {
   upgrades: Record<string, number>;
@@ -53,14 +54,10 @@ export const defaultMeta = (): MetaState => ({
 });
 
 export function loadMeta(): MetaState {
-  try {
-    const s = localStorage.getItem(META_KEY);
-    if (s) return Object.assign(defaultMeta(), JSON.parse(s));
-  } catch (e) {}
-  return defaultMeta();
+  return Object.assign(defaultMeta(), readJsonStorage<Partial<MetaState>>(META_KEY, {}));
 }
 export function saveMeta(m: MetaState) {
-  try { localStorage.setItem(META_KEY, JSON.stringify(m)); } catch (e) {}
+  writeStorage(META_KEY, JSON.stringify(m));
 }
 
 export const meta: MetaState = loadMeta();
@@ -82,12 +79,11 @@ export interface Checkpoint {
   epochName: string;
 }
 export function saveCheckpoint(snapshot: Checkpoint) {
-  try { localStorage.setItem(RUN_KEY, JSON.stringify(snapshot)); } catch (e) {}
+  writeStorage(RUN_KEY, JSON.stringify(snapshot));
 }
 export function loadCheckpoint(): Checkpoint | null {
-  try { const s = localStorage.getItem(RUN_KEY); if (s) return JSON.parse(s); } catch (e) {}
-  return null;
+  return readJsonStorage<Checkpoint | null>(RUN_KEY, null);
 }
 export function clearCheckpoint() {
-  try { localStorage.removeItem(RUN_KEY); } catch (e) {}
+  removeStorage(RUN_KEY);
 }

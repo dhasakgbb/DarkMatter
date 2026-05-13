@@ -133,6 +133,35 @@ class HazardManager {
     data.hazardGlowBaseOpacity = material.opacity;
   }
 
+  private canRadioTransmit(h: Hazard, photonWL: number) {
+    return photonWL === 2 && h.wlIdx !== 2 && (h.type === 'plasma' || h.type === 'fluct');
+  }
+
+  private ionizeNearby(source: Hazard, currentEpoch: Epoch) {
+    if (source.wlIdx !== 0) return 0;
+    let ionized = 0;
+    for (const other of this.list) {
+      if (other === source || other.hit || other.type === 'pickup' || other.type === 'finalPickup') continue;
+      if (other.type !== 'plasma' && other.type !== 'fluct' && other.type !== 'gluon') continue;
+      if (Math.abs(other.dist - source.dist) > 11) continue;
+      const dx = other.lateral - source.lateral;
+      const dy = other.vertical - source.vertical;
+      if (dx * dx + dy * dy > 8.5 * 8.5) continue;
+      other.hit = true;
+      (other.mesh.material as THREE.MeshBasicMaterial).opacity = 0.16;
+      particleManager.emitBurst(other.mesh.position, 'phase', 10, WAVELENGTHS[0].color);
+      funLab.record('gamma-ionization', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: source.dist, cause: other.type, value: 1 });
+      ionized++;
+      if (ionized >= 2) break;
+    }
+    if (ionized > 0) {
+      game.lineEventText = 'IONIZATION CASCADE';
+      game.lineEventTime = 0.95;
+      game.trauma = Math.min(1, game.trauma + 0.08 * ionized);
+    }
+    return ionized;
+  }
+
   reset() {
     for (const h of this.list) this.group.remove(h.mesh);
     this.list.length = 0;
@@ -411,8 +440,20 @@ class HazardManager {
           if (!meta.firstWormhole) { meta.firstWormhole = true; saveMeta(meta); checkMemoryTriggers(); }
           game.trauma = Math.min(1, game.trauma + 0.25);
         }
+        const ionized = this.ionizeNearby(h, currentEpoch);
+        if (ionized > 0) onCollect(3 * ionized);
         if (h.wlIdx === 0) maybeUnlockCodexFn('GAMMA', CODEX_ENTRIES);
         if (h.wlIdx === 2) maybeUnlockCodexFn('RADIO', CODEX_ENTRIES);
+      } else if (this.canRadioTransmit(h, photonWL)) {
+        h.hit = true;
+        funLab.record('radio-transmission', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: photonDist, cause: h.type, value: h.dmg });
+        (h.mesh.material as THREE.MeshBasicMaterial).opacity = 0.14;
+        onCollect(3);
+        photon.phaseFlash();
+        game.lineEventText = 'RADIO TRANSMISSION';
+        game.lineEventTime = 0.85;
+        particleManager.emitBurst(h.mesh.position, 'phase', 12, WAVELENGTHS[2].color);
+        maybeUnlockCodexFn('RADIO', CODEX_ENTRIES);
       } else {
         if (onHit(h.dmg)) {
           funLab.record('hazard-hit', { epochIndex: game.epochIndex, distance: photonDist, cause: h.type, damage: h.dmg, value: h.dmg });
@@ -431,6 +472,7 @@ class HazardManager {
 }
 
 export const hazards = new HazardManager();
+const finalPickupPoint = new THREE.Vector3();
 
 // Spawned exactly once at t=300s of Heat Death. Triggers the witness ending on collection.
 export function spawnFinalPickup(dist: number) {
@@ -441,7 +483,7 @@ export function spawnFinalPickup(dist: number) {
   mesh.add(halo);
   const halo2 = new THREE.Mesh(new THREE.SphereGeometry(4.5, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfafaff, transparent: true, opacity: 0.18, depthWrite: false }));
   mesh.add(halo2);
-  const p = track.pointAt(dist);
+  const p = track.pointAt(dist, finalPickupPoint);
   mesh.position.copy(p);
   hazards.group.add(mesh);
   hazards.list.push({ kind: 'pickup', type: 'finalPickup', dist, lateral: 0, vertical: 0, baseLateral: 0, baseVertical: 0, wlIdx: -1, dmg: 0, mesh, hit: false, hitRadius: 2.6 });

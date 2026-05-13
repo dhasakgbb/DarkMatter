@@ -55,9 +55,15 @@ export function checkMemoryTriggers() {
   }
 }
 
-// Apply resonance bonuses (passive effects) at the start of each run. Photon is a typed-loose param
-// to avoid pulling the Photon class into this module; we mutate the same private fields photon expects.
-export function applyMemoryResonances(photon: any) {
+interface MemoryResonanceTarget {
+  _firstChainFreeUsed: boolean;
+  _firstChainFreePerRun: boolean;
+  _memoryStartEnergyBonus: number;
+  _memoryStartBoostBonus: number;
+}
+
+// Apply resonance bonuses at the start of each run without importing the Photon singleton here.
+export function applyMemoryResonances(photon: MemoryResonanceTarget) {
   photon._firstChainFreeUsed = false;
   photon._memoryStartEnergyBonus = 0;
   photon._memoryStartBoostBonus = 0;

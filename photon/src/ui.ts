@@ -1,7 +1,7 @@
 import { meta, saveMeta, loadCheckpoint, clearCheckpoint, defaultMeta } from './meta';
 import { settings, applySettings, saveSettings } from './settings';
 import { EPOCHS, WAVELENGTHS, CODEX_ENTRIES, MEMORIES, VARIANTS } from './cosmology';
-import { game } from './state';
+import { game, type GameStateName } from './state';
 import { memoryBody } from './memories';
 import { showToast } from './utils';
 import { applyMetaUpgrades, setState, startRun, resume, beginDeath, checkVariantUnlocks } from './game';
@@ -9,6 +9,15 @@ import { audio } from './audio';
 import { parseSeedLabel } from './seed';
 import { funLab } from './funlab/runtime';
 import { buildVibeControls, clearFunLabAndRender, exportFunLab, readVibeRating, renderFunLabDashboard, renderVibePrompt } from './funlab/ui';
+import { removeStorage } from './storage';
+
+function eventInput(e: Event): HTMLInputElement {
+  return e.currentTarget as HTMLInputElement;
+}
+
+function panelReturnState(id: string, fallback: GameStateName): GameStateName {
+  return (document.getElementById(id)?.dataset.returnState as GameStateName | undefined) || fallback;
+}
 
 export function refreshTitleStats() {
   const stats = document.getElementById('title-stats')!;
@@ -158,18 +167,18 @@ export function bindUI() {
   });
 
   // Settings controls
-  document.getElementById('set-master')!.addEventListener('input', (e: any) => {
-    settings.masterVol = parseFloat(e.target.value);
+  document.getElementById('set-master')!.addEventListener('input', (e) => {
+    settings.masterVol = parseFloat(eventInput(e).value);
     document.getElementById('set-master-val')!.textContent = String(Math.round(settings.masterVol * 100));
     applySettings(); saveSettings(settings);
   });
-  document.getElementById('set-fov')!.addEventListener('input', (e: any) => {
-    settings.fov = parseInt(e.target.value, 10);
+  document.getElementById('set-fov')!.addEventListener('input', (e) => {
+    settings.fov = parseInt(eventInput(e).value, 10);
     document.getElementById('set-fov-val')!.textContent = String(settings.fov);
     applySettings(); saveSettings(settings);
   });
-  document.getElementById('set-sens')!.addEventListener('input', (e: any) => {
-    settings.sensitivity = parseFloat(e.target.value);
+  document.getElementById('set-sens')!.addEventListener('input', (e) => {
+    settings.sensitivity = parseFloat(eventInput(e).value);
     document.getElementById('set-sens-val')!.textContent = settings.sensitivity.toFixed(2);
     applySettings(); saveSettings(settings);
   });
@@ -186,7 +195,7 @@ export function bindUI() {
   document.getElementById('btn-end-run')!.addEventListener('click', () => { game.manualEndRequested = true; resume(); beginDeath(); });
   document.getElementById('btn-reset-meta')!.addEventListener('click', () => {
     if (!confirm('Reset ALL progress (upgrades, codex, runs, best distance)? This cannot be undone.')) return;
-    try { localStorage.removeItem('photon-meta-v1'); } catch (e) {}
+    removeStorage('photon-meta-v1');
     Object.assign(meta, defaultMeta());
     saveMeta(meta);
     applyMetaUpgrades();
@@ -195,7 +204,7 @@ export function bindUI() {
   });
   buildVibeControls();
   const closeVibePrompt = () => {
-    const returnState = document.getElementById('vibe-panel')!.dataset.returnState || 'death';
+    const returnState = panelReturnState('vibe-panel', 'death');
     if (returnState === 'title') {
       refreshTitleStats();
       setState('title');
@@ -220,7 +229,7 @@ export function bindUI() {
     startRun();
   });
   document.getElementById('btn-funlab-back')!.addEventListener('click', () => {
-    const returnState = (document.getElementById('funlab')!.dataset.returnState as any) || 'title';
+    const returnState = panelReturnState('funlab', 'title');
     if (returnState === 'pause') setState('pause');
     else { refreshTitleStats(); setState('title'); }
   });
@@ -230,6 +239,4 @@ export function bindUI() {
     clearFunLabAndRender();
   });
   if (funLab.pendingVibeRunId) renderVibePrompt(funLab.pendingVibeRunId);
-  // Silence unused-import warnings in development
-  void audio;
 }

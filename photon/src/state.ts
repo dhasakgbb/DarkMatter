@@ -42,6 +42,7 @@ export interface RunState {
   _echoTime?: number;
   // Coherence (redshift fatigue)
   coherenceTime: number;
+  redshiftAmount: number;
   // Racing line systems
   padBoostTime: number;
   padBoostTotal: number;
@@ -102,6 +103,7 @@ export const game: RunState = {
   heatDeathFinalSpawned: false,
   witnessing: false,
   coherenceTime: 0,
+  redshiftAmount: 0,
   padBoostTime: 0,
   padBoostTotal: 0,
   lineStreak: 0,

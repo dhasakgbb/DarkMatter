@@ -18,6 +18,23 @@ function makeTrackFrame(): TrackFrame {
   };
 }
 
+interface TrackRingUserData {
+  arcAngle: number;
+  arcDrift: number;
+}
+
+interface RouteLineUserData {
+  lane: number;
+}
+
+function trackRingData(mesh: THREE.Mesh): TrackRingUserData {
+  return mesh.userData as TrackRingUserData;
+}
+
+function routeLineData(line: THREE.Line): RouteLineUserData {
+  return line.userData as RouteLineUserData;
+}
+
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 const ROUTE_SAMPLES = IS_MOBILE ? 42 : 54;
 const RING_POOL_SIZE = IS_MOBILE ? 32 : 42;
@@ -54,8 +71,9 @@ class Track {
     for (let i = 0; i < RING_POOL_SIZE; i++) {
       const m = new THREE.Mesh(ringGeo, ringMat.clone());
       m.frustumCulled = false;
-      (m.userData as any).arcAngle = Math.random() * Math.PI * 2;
-      (m.userData as any).arcDrift = (Math.random() - 0.5) * 0.35;
+      const data = trackRingData(m);
+      data.arcAngle = Math.random() * Math.PI * 2;
+      data.arcDrift = (Math.random() - 0.5) * 0.35;
       this.ringGroup.add(m);
       this.ringPool.push(m);
     }
@@ -71,7 +89,7 @@ class Track {
       });
       const line = new THREE.Line(g, m);
       line.frustumCulled = false;
-      (line.userData as any).lane = i;
+      routeLineData(line).lane = i;
       this.routeGroup.add(line);
       this.routeLines.push(line);
     }
@@ -114,7 +132,7 @@ class Track {
     for (const m of this.ringPool) (m.material as THREE.MeshBasicMaterial).color.copy(ringColor);
     for (const line of this.routeLines) {
       const mat = line.material as THREE.LineBasicMaterial;
-      mat.color.copy(epoch.palettePoint).lerp(epoch.paletteB, Math.abs((line.userData as any).lane) * 0.45);
+      mat.color.copy(epoch.palettePoint).lerp(epoch.paletteB, Math.abs(routeLineData(line).lane) * 0.45);
     }
     (this.routeBeads.material as THREE.PointsMaterial).color.copy(epoch.palettePoint).lerp(epoch.paletteA, 0.22);
     (this.dust.material as THREE.PointsMaterial).color.copy(epoch.palettePoint).multiplyScalar(0.7);
@@ -138,14 +156,14 @@ class Track {
     if (changed || !this.curve) this.curve = new THREE.CatmullRomCurve3(this.points, false, 'catmullrom', 0.5);
   }
 
-  pointAt(d: number, target = new THREE.Vector3()): THREE.Vector3 {
+  pointAt(d: number, target: THREE.Vector3): THREE.Vector3 {
     if (!this.curve) return target.set(0, 0, 0);
     const firstZ = this.points[0].z;
     const lastZ = this.points[this.points.length - 1].z;
     const u = THREE.MathUtils.clamp((d - firstZ) / (lastZ - firstZ), 0, 1);
     return this.curve.getPoint(u, target);
   }
-  tangentAt(d: number, target = new THREE.Vector3()): THREE.Vector3 {
+  tangentAt(d: number, target: THREE.Vector3): THREE.Vector3 {
     if (!this.curve) return target.set(0, 0, 1);
     const firstZ = this.points[0].z;
     const lastZ = this.points[this.points.length - 1].z;
@@ -153,7 +171,7 @@ class Track {
     return this.curve.getTangent(u, target).normalize();
   }
   // "right" here means SCREEN-right from the chase-cam's perspective (post lookAt convention).
-  frameAt(d: number, target: TrackFrame = makeTrackFrame()) {
+  frameAt(d: number, target: TrackFrame) {
     this.tangentAt(d, target.fwd);
     target.right.crossVectors(target.fwd, WORLD_UP);
     if (target.right.lengthSq() < 1e-4) target.right.set(1, 0, 0);
@@ -181,7 +199,8 @@ class Track {
       (m.material as THREE.MeshBasicMaterial).opacity = (0.055 + 0.255 * t * farFade) * shimmer;
       const sc = 1 + Math.sin(d * 0.21 + time * 3.3) * 0.018;
       m.scale.set(sc, sc, 1);
-      m.rotateZ(((m.userData as any).arcAngle || 0) + time * ((m.userData as any).arcDrift || 0));
+      const ring = trackRingData(m);
+      m.rotateZ(ring.arcAngle + time * ring.arcDrift);
       m.visible = true;
     }
     for (let j = idx; j < this.ringPool.length; j++) this.ringPool[j].visible = false;
@@ -193,7 +212,7 @@ class Track {
     const startD = photonZ + 18;
     const step = 8;
     for (const line of this.routeLines) {
-      const lane = (line.userData as any).lane || 0;
+      const lane = routeLineData(line).lane;
       const arr = line.geometry.attributes.position.array as Float32Array;
       for (let i = 0; i < samples; i++) {
         const d = startD + i * step;

@@ -69,7 +69,7 @@ Core racing:
 - `gateMiss`: short negative read, 3 variations.
 - `railScrape`: edge strain and field contact, 5 variations.
 - `boostStart`: ignition transient, 3 variations.
-- `boostLoop`: optional loop layered under the procedural boost.
+- `boostLoop`: optional loop layered under authored engine and boost assets.
 - `boostEnd`: release or depletion tail, 3 variations.
 
 Photon state:
@@ -107,16 +107,16 @@ Rules:
 - Loudness target: avoid clipping; leave headroom for SFX over music.
 - Filenames use lowercase kebab-case.
 - Manifest entries stay `enabled: false` until files exist and licensing is verified, except generated director-temp assets covered by `photon/public/audio/TEMP_LICENSE.md`.
-- Procedural audio in `photon/src/audio.ts` remains the fallback for every cue.
+- `photon/src/audio.ts` plays manifest assets only; missing or late assets stay silent and are traceable through `__PHOTON_AUDIO_TRACE`.
 
 ## Acceptance Tests
 
 Before calling an audio pass final:
 
-- Start a run with no audio assets present: no errors, procedural audio still works.
-- Enable one SFX asset: it plays instead of the procedural cue.
+- Start a run with no audio assets present: no errors, and missing cues stay silent.
+- Enable one SFX asset: it plays from the manifest path.
 - Enable one epoch stem set: it loops and fades in on epoch start.
-- Cross an epoch boundary: old loop fades out cleanly, new loop starts or fallback drone plays.
+- Cross an epoch boundary: old loop fades out cleanly, new loop starts when its asset is available.
 - Play 10 minutes: no runaway node buildup or obvious clipping.
 - Reach Heat Death: music thins out and SFX restraint matches the design.
 

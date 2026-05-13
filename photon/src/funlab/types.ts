@@ -15,6 +15,8 @@ export type FunEventType =
   | 'hazard-near-miss'
   | 'hazard-hit'
   | 'phase-through'
+  | 'gamma-ionization'
+  | 'radio-transmission'
   | 'damage'
   | 'pickup'
   | 'boost-start'

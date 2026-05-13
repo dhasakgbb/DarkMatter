@@ -72,7 +72,7 @@ License rule:
 
 Goal: get timing, gain, and game feel right before final assets arrive.
 
-Use original generated or procedural temp sounds only for:
+Use original generated temp sound assets only for:
 
 - validating cue timing,
 - proving music stem transitions,

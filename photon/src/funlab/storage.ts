@@ -1,29 +1,18 @@
 import { analyzeRun } from './model';
 import type { FunRunRecord, VibeRating } from './types';
+import { readJsonStorage, readStorage, removeStorage, writeStorage } from '../storage';
 
 const HISTORY_KEY = 'photon-funlab-v1';
 const SKIP_KEY = 'photon-funlab-skip-v1';
 const MAX_RUNS = 40;
 
-function safeParse<T>(raw: string | null, fallback: T): T {
-  if (!raw) return fallback;
-  try { return JSON.parse(raw) as T; } catch (e) { return fallback; }
-}
-
 export function loadFunHistory(): FunRunRecord[] {
-  try {
-    const parsed = safeParse<FunRunRecord[]>(localStorage.getItem(HISTORY_KEY), []);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    return [];
-  }
+  const parsed = readJsonStorage<FunRunRecord[]>(HISTORY_KEY, []);
+  return Array.isArray(parsed) ? parsed : [];
 }
 
 export function saveFunHistory(records: FunRunRecord[]) {
-  try {
-    const bounded = records.slice(0, MAX_RUNS);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(bounded));
-  } catch (e) {}
+  writeStorage(HISTORY_KEY, JSON.stringify(records.slice(0, MAX_RUNS)));
 }
 
 export function saveRunRecord(record: FunRunRecord) {
@@ -50,7 +39,7 @@ export function updateRunVibe(runId: string, vibe: VibeRating): FunRunRecord | n
 }
 
 export function clearFunHistory() {
-  try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
+  removeStorage(HISTORY_KEY);
 }
 
 export function exportFunHistoryJSON() {
@@ -58,13 +47,13 @@ export function exportFunHistoryJSON() {
 }
 
 export function loadSkipCount() {
-  try { return Number(localStorage.getItem(SKIP_KEY) || '0') || 0; } catch (e) { return 0; }
+  return Number(readStorage(SKIP_KEY) || '0') || 0;
 }
 
 export function noteVibeSkipped() {
-  try { localStorage.setItem(SKIP_KEY, String(loadSkipCount() + 1)); } catch (e) {}
+  writeStorage(SKIP_KEY, String(loadSkipCount() + 1));
 }
 
 export function noteVibeAnswered() {
-  try { localStorage.setItem(SKIP_KEY, '0'); } catch (e) {}
+  writeStorage(SKIP_KEY, '0');
 }

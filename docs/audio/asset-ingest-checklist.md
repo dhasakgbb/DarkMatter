@@ -35,8 +35,8 @@ Use this every time a purchased, commissioned, or generated audio asset enters t
 ## Acceptance
 
 - No console errors if an asset is missing.
-- Missing assets fall back to procedural audio.
-- Enabled SFX plays instead of procedural fallback.
+- Missing assets stay silent; no legacy synth should play.
+- Enabled SFX plays from the manifest asset path.
 - Enabled music fades in and out without abrupt cuts.
 - Common SFX do not stack into clipping during high-speed play.
 - Heat Death does not accidentally play ordinary race clutter.
