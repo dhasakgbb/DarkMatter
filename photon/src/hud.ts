@@ -42,10 +42,7 @@ export function drawHud() {
   hud.textBaseline = 'top';
   const e = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
   hud.fillStyle = 'rgba(255,255,255,0.85)';
-  const epochLabel = (game.endlessLoop || 0) > 0
-    ? `ENDLESS  Λ${game.endlessLoop}`
-    : `ERA ${game.epochIndex + 1} / ${EPOCHS.length}`;
-  hud.fillText(epochLabel, 20, 20);
+  hud.fillText(`ERA ${game.epochIndex + 1} / ${EPOCHS.length}`, 20, 20);
   hud.fillStyle = '#88e0ff';
   hud.font = 'bold 16px ui-monospace, monospace';
   hud.fillText(e.name.toUpperCase(), 20, 36);

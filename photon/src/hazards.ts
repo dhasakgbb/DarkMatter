@@ -36,6 +36,13 @@ export interface Hazard {
   nearMissed?: boolean;
 }
 
+const GRAVITY_SLING_COLOR = new THREE.Color(0xff5de1);
+const FINAL_PICKUP_CORE_COLOR = new THREE.Color(0xfafaff);
+const FINAL_PICKUP_RING_COLOR = new THREE.Color(0xb888ff);
+const PICKUP_COLOR = new THREE.Color(0xfff3a0);
+const WORMHOLE_COLOR = new THREE.Color(0x66ffcc);
+const DEFAULT_HIT_COLOR = new THREE.Color(0xff5566);
+
 interface HazardUserData {
   spinSpeed?: number;
   wellLens?: THREE.Mesh;
@@ -172,7 +179,6 @@ class HazardManager {
   ensureAhead(epoch: Epoch, photonDist: number) {
     const horizon = photonDist + SEGMENT_LEN * SEGMENTS_AHEAD - 20;
     const tutorialEase = (game.tutorialActive && game.tutorialStep < 2) ? 2.0 : 1.0;
-    const endlessSqueeze = 1 / (1 + (game.endlessLoop || 0) * 0.22);
     if (epoch.isHeatDeath) {
       while (this.lastSpawnDist < horizon) {
         this.lastSpawnDist += 40 + Math.random() * 50;
@@ -180,7 +186,7 @@ class HazardManager {
       }
     } else {
       while (this.lastSpawnDist < horizon) {
-        const gap = (12 + Math.random() * 22) / epoch.hazardDensity * tutorialEase * endlessSqueeze;
+        const gap = (12 + Math.random() * 22) / epoch.hazardDensity * tutorialEase;
         this.lastSpawnDist += gap;
         this.spawnAt(epoch, this.lastSpawnDist);
         const just = this.list[this.list.length - 1];
@@ -395,7 +401,7 @@ class HazardManager {
             game.lineEventTime = 1.05;
             funLab.record('gravity-sling', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: photonDist, cause: h.type, value: skim });
             audio.speedPad();
-            particleManager.emitBurst(h.mesh.position, 'phase', 30, new THREE.Color(0xff5de1));
+            particleManager.emitBurst(h.mesh.position, 'phase', 30, GRAVITY_SLING_COLOR);
           }
         }
         continue;
@@ -404,13 +410,13 @@ class HazardManager {
       if (h.type === 'pickup' || h.type === 'finalPickup') {
         h.hit = true; h.mesh.visible = false;
         if (h.type === 'finalPickup') {
-          particleManager.emitBurst(h.mesh.position, 'death', 80, new THREE.Color(0xfafaff));
-          particleManager.emitBurst(h.mesh.position, 'death', 60, new THREE.Color(0xb888ff));
+          particleManager.emitBurst(h.mesh.position, 'death', 80, FINAL_PICKUP_CORE_COLOR);
+          particleManager.emitBurst(h.mesh.position, 'death', 60, FINAL_PICKUP_RING_COLOR);
           triggerWitness();
         } else {
           funLab.record('pickup', { epochIndex: game.epochIndex, distance: photonDist, value: 20 });
           onCollect(20);
-          particleManager.emitBurst(h.mesh.position, 'pickup', 18, new THREE.Color(0xfff3a0));
+          particleManager.emitBurst(h.mesh.position, 'pickup', 18, PICKUP_COLOR);
           meta.pickupsLifetime = (meta.pickupsLifetime || 0) + 1;
           saveMeta(meta);
           checkMemoryTriggers();
@@ -436,7 +442,7 @@ class HazardManager {
           photon.distance += 95 + Math.random() * 55;
           photon.invulnTimer = Math.max(photon.invulnTimer, 1.15);
           photon.energy = Math.min(photon.maxEnergy(), photon.energy + 12);
-          particleManager.emitBurst(h.mesh.position, 'death', 22, new THREE.Color(0x66ffcc));
+          particleManager.emitBurst(h.mesh.position, 'death', 22, WORMHOLE_COLOR);
           if (!meta.firstWormhole) { meta.firstWormhole = true; saveMeta(meta); checkMemoryTriggers(); }
           game.trauma = Math.min(1, game.trauma + 0.25);
         }
@@ -459,8 +465,8 @@ class HazardManager {
           funLab.record('hazard-hit', { epochIndex: game.epochIndex, distance: photonDist, cause: h.type, damage: h.dmg, value: h.dmg });
           h.hit = true;
           (h.mesh.material as THREE.MeshBasicMaterial).opacity = 0.25;
-          const hitColor = h.wlIdx >= 0 ? WAVELENGTHS[h.wlIdx].color : new THREE.Color(0xff5566);
-            particleManager.emitBurst(h.mesh.position, 'hit', 22, hitColor);
+          const hitColor = h.wlIdx >= 0 ? WAVELENGTHS[h.wlIdx].color : DEFAULT_HIT_COLOR;
+          particleManager.emitBurst(h.mesh.position, 'hit', 22, hitColor);
         }
         if (h.type === 'well') maybeUnlockCodexFn('GRAVWELL', CODEX_ENTRIES);
         if (h.type === 'gluon') maybeUnlockCodexFn('GLUON', CODEX_ENTRIES);

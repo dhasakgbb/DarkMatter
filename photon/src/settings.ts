@@ -12,6 +12,7 @@ export interface SettingsState {
   sensitivity: number;
   highContrast: boolean;
   reducedMotion: boolean;
+  proceduralAudio: boolean;
 }
 
 export const defaultSettings = (): SettingsState => ({
@@ -21,6 +22,7 @@ export const defaultSettings = (): SettingsState => ({
   sensitivity: 1.0,
   highContrast: false,
   reducedMotion: false,
+  proceduralAudio: true,
 });
 
 export function loadSettings(): SettingsState {
@@ -35,6 +37,7 @@ export const settings: SettingsState = loadSettings();
 // Apply current settings to the engine + visuals. Called on boot, settings change, and each startRun.
 export function applySettings() {
   if (audio.master) audio.master.gain.value = settings.muted ? 0 : settings.masterVol;
+  audio.setUseProcedural(settings.proceduralAudio);
   if (scene.camera) {
     scene.camera.fov = settings.fov;
     scene.camera.updateProjectionMatrix();

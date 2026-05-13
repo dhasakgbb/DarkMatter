@@ -65,8 +65,6 @@ export interface RunState {
   epochParams: Record<number, { twistFreqMul: number; twistAmpMul: number; hueShift: number; dominantKind: string }>;
   // MULTIVERSE: per-run physical constant modulations (only active after first witness)
   cosmicConstants: { speedMul: number; agilityMul: number; coherenceThreshold: number };
-  // Endless scaffolding (deprecated by Heat Death; kept for safety)
-  endlessLoop: number;
   // Misc HUD/debug
   _speed: number;
   _shiftedThisRun: boolean;
@@ -122,7 +120,6 @@ export const game: RunState = {
   runSeed: 0,
   epochParams: {},
   cosmicConstants: { speedMul: 1, agilityMul: 1, coherenceThreshold: 14 },
-  endlessLoop: 0,
   _speed: 0,
   _shiftedThisRun: false,
 };

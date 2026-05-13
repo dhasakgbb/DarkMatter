@@ -228,13 +228,12 @@ class Photon {
     if (!wasBoosting && this.boosting) funLab.record('boost-start', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: this.distance });
     if (wasBoosting && !this.boosting) funLab.record(this.boost <= 0 ? 'boost-depleted' : 'boost-end', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: this.distance });
 
-    const endlessMul = 1 + (game.endlessLoop || 0) * 0.10;
     // MULTIVERSE: this universe's effective speed-of-light multiplier
     const cosmicSpeed = game.cosmicConstants.speedMul;
     const padBoost = game.padBoostTime > 0
       ? 1 + 0.42 * Math.min(1, game.padBoostTime / Math.max(0.1, game.padBoostTotal || 1.35))
       : 1;
-    const speed = BASE_SPEED * this.speedBonus * currentEpoch.speedMul * (variant.mods.speedMul || 1) * (this.boosting ? BOOST_MUL : 1) * endlessMul * cosmicSpeed * padBoost;
+    const speed = BASE_SPEED * this.speedBonus * currentEpoch.speedMul * (variant.mods.speedMul || 1) * (this.boosting ? BOOST_MUL : 1) * cosmicSpeed * padBoost;
     this.distance += speed * dt;
 
     if (this.invulnTimer > 0) this.invulnTimer -= dt;

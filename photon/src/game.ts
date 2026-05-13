@@ -23,8 +23,14 @@ import { funLab } from './funlab/runtime';
 import { renderVibePrompt } from './funlab/ui';
 
 const FOAM_COLOR = new THREE.Color(0x99ddff);
+const BACKGROUND_COLOR = new THREE.Color();
+const DEATH_CORE_COLOR = new THREE.Color(0xff5566);
+const SPEED_PAD_COLOR = new THREE.Color(0xff7ad9);
+const LINE_GATE_COLOR = new THREE.Color(0x88e0ff);
+const LINE_GATE_HOT_COLOR = new THREE.Color(0xff7ad9);
 const foamPoint = new THREE.Vector3();
 const foamOffset = new THREE.Vector3();
+const deathPoint = new THREE.Vector3();
 const idlePoint = new THREE.Vector3();
 const idleFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
 const idleLookPoint = new THREE.Vector3();
@@ -48,6 +54,7 @@ interface HazardLensCandidate {
 }
 
 const hazardLensCandidates: HazardLensCandidate[] = [];
+type UpgradeOption = (typeof UPGRADES)[number];
 
 declare global {
   interface Window {
@@ -114,7 +121,7 @@ export function setEpoch(idx: number) {
   cosmicWebMat.opacity = e.isHeatDeath ? 0.035 : 0.10 + Math.min(0.05, idx * 0.006);
   scene.fog!.color.copy(e.fogColor);
   (scene.fog as THREE.Fog).near = e.fogNear; (scene.fog as THREE.Fog).far = e.fogFar;
-  scene.background = e.fogColor.clone().multiplyScalar(0.4);
+  scene.background = BACKGROUND_COLOR.copy(e.fogColor).multiplyScalar(0.4);
   track.setEpoch(e);
   if (e.isHeatDeath) {
     audio.startHeatDeath();
@@ -174,6 +181,7 @@ function baseRedshiftForEpoch(idx: number) {
 function setSkyRedshift(amount: number) {
   game.redshiftAmount = THREE.MathUtils.clamp(amount, 0, 1);
   skyMat.uniforms.uRedshift.value = game.redshiftAmount;
+  audio.setRedshift(game.redshiftAmount);
 }
 
 function updateLateEpochRedshift(dt: number, e: Epoch) {
@@ -255,7 +263,6 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   game.perfectEpochThisRun = true;
   game.lastRunWasPerfect = false;
   game.phaseStreak = 0;
-  game.endlessLoop = 0;
   game.witnessing = false;
   game.heatDeathFade = 0;
   game.redshiftAmount = 0;
@@ -317,8 +324,9 @@ export function beginDeath() {
   audio.stopEngine();
   game.trauma = Math.min(1, game.trauma + 0.9);
   game.timeScale = 1; game.hitStopTime = 0;
-  particleManager.emitBurst(photon.group.position.clone(), 'death', 90, new THREE.Color(0xff5566));
-  particleManager.emitBurst(photon.group.position.clone(), 'death', 50, WAVELENGTHS[photon.wavelength].color);
+  deathPoint.copy(photon.group.position);
+  particleManager.emitBurst(deathPoint, 'death', 90, DEATH_CORE_COLOR);
+  particleManager.emitBurst(deathPoint, 'death', 50, WAVELENGTHS[photon.wavelength].color);
 }
 
 function finalizeDeath() {
@@ -406,7 +414,7 @@ export function epochCleared() {
   if (game.perfectEpochThisRun) checkMemoryTriggers();
   game.perfectEpochThisRun = true;
   const pool = UPGRADES.filter(u => (meta.upgrades[u.key] || 0) < u.max);
-  const shuffled = pool.sort(() => Math.random() - 0.5).slice(0, 3);
+  const shuffled = pickUpgradeOptions(pool, 3);
   if (shuffled.length === 0) { game.runEnergy += 30; advanceEpoch(); return; }
   const e = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
   funLab.record('upgrade-options', { epochIndex: game.epochIndex, epochName: e.name, distance: game.runDistance, value: shuffled.length });
@@ -428,6 +436,16 @@ export function epochCleared() {
     wrap.appendChild(card);
   }
   setState('upgrade');
+}
+
+function pickUpgradeOptions(pool: UpgradeOption[], count: number) {
+  const options = pool.slice();
+  const take = Math.min(count, options.length);
+  for (let i = 0; i < take; i++) {
+    const j = i + Math.floor(Math.random() * (options.length - i));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
+  return options.slice(0, take);
 }
 
 export function advanceEpoch() {
@@ -463,7 +481,7 @@ function activateSpeedPad(pos: THREE.Vector3) {
   checkMemoryTriggers();
   setLineEvent('SPEED PAD', 1.15);
   audio.speedPad();
-  particleManager.emitBurst(pos, 'pickup', 34, new THREE.Color(0xff7ad9));
+  particleManager.emitBurst(pos, 'pickup', 34, SPEED_PAD_COLOR);
 }
 
 function threadRacingGate(pos: THREE.Vector3) {
@@ -481,7 +499,7 @@ function threadRacingGate(pos: THREE.Vector3) {
   game.runEnergy += reward;
   setLineEvent(`LINE ×${game.lineStreak}`, 1.2);
   audio.lineGate(game.lineStreak);
-  particleManager.emitBurst(pos, 'phase', 26, new THREE.Color(game.lineStreak >= 5 ? 0xff7ad9 : 0x88e0ff));
+  particleManager.emitBurst(pos, 'phase', 26, game.lineStreak >= 5 ? LINE_GATE_HOT_COLOR : LINE_GATE_COLOR);
 }
 
 function missRacingGate() {

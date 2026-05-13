@@ -19,10 +19,29 @@ const keyMap: Record<string, keyof typeof input> = {
   Space: 'boost', ShiftLeft: 'boost', ShiftRight: 'boost',
 };
 
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT';
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+    return;
+  }
+  const target = document.getElementById('stage') || canvas;
+  target.requestFullscreen().catch(() => {});
+}
+
 export function bindInput() {
   window.addEventListener('keydown', e => {
+    if (isEditableTarget(e.target)) return;
     const k = keyMap[e.code];
     if (k) { input[k] = true; e.preventDefault(); }
+    if (e.code === 'KeyF') {
+      toggleFullscreen();
+      e.preventDefault();
+    }
     if (game.state === 'run') {
       let did = false;
       if (e.code === 'Digit1') did = photon.shift(0);
@@ -50,6 +69,7 @@ export function bindInput() {
     }
   });
   window.addEventListener('keyup', e => {
+    if (isEditableTarget(e.target)) return;
     const k = keyMap[e.code];
     if (k) { input[k] = false; e.preventDefault(); }
   });
