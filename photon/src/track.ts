@@ -19,6 +19,8 @@ function makeTrackFrame(): TrackFrame {
 }
 
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
+const ROUTE_SAMPLES = IS_MOBILE ? 42 : 54;
+const RING_POOL_SIZE = IS_MOBILE ? 32 : 42;
 
 class Track {
   points: THREE.Vector3[] = [];
@@ -47,9 +49,9 @@ class Track {
     scene.add(this.ringGroup);
     scene.add(this.routeGroup);
     scene.add(this.dustGroup);
-    const ringGeo = new THREE.RingGeometry(GUIDE_ARC_RADIUS - 0.22, GUIDE_ARC_RADIUS + 0.22, 72, 1, 0, Math.PI * 0.72);
+    const ringGeo = new THREE.RingGeometry(GUIDE_ARC_RADIUS - 0.22, GUIDE_ARC_RADIUS + 0.22, IS_MOBILE ? 48 : 72, 1, 0, Math.PI * 0.72);
     const ringMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.30, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
-    for (let i = 0; i < 42; i++) {
+    for (let i = 0; i < RING_POOL_SIZE; i++) {
       const m = new THREE.Mesh(ringGeo, ringMat.clone());
       m.frustumCulled = false;
       (m.userData as any).arcAngle = Math.random() * Math.PI * 2;
@@ -59,7 +61,7 @@ class Track {
     }
     for (let i = -1; i <= 1; i++) {
       const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(54 * 3), 3));
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ROUTE_SAMPLES * 3), 3));
       const m = new THREE.LineBasicMaterial({
         color: i === 0 ? 0x88e0ff : 0xff7ad9,
         transparent: true,
@@ -73,7 +75,7 @@ class Track {
       this.routeGroup.add(line);
       this.routeLines.push(line);
     }
-    const beadCount = IS_MOBILE ? 52 : 88;
+    const beadCount = IS_MOBILE ? 42 : 88;
     const beadGeo = new THREE.BufferGeometry();
     beadGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(beadCount * 3), 3));
     const beadMat = new THREE.PointsMaterial({
@@ -89,7 +91,7 @@ class Track {
     this.routeBeads.frustumCulled = false;
     this.routeGroup.add(this.routeBeads);
 
-    const N = IS_MOBILE ? 220 : 480;
+    const N = IS_MOBILE ? 160 : 480;
     const g = new THREE.BufferGeometry();
     const positions = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
@@ -187,7 +189,7 @@ class Track {
   }
 
   updateRouteLines(photonZ: number) {
-    const samples = 54;
+    const samples = ROUTE_SAMPLES;
     const startD = photonZ + 18;
     const step = 8;
     for (const line of this.routeLines) {

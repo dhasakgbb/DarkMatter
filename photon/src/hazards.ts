@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BOOST_MAX, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGMENT_LEN, SEGMENTS_AHEAD } from './constants';
+import { BOOST_MAX, IS_MOBILE, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGMENT_LEN, SEGMENTS_AHEAD } from './constants';
 import { WAVELENGTHS, CODEX_ENTRIES, type Epoch } from './cosmology';
 import { scene } from './scene';
 import { track } from './track';
@@ -36,6 +36,20 @@ export interface Hazard {
   nearMissed?: boolean;
 }
 
+interface HazardUserData {
+  spinSpeed?: number;
+  wellLens?: THREE.Mesh;
+  wellRings?: THREE.Mesh[];
+  hazardGlow?: THREE.Mesh;
+  hazardGlowBaseScale?: number;
+  hazardGlowBaseOpacity?: number;
+  pickupRing?: THREE.Mesh;
+}
+
+function hazardUserData(mesh: THREE.Mesh): HazardUserData {
+  return mesh.userData as HazardUserData;
+}
+
 class HazardManager {
   list: Hazard[] = [];
   group = new THREE.Group();
@@ -49,19 +63,19 @@ class HazardManager {
   constructor() {
     scene.add(this.group);
     this.geos = {
-      asteroid: new THREE.IcosahedronGeometry(2.2, 1),
-      gluon:    new THREE.TorusGeometry(3.4, 0.45, 8, 24),
-      well:     new THREE.SphereGeometry(2.6, 20, 14),
-      plasma:   new THREE.SphereGeometry(1.8, 12, 10),
+      asteroid: new THREE.IcosahedronGeometry(2.2, IS_MOBILE ? 0 : 1),
+      gluon:    new THREE.TorusGeometry(3.4, 0.45, IS_MOBILE ? 6 : 8, IS_MOBILE ? 18 : 24),
+      well:     new THREE.SphereGeometry(2.6, IS_MOBILE ? 16 : 20, IS_MOBILE ? 10 : 14),
+      plasma:   new THREE.SphereGeometry(1.8, IS_MOBILE ? 10 : 12, IS_MOBILE ? 8 : 10),
       fluct:    new THREE.OctahedronGeometry(1.6, 0),
-      supernova: new THREE.TorusGeometry(8.5, 1.4, 10, 36),
-      horizon:   new THREE.CircleGeometry(12, 36),
+      supernova: new THREE.TorusGeometry(8.5, 1.4, IS_MOBILE ? 8 : 10, IS_MOBILE ? 28 : 36),
+      horizon:   new THREE.CircleGeometry(12, IS_MOBILE ? 28 : 36),
     };
   }
 
   private decorateGravityWell(mesh: THREE.Mesh) {
     const lens = new THREE.Mesh(
-      new THREE.SphereGeometry(6.8, 24, 14),
+      new THREE.SphereGeometry(6.8, IS_MOBILE ? 16 : 24, IS_MOBILE ? 10 : 14),
       new THREE.MeshBasicMaterial({
         color: 0x7755ff,
         transparent: true,
@@ -71,7 +85,7 @@ class HazardManager {
       }),
     );
     const innerRing = new THREE.Mesh(
-      new THREE.TorusGeometry(4.5, 0.08, 8, 64),
+      new THREE.TorusGeometry(4.5, 0.08, IS_MOBILE ? 6 : 8, IS_MOBILE ? 42 : 64),
       new THREE.MeshBasicMaterial({
         color: 0xff5de1,
         transparent: true,
@@ -81,7 +95,7 @@ class HazardManager {
       }),
     );
     const outerRing = new THREE.Mesh(
-      new THREE.TorusGeometry(7.2, 0.055, 8, 72),
+      new THREE.TorusGeometry(7.2, 0.055, IS_MOBILE ? 6 : 8, IS_MOBILE ? 44 : 72),
       new THREE.MeshBasicMaterial({
         color: 0x86f7ff,
         transparent: true,
@@ -94,28 +108,30 @@ class HazardManager {
     outerRing.rotation.x = Math.PI * 0.5;
     outerRing.rotation.y = Math.PI * 0.18;
     mesh.add(lens, innerRing, outerRing);
-    (mesh.userData as any).wellLens = lens;
-    (mesh.userData as any).wellRings = [innerRing, outerRing];
+    const data = hazardUserData(mesh);
+    data.wellLens = lens;
+    data.wellRings = [innerRing, outerRing];
   }
 
-    private addHazardGlow(mesh: THREE.Mesh, type: string, hex: number) {
-      if (type === 'well') return;
-      const material = new THREE.MeshBasicMaterial({
-        color: hex,
-        transparent: true,
-        opacity: type === 'supernova' ? 0.20 : type === 'eventHorizon' ? 0.16 : 0.18,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-      });
-      const glow = new THREE.Mesh(mesh.geometry, material);
-      const scale = type === 'supernova' ? 1.18 : type === 'eventHorizon' ? 1.12 : type === 'gluon' ? 1.22 : 1.34;
-      glow.scale.setScalar(scale);
-      mesh.add(glow);
-      (mesh.userData as any).hazardGlow = glow;
-      (mesh.userData as any).hazardGlowBaseScale = scale;
-      (mesh.userData as any).hazardGlowBaseOpacity = material.opacity;
-    }
+  private addHazardGlow(mesh: THREE.Mesh, type: string, hex: number) {
+    if (type === 'well' || (IS_MOBILE && type !== 'supernova' && type !== 'eventHorizon')) return;
+    const material = new THREE.MeshBasicMaterial({
+      color: hex,
+      transparent: true,
+      opacity: type === 'supernova' ? 0.20 : type === 'eventHorizon' ? 0.16 : 0.18,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const glow = new THREE.Mesh(mesh.geometry, material);
+    const scale = type === 'supernova' ? 1.18 : type === 'eventHorizon' ? 1.12 : type === 'gluon' ? 1.22 : 1.34;
+    glow.scale.setScalar(scale);
+    mesh.add(glow);
+    const data = hazardUserData(mesh);
+    data.hazardGlow = glow;
+    data.hazardGlowBaseScale = scale;
+    data.hazardGlowBaseOpacity = material.opacity;
+  }
 
   reset() {
     for (const h of this.list) this.group.remove(h.mesh);
@@ -165,9 +181,9 @@ class HazardManager {
     let kind: string;
     if (chainOpts?.forceKind) kind = chainOpts.forceKind;
     else {
-      const params = (game.epochParams && game.epochParams[game.epochIndex]) || {};
+      const params = game.epochParams?.[game.epochIndex];
       const kinds = epoch.hazardKinds;
-      const weights = kinds.map(k => k === (params as any).dominantKind ? 2 : 1);
+      const weights = kinds.map(k => k === params?.dominantKind ? 2 : 1);
       const total = weights.reduce((a, b) => a + b, 0);
       const r = (runRng ? runRng() : Math.random()) * total;
       let acc = 0;
@@ -191,7 +207,7 @@ class HazardManager {
     const mat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: type === 'eventHorizon' ? 0.55 : 0.85, wireframe: type === 'gluon', side: isFrontFacing ? THREE.DoubleSide : THREE.FrontSide });
     const mesh = new THREE.Mesh(geo, mat);
     if (type === 'well') this.decorateGravityWell(mesh);
-      else this.addHazardGlow(mesh, type, hex);
+    else this.addHazardGlow(mesh, type, hex);
     const lat = isFrontFacing ? 0 : (Math.random() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.7;
     const ver = isFrontFacing ? 0 : (Math.random() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.7;
     const p = track.pointAt(dist, this.scratchPoint);
@@ -200,9 +216,9 @@ class HazardManager {
     if (isFrontFacing) {
       const mtx = this.scratchMatrix.makeBasis(frame.right, frame.up, frame.fwd);
       mesh.quaternion.setFromRotationMatrix(mtx);
-      (mesh.userData as any).spinSpeed = type === 'supernova' ? 0.4 : 0;
+      hazardUserData(mesh).spinSpeed = type === 'supernova' ? 0.4 : 0;
     } else {
-      (mesh.userData as any).spinSpeed = (Math.random() - 0.5) * 2;
+      hazardUserData(mesh).spinSpeed = (Math.random() - 0.5) * 2;
     }
     this.group.add(mesh);
     const hazard: Hazard = { kind, type, dist, lateral: lat, vertical: ver, baseLateral: lat, baseVertical: ver, hex, wlIdx, dmg, mesh, hit: false, hitRadius, isFrontFacing, cannotPhase };
@@ -222,15 +238,17 @@ class HazardManager {
     const geo = new THREE.IcosahedronGeometry(0.7, 1);
     const mat = new THREE.MeshBasicMaterial({ color: 0xfff7d0, transparent: true, opacity: 0.95 });
     const mesh = new THREE.Mesh(geo, mat);
-    const halo = new THREE.Mesh(new THREE.SphereGeometry(1.4, 12, 8), new THREE.MeshBasicMaterial({ color: 0xfff7d0, transparent: true, opacity: 0.25, depthWrite: false }));
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(1.45, 0.045, 6, 28),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.34, depthWrite: false, blending: THREE.AdditiveBlending }),
-      );
-      ring.rotation.x = Math.PI * 0.5;
+    const halo = new THREE.Mesh(new THREE.SphereGeometry(1.4, IS_MOBILE ? 8 : 12, IS_MOBILE ? 6 : 8), new THREE.MeshBasicMaterial({ color: 0xfff7d0, transparent: true, opacity: 0.25, depthWrite: false }));
+    const ring = IS_MOBILE ? null : new THREE.Mesh(
+      new THREE.TorusGeometry(1.45, 0.045, 6, 28),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.34, depthWrite: false, blending: THREE.AdditiveBlending }),
+    );
+    if (ring) ring.rotation.x = Math.PI * 0.5;
     mesh.add(halo);
+    if (ring) {
       mesh.add(ring);
-      (mesh.userData as any).pickupRing = ring;
+      hazardUserData(mesh).pickupRing = ring;
+    }
     const lat = (Math.random() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.55;
     const ver = (Math.random() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.55;
     const p = track.pointAt(dist, this.scratchPoint);
@@ -245,12 +263,13 @@ class HazardManager {
     const HIT_WINDOW = 2.6;
     const animTime = performance.now() * 0.001;
     for (const h of this.list) {
+      const data = hazardUserData(h.mesh);
       if (!h.isFrontFacing) {
-        h.mesh.rotation.y += dt * ((h.mesh.userData as any).spinSpeed || 1.2);
+        h.mesh.rotation.y += dt * (data.spinSpeed || 1.2);
         h.mesh.rotation.x += dt * 0.4;
         if (h.type === 'well') {
-          const rings = (h.mesh.userData as any).wellRings as THREE.Mesh[] | undefined;
-          const lens = (h.mesh.userData as any).wellLens as THREE.Mesh | undefined;
+          const rings = data.wellRings;
+          const lens = data.wellLens;
           if (rings) {
             rings[0].rotation.z += dt * 1.85;
             rings[1].rotation.z -= dt * 1.15;
@@ -264,18 +283,18 @@ class HazardManager {
           }
         }
       } else if (h.type === 'supernova') {
-        h.mesh.rotateZ(dt * (h.mesh.userData as any).spinSpeed);
+        h.mesh.rotateZ(dt * (data.spinSpeed || 0));
       }
-        const hazardGlow = (h.mesh.userData as any).hazardGlow as THREE.Mesh | undefined;
-        if (hazardGlow) {
-          const baseScale = (h.mesh.userData as any).hazardGlowBaseScale || 1.2;
-          const baseOpacity = (h.mesh.userData as any).hazardGlowBaseOpacity || 0.16;
-          const glowPulse = 1 + Math.sin(animTime * 5.2 + h.dist * 0.041) * 0.055;
-          hazardGlow.scale.setScalar(baseScale * glowPulse);
-          (hazardGlow.material as THREE.MeshBasicMaterial).opacity = baseOpacity * (h.hit ? 0.38 : 1);
-        }
-        const pickupRing = (h.mesh.userData as any).pickupRing as THREE.Mesh | undefined;
-        if (pickupRing) pickupRing.rotation.z += dt * 2.4;
+      const hazardGlow = data.hazardGlow;
+      if (hazardGlow) {
+        const baseScale = data.hazardGlowBaseScale || 1.2;
+        const baseOpacity = data.hazardGlowBaseOpacity || 0.16;
+        const glowPulse = 1 + Math.sin(animTime * 5.2 + h.dist * 0.041) * 0.055;
+        hazardGlow.scale.setScalar(baseScale * glowPulse);
+        (hazardGlow.material as THREE.MeshBasicMaterial).opacity = baseOpacity * (h.hit ? 0.38 : 1);
+      }
+      const pickupRing = data.pickupRing;
+      if (pickupRing) pickupRing.rotation.z += dt * 2.4;
       if (h.movement) {
         const offset = Math.sin(animTime * h.movement.freq * Math.PI * 2 + h.movement.phase) * h.movement.amp;
         if (h.movement.axis === 'lateral') h.lateral = h.baseLateral + offset;

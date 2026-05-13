@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { EPOCHS, WAVELENGTHS, CODEX_ENTRIES, UPGRADES, VARIANTS, MEMORIES, TUTORIAL_STEPS, type Epoch } from './cosmology';
-import { BASE_SPEED, BOOST_MAX, SEGMENT_LEN } from './constants';
+import { BASE_SPEED, BOOST_MAX, IS_MOBILE, SEGMENT_LEN } from './constants';
 import { game, type GameStateName } from './state';
 import { meta, saveMeta, saveCheckpoint, clearCheckpoint, type Checkpoint } from './meta';
 import { settings, applySettings } from './settings';
@@ -474,7 +474,7 @@ function loop() {
   cosmicWeb.rotation.y += realDt * 0.0018;
   cosmicWeb.rotation.x += realDt * 0.0007;
 
-  if (game.state === 'run' && !game.dying && Math.random() < 0.05) {
+  if (game.state === 'run' && !game.dying && Math.random() < (IS_MOBILE ? 0.028 : 0.05)) {
     const foamD = photon.distance + 35 + Math.random() * 160;
     const p = track.pointAt(foamD, foamPoint);
     foamOffset.set((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18, (Math.random() - 0.5) * 6);
@@ -625,11 +625,12 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
   camera.fov += (fovTarget - camera.fov) * Math.min(1, realDt * 8);
   camera.updateProjectionMatrix();
   const motionMul = settings.reducedMotion ? 0 : 1;
-  lensingPass.uniforms.uIntensity.value = (0.0016 + (photon.boosting ? 0.0024 : 0) + Math.min(0.0014, speedFactor * 0.0007)) * motionMul;
-  lensingPass.uniforms.uBarrel.value    = (0.024 + (photon.boosting ? 0.066 : 0) + Math.min(0.032, speedFactor * 0.016)) * motionMul;
-  lensingPass.uniforms.uGlow.value = 0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0);
-  const bloomTarget = 0.54 + Math.min(0.14, speedFactor * 0.08) + (photon.boosting ? 0.10 : 0) + game.trauma * 0.06;
-  const bloomRadiusTarget = 0.62 + Math.min(0.12, speedFactor * 0.07) + (photon.boosting ? 0.06 : 0);
+  const mobileVisualMul = IS_MOBILE ? 0.78 : 1;
+  lensingPass.uniforms.uIntensity.value = (0.0016 + (photon.boosting ? 0.0024 : 0) + Math.min(0.0014, speedFactor * 0.0007)) * motionMul * mobileVisualMul;
+  lensingPass.uniforms.uBarrel.value    = (0.024 + (photon.boosting ? 0.066 : 0) + Math.min(0.032, speedFactor * 0.016)) * motionMul * mobileVisualMul;
+  lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * (IS_MOBILE ? 0.86 : 1);
+  const bloomTarget = (IS_MOBILE ? 0.46 : 0.54) + Math.min(IS_MOBILE ? 0.10 : 0.14, speedFactor * (IS_MOBILE ? 0.06 : 0.08)) + (photon.boosting ? (IS_MOBILE ? 0.07 : 0.10) : 0) + game.trauma * (IS_MOBILE ? 0.04 : 0.06);
+  const bloomRadiusTarget = (IS_MOBILE ? 0.54 : 0.62) + Math.min(IS_MOBILE ? 0.09 : 0.12, speedFactor * (IS_MOBILE ? 0.05 : 0.07)) + (photon.boosting ? (IS_MOBILE ? 0.04 : 0.06) : 0);
   bloom.strength += (bloomTarget - bloom.strength) * Math.min(1, realDt * 3.5);
   bloom.radius += (bloomRadiusTarget - bloom.radius) * Math.min(1, realDt * 2.8);
   if (game.trauma > 0 && !settings.reducedMotion) {

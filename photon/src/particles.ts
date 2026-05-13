@@ -64,7 +64,8 @@ class ParticleSystem {
     const life = opts?.life ?? 0.65;
     const drag = opts?.drag ?? 0.95;
     const dirBias = opts?.dirBias;
-    for (let i = 0; i < count; i++) {
+    const emitCount = IS_MOBILE ? Math.max(1, Math.ceil(count * 0.68)) : count;
+    for (let i = 0; i < emitCount; i++) {
       const idx = this.cursor; this.cursor = (this.cursor + 1) % this.max;
       this.positions[idx*3+0] = pos.x;
       this.positions[idx*3+1] = pos.y;
@@ -134,5 +135,5 @@ class ParticleSystem {
   }
 }
 
-export const particleManager = new ParticleSystem(IS_MOBILE ? 320 : 600);
+export const particleManager = new ParticleSystem(IS_MOBILE ? 240 : 600);
 export const particles = particleManager;

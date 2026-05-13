@@ -1,9 +1,10 @@
+import * as THREE from 'three';
 import { hud, hudCanvas, camera } from './scene';
 import { game } from './state';
 import { meta } from './meta';
 import { EPOCHS, WAVELENGTHS, TUTORIAL_STEPS } from './cosmology';
 import { photon } from './photon';
-import { BASE_SPEED, BOOST_MAX, PIXEL_RATIO } from './constants';
+import { BASE_SPEED, BOOST_MAX, IS_MOBILE, PIXEL_RATIO } from './constants';
 import { cosmicTimeLabel, comboMultiplier } from './utils';
 import { seedToLabel } from './seed';
 
@@ -14,6 +15,8 @@ const HEAT_DEATH_MICRO_LINES = [
   { at: 270, text: 'YOU ARE STILL HERE' },
   { at: 318, text: 'ONE LAST DIFFERENCE' },
 ];
+
+const comboProject = new THREE.Vector3();
 
 export function showEpochToast(numOrLabel: number | string, name: string, sub: string, chapter?: string) {
   const el = document.getElementById('epoch-toast')!;
@@ -236,8 +239,8 @@ export function drawHud() {
     const speedFactor = Math.max(0, (game._speed - BASE_SPEED) / BASE_SPEED);
     if (speedFactor > 0.04) {
       const cx = w / 2, cy = h / 2;
-      const numLines = Math.floor(18 + speedFactor * 50);
-      const baseAlpha = Math.min(0.45, speedFactor * 0.7);
+      const numLines = Math.floor((IS_MOBILE ? 10 : 18) + speedFactor * (IS_MOBILE ? 28 : 50));
+      const baseAlpha = Math.min(IS_MOBILE ? 0.34 : 0.45, speedFactor * 0.7);
       hud.save();
       hud.translate(cx, cy);
       hud.rotate((performance.now() * 0.00018) % (Math.PI * 2));
@@ -261,7 +264,7 @@ export function drawHud() {
   const streak = game.phaseStreak || 0;
   if (streak >= 1) {
     const mult = comboMultiplier(streak);
-    const v = photon.group.position.clone().project(camera);
+    const v = comboProject.copy(photon.group.position).project(camera);
     if (v.z < 1) {
       const sx2 = (v.x * 0.5 + 0.5) * w;
       const sy = (-v.y * 0.5 + 0.5) * h - 60;

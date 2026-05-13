@@ -1,6 +1,7 @@
 // Hardware/render constants
 export const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && window.innerWidth < 900);
-export const PIXEL_RATIO = Math.min(IS_MOBILE ? 1.5 : 2.0, window.devicePixelRatio || 1);
+const MOBILE_PIXEL_CAP = window.innerWidth < 430 ? 1.15 : 1.25;
+export const PIXEL_RATIO = Math.min(IS_MOBILE ? MOBILE_PIXEL_CAP : 2.0, window.devicePixelRatio || 1);
 
 // Track geometry
 export const TUBE_RADIUS = 22;

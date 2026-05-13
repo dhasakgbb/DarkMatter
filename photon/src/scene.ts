@@ -7,7 +7,7 @@ import { IS_MOBILE, PIXEL_RATIO } from './constants';
 import { EPOCHS } from './cosmology';
 
 export const canvas = document.getElementById('game') as HTMLCanvasElement;
-export const renderer = new THREE.WebGLRenderer({ canvas, antialias: !IS_MOBILE, powerPreference: 'high-performance' });
+export const renderer = new THREE.WebGLRenderer({ canvas, antialias: !IS_MOBILE, powerPreference: 'high-performance', precision: IS_MOBILE ? 'mediump' : 'highp' });
 renderer.setPixelRatio(PIXEL_RATIO);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -27,7 +27,12 @@ composer.setPixelRatio(PIXEL_RATIO);
 composer.setSize(window.innerWidth, window.innerHeight);
 composer.addPass(new RenderPass(scene, camera));
 // Tuned for readable punch: bright enough to feel cosmic without washing out hazards.
-export const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.54, 0.62, 0.34);
+export const bloom = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  IS_MOBILE ? 0.46 : 0.54,
+  IS_MOBILE ? 0.54 : 0.62,
+  IS_MOBILE ? 0.38 : 0.34,
+);
 composer.addPass(bloom);
 
 export const lensingPass = new ShaderPass({
@@ -72,7 +77,7 @@ export const lensingPass = new ShaderPass({
 composer.addPass(lensingPass);
 
 // Cosmic backdrop: sphere with procedural nebula + starfield + redshift uniform.
-const skyGeo = new THREE.SphereGeometry(900, 48, 24);
+const skyGeo = new THREE.SphereGeometry(900, IS_MOBILE ? 36 : 48, IS_MOBILE ? 18 : 24);
 export const skyMat = new THREE.ShaderMaterial({
   side: THREE.BackSide,
   depthWrite: false,
@@ -213,7 +218,7 @@ function makeStarfield(count: number) {
   g.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
   return new THREE.Points(g, starMat);
 }
-export const stars = makeStarfield(IS_MOBILE ? 1200 : 2400);
+export const stars = makeStarfield(IS_MOBILE ? 820 : 2400);
 scene.add(stars);
 
 // Large-scale cosmic web filaments. This is a procedural visual asset, not game state.
@@ -252,7 +257,7 @@ function makeCosmicWeb(strands: number) {
   return web;
 }
 
-export const cosmicWeb = makeCosmicWeb(IS_MOBILE ? 42 : 86);
+export const cosmicWeb = makeCosmicWeb(IS_MOBILE ? 30 : 86);
 scene.add(cosmicWeb);
 
 // HUD canvas + sizing

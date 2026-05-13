@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGMENT_LEN, SEGMENTS_AHEAD } from './constants';
+import { IS_MOBILE, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGMENT_LEN, SEGMENTS_AHEAD } from './constants';
 import type { Epoch } from './cosmology';
 import { scene } from './scene';
 import { track } from './track';
@@ -33,10 +33,10 @@ class RacingLineManager {
   list: RacingEntity[] = [];
   group = new THREE.Group();
   private lastSpawnDist = 42;
-  private gateGeo = new THREE.TorusGeometry(6.3, 0.18, 8, 64);
-  private gateInnerGeo = new THREE.TorusGeometry(2.55, 0.07, 6, 36);
-  private padGeo = new THREE.TorusGeometry(3.4, 0.16, 8, 36);
-  private padStripeGeo = new THREE.TorusGeometry(1.75, 0.07, 6, 28);
+  private gateGeo = new THREE.TorusGeometry(6.3, 0.18, IS_MOBILE ? 6 : 8, IS_MOBILE ? 44 : 64);
+  private gateInnerGeo = new THREE.TorusGeometry(2.55, 0.07, IS_MOBILE ? 5 : 6, IS_MOBILE ? 24 : 36);
+  private padGeo = new THREE.TorusGeometry(3.4, 0.16, IS_MOBILE ? 6 : 8, IS_MOBILE ? 26 : 36);
+  private padStripeGeo = new THREE.TorusGeometry(1.75, 0.07, IS_MOBILE ? 5 : 6, IS_MOBILE ? 18 : 28);
   private readonly scratchPoint = new THREE.Vector3();
   private readonly scratchFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
   private readonly scratchMatrix = new THREE.Matrix4();
@@ -140,15 +140,15 @@ class RacingLineManager {
   private spawnGate(dist: number, lateral: number, vertical: number) {
     const group = new THREE.Group();
     group.name = 'racing-line-gate';
-    const glowMat = new THREE.MeshBasicMaterial({
+    const glowMat = IS_MOBILE ? null : new THREE.MeshBasicMaterial({
       color: 0x88e0ff,
       transparent: true,
       opacity: 0.18,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
-    const glow = new THREE.Mesh(this.gateGeo, glowMat);
-    glow.scale.setScalar(1.18);
+    const glow = glowMat ? new THREE.Mesh(this.gateGeo, glowMat) : null;
+    if (glow) glow.scale.setScalar(1.18);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0x88e0ff,
       transparent: true,
@@ -165,7 +165,8 @@ class RacingLineManager {
       blending: THREE.AdditiveBlending,
     });
     const inner = new THREE.Mesh(this.gateInnerGeo, innerMat);
-    group.add(glow, ring, inner);
+    if (glow) group.add(glow);
+    group.add(ring, inner);
     this.group.add(group);
     const e: RacingEntity = {
       kind: 'gate',
@@ -175,7 +176,7 @@ class RacingLineManager {
       radius: 7.0,
       object: group,
       materialLayers: [
-        { material: glowMat, opacityScale: 0.34 },
+        ...(glowMat ? [{ material: glowMat, opacityScale: 0.34 }] : []),
         { material: ringMat, opacityScale: 1.0 },
         { material: innerMat, opacityScale: 0.68 },
       ],
@@ -189,7 +190,7 @@ class RacingLineManager {
   private spawnPad(dist: number, lateral: number, vertical: number) {
     const group = new THREE.Group();
     group.name = 'speed-pad';
-    const glowMat = new THREE.MeshBasicMaterial({
+    const glowMat = IS_MOBILE ? null : new THREE.MeshBasicMaterial({
       color: 0xff7ad9,
       transparent: true,
       opacity: 0.18,
@@ -197,8 +198,8 @@ class RacingLineManager {
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
-    const glow = new THREE.Mesh(this.padGeo, glowMat);
-    glow.scale.setScalar(1.26);
+    const glow = glowMat ? new THREE.Mesh(this.padGeo, glowMat) : null;
+    if (glow) glow.scale.setScalar(1.26);
     const padMat = new THREE.MeshBasicMaterial({
       color: 0xff7ad9,
       transparent: true,
@@ -218,7 +219,8 @@ class RacingLineManager {
     });
     const stripe = new THREE.Mesh(this.padStripeGeo, stripeMat);
     stripe.position.z = 0.04;
-    group.add(glow, pad, stripe);
+    if (glow) group.add(glow);
+    group.add(pad, stripe);
     this.group.add(group);
     const e: RacingEntity = {
       kind: 'pad',
@@ -228,7 +230,7 @@ class RacingLineManager {
       radius: 4.6,
       object: group,
       materialLayers: [
-        { material: glowMat, opacityScale: 0.34 },
+        ...(glowMat ? [{ material: glowMat, opacityScale: 0.34 }] : []),
         { material: padMat, opacityScale: 0.92 },
         { material: stripeMat, opacityScale: 0.82 },
       ],
