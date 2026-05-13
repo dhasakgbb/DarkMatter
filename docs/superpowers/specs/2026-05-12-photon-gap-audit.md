@@ -11,16 +11,21 @@
 Each row is one concrete claim from `photon-design.md` checked against `photon/src/`. Status values:
 - `shipped` — claim is implemented and matches the design-doc numbers/behavior.
 - `partial` — implemented but diverges from the design doc in a specific, named way.
-- `missing` — no implementation found.
+- `missing` — **no static evidence found in `photon/src/`**. Read this strictly: it means a grep/read pass did not find the implementation. If the behavior is wired via an indirect mechanism the audit missed, a `missing` row may be wrong. Before fixing a `missing` row, confirm the gap with a runtime playtest (the Quick-wins below mostly need this gate).
 - `unverifiable` — would require a runtime playtest to confirm; static read is insufficient.
 
 `Pillar impact` ranks how much a gap on this row degrades the named pillar(s). Fix size is the engineer's estimate of what closing the gap would cost.
+
+### Corrigendum (added 2026-05-12, post-audit)
+
+- Commit `59ed489` ("docs(audit): death panel reframe and memory surfacing") bundled 14 unrelated files (parallel feature work that landed in the working tree mid-audit). The audit-doc row addition in that commit is correct and isolated; the other files are unrelated to this audit. Future readers inspecting audit-cycle commits should expect to see one mixed commit in the chain.
+- The original Phase D row in the ratification doc claimed Codex + Memories were surfaced as "sister tabs". This audit's Task 8 row (Pillar 2, partial) corrected that: they are sibling title-screen buttons (`#btn-codex` + `#btn-memories`), not a tab strip. The ratification doc has been edited to match.
 
 ## Findings
 
 | Claim | Section | Status | Evidence | Pillar | Pillar impact | Fix size | Notes |
 |---|---|---|---|---|---|---|---|
-| HUD shrinks during Heat Death: distance and combo fade out, only wavelength selector and energy bar remain | The signature scene | missing | `photon/src/hud.ts:100-110`; distance drawn unconditionally at line 91, no `isHeatDeath` gate on combo/distance | 1+2 | high | M | Heat Death branch only adds a micro-text overlay (lines 100-110); distance counter, cosmic-time label, boost bar, and combo display all render unchanged — no shrink, fade, or hide logic tied to `e.isHeatDeath`. |
+| HUD shrinks during Heat Death: distance and combo fade out, only wavelength selector and energy bar remain | The signature scene | missing | `photon/src/hud.ts:115-138`; distance drawn unconditionally at line 118, combo/cosmic-time at lines 121/126, no `isHeatDeath` gate on either | 1+2 | high | M | The only Heat Death branch in `hud.ts` is the micro-text overlay at line 127 (`if (e.isHeatDeath) { ... fillText(micro.text, ...) }`); distance counter (line 118), cosmic-time label (line 126), boost bar, and combo display all render unchanged — no shrink, fade, or hide logic tied to `e.isHeatDeath`. |
 | No SFX except the player's own boost during Heat Death | The signature scene | missing | `photon/src/audio.ts:234-408`; no `isHeatDeath` gate in `playSfx` or per-cue dispatchers | 1 | high | S | `playSfx` and all cue methods (`pickup`, `lineGate`, `gateMiss`, `railScrape`, `hit`, `shift`, `witnessChime`, `memoryUnlock`, UI cues) fire unconditionally; nothing suppresses non-boost SFX when `startHeatDeath` is active, so the silence-except-boost rule is unenforced. |
 | After collecting it, the photon continues for one more minute through total black | The signature scene | missing | `photon/src/hazards.ts:414-419`; `photon/src/witness.ts:32-56` | 1+2 | high | M | `triggerWitness()` fires synchronously on `finalPickup` collision: overlay activates immediately (`overlay.classList.add('on')` at t+0), with no ~60s black-continuation interval where the photon keeps moving through darkness before the ending sequence begins. |
 | Then the credits scroll silently | The signature scene | missing | `photon/index.html:26-30`; `photon/src/witness.ts:58-79` `endWitness()`; no `credits` id/class anywhere in `photon/` | 1 | high | L | No credits element exists in markup, CSS, or witness logic; pressing any key invokes `endWitness()` which strips overlay classes and returns to the title screen — there is no silent scrolling credits sequence after the held line. |
