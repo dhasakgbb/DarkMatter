@@ -71,7 +71,7 @@ class Track {
     scene.add(this.routeGroup);
     scene.add(this.dustGroup);
     const ringGeo = new THREE.RingGeometry(GUIDE_ARC_RADIUS - 0.22, GUIDE_ARC_RADIUS + 0.22, IS_MOBILE ? 48 : 72, 1, 0, Math.PI * 0.72);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.30, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.14, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
     for (let i = 0; i < RING_POOL_SIZE; i++) {
       const m = new THREE.Mesh(ringGeo, ringMat.clone());
       m.frustumCulled = false;
@@ -205,7 +205,7 @@ class Track {
       const t = THREE.MathUtils.smoothstep(distToPhoton, -20, 60);
       const farFade = 1 - THREE.MathUtils.clamp((distToPhoton - 200) / 200, 0, 1);
       const shimmer = 0.86 + 0.10 * Math.sin(time * 2.7 + d * 0.09) + 0.06 * Math.sin(time * 7.3 + d * 0.31);
-      (m.material as THREE.MeshBasicMaterial).opacity = (0.055 + 0.255 * t * farFade) * shimmer;
+      (m.material as THREE.MeshBasicMaterial).opacity = (0.018 + 0.118 * t * farFade) * shimmer;
       const sc = 1 + Math.sin(d * 0.21 + time * 3.3) * 0.018;
       m.scale.set(sc, sc, 1);
       const ring = trackRingData(m);
@@ -259,7 +259,7 @@ class Track {
     }
     this.routeBeads.geometry.attributes.position.needsUpdate = true;
     const beadMat = this.routeBeads.material as THREE.PointsMaterial;
-    beadMat.opacity = 0.56 + 0.22 * Math.sin(time * 2.6);
+    beadMat.opacity = 0.36 + 0.14 * Math.sin(time * 2.6);
     this.routeBeads.visible = true;
   }
 

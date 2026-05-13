@@ -33,7 +33,7 @@ export interface RunState {
   phaseStreak: number;
   // Flow-state signal (Csikszentmihalyi-style hidden meter): smoothed 0..1
   // derived from streak + clean time + activity. Drives adaptive difficulty,
-  // chain-reward amplification, audio/lensing intensity, and memory unlocks.
+  // chain-reward amplification, audio intensity, and memory unlocks.
   flowLevel: number;
   flowPeak: number;
   flowPeakDwell: number;

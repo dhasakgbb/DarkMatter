@@ -44,6 +44,7 @@ const FINAL_PICKUP_RING_COLOR = new THREE.Color(0xb888ff);
 const PICKUP_COLOR = new THREE.Color(0xfff3a0);
 const WORMHOLE_COLOR = new THREE.Color(0x66ffcc);
 const DEFAULT_HIT_COLOR = new THREE.Color(0xff5566);
+const GRAVITY_SHEAR_ENABLED = false;
 
 function rand() {
   return runRng ? runRng() : Math.random();
@@ -51,8 +52,6 @@ function rand() {
 
 interface HazardUserData {
   spinSpeed?: number;
-  wellLens?: THREE.Mesh;
-  wellRings?: THREE.Mesh[];
   hazardGlow?: THREE.Mesh;
   hazardGlowBaseScale?: number;
   hazardGlowBaseOpacity?: number;
@@ -91,59 +90,10 @@ class HazardManager {
   }
 
   private decorateGravityWell(mesh: THREE.Mesh) {
-    const lens = new THREE.Mesh(
-      new THREE.SphereGeometry(6.8, IS_MOBILE ? 16 : 24, IS_MOBILE ? 10 : 14),
-      new THREE.MeshBasicMaterial({
-        color: 0x7755ff,
-        transparent: true,
-        opacity: 0.10,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    );
-    const innerRing = new THREE.Mesh(
-      new THREE.TorusGeometry(4.5, 0.08, IS_MOBILE ? 6 : 8, IS_MOBILE ? 42 : 64),
-      new THREE.MeshBasicMaterial({
-        color: 0xff5de1,
-        transparent: true,
-        opacity: 0.42,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    );
-    const outerRing = new THREE.Mesh(
-      new THREE.TorusGeometry(7.2, 0.055, IS_MOBILE ? 6 : 8, IS_MOBILE ? 44 : 72),
-      new THREE.MeshBasicMaterial({
-        color: 0x86f7ff,
-        transparent: true,
-        opacity: 0.24,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    );
-    const detail = getActiveRenderProfile().hazardDetail;
-    const shearRing = detail >= 0.8 ? new THREE.Mesh(
-      new THREE.TorusGeometry(9.8, 0.045, IS_MOBILE ? 6 : 8, IS_MOBILE ? 38 : 84),
-      new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.11 * detail,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    ) : null;
-    innerRing.rotation.x = Math.PI * 0.5;
-    outerRing.rotation.x = Math.PI * 0.5;
-    outerRing.rotation.y = Math.PI * 0.18;
-    if (shearRing) {
-      shearRing.rotation.x = Math.PI * 0.5;
-      shearRing.rotation.z = Math.PI * 0.12;
-    }
-    mesh.add(lens, innerRing, outerRing);
-    if (shearRing) mesh.add(shearRing);
-    const data = hazardUserData(mesh);
-    data.wellLens = lens;
-    data.wellRings = shearRing ? [innerRing, outerRing, shearRing] : [innerRing, outerRing];
+    const material = mesh.material as THREE.MeshBasicMaterial;
+    material.color.setHex(0x7d5cff);
+    material.opacity = 0.42;
+    material.wireframe = true;
   }
 
   private addMaterialDetail(mesh: THREE.Mesh, type: string, hex: number) {
@@ -416,23 +366,6 @@ class HazardManager {
       if (!h.isFrontFacing) {
         h.mesh.rotation.y += dt * (data.spinSpeed || 1.2);
         h.mesh.rotation.x += dt * 0.4;
-        if (h.type === 'well') {
-          const rings = data.wellRings;
-          const lens = data.wellLens;
-          if (rings) {
-            rings[0].rotation.z += dt * 1.85;
-            rings[1].rotation.z -= dt * 1.15;
-            if (rings[2]) rings[2].rotation.z += dt * 0.42;
-            const pulse = 1 + Math.sin(animTime * 4.2 + h.dist * 0.03) * 0.045;
-            rings[0].scale.setScalar(pulse);
-            rings[1].scale.setScalar(1.04 - (pulse - 1) * 0.75);
-            if (rings[2]) rings[2].scale.setScalar(1.02 + (pulse - 1) * 0.35);
-          }
-          if (lens) {
-            const lensMat = lens.material as THREE.MeshBasicMaterial;
-            lensMat.opacity = 0.08 + Math.max(0, Math.sin(animTime * 3.4 + h.dist * 0.025)) * 0.05;
-          }
-        }
       } else if (h.type === 'supernova') {
         h.mesh.rotateZ(dt * (data.spinSpeed || 0));
       }
@@ -473,7 +406,7 @@ class HazardManager {
         h.mesh.quaternion.setFromRotationMatrix(mtx);
       }
       const dz = h.dist - photonDist;
-      if (!h.hit && h.type === 'well' && dz > -14 && dz < 86) {
+      if (GRAVITY_SHEAR_ENABLED && !h.hit && h.type === 'well' && dz > -14 && dz < 86) {
         const dx = h.lateral - photonLat;
         const dy = h.vertical - photonVer;
         const lateralDist = Math.max(0.001, Math.sqrt(dx * dx + dy * dy));

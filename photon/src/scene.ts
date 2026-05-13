@@ -52,9 +52,9 @@ export const lensingPass = new ShaderPass({
   uniforms: {
     tDiffuse: { value: null },
     uTime: { value: 0 },
-    uIntensity: { value: 0.0014 },
+    uIntensity: { value: 0 },
     uVignette: { value: 0.85 },
-    uBarrel: { value: 0.02 },
+    uBarrel: { value: 0 },
     uVignettePower: { value: 1.0 },
     uVignetteColor: { value: new THREE.Vector3(0, 0, 0) },
     uGlow: { value: 0.12 },

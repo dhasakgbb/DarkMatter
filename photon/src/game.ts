@@ -46,6 +46,7 @@ const lensProjectPoint = new THREE.Vector3();
 const MAX_ACTIVE_HAZARD_LENSES = 4;
 const HAZARD_LENS_BACK_DISTANCE = 22;
 const HAZARD_LENS_FORWARD_DISTANCE = 132;
+const GRAVITY_LENSING_ENABLED = false;
 
 interface HazardLensCandidate {
   score: number;
@@ -745,8 +746,8 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
   camera.updateProjectionMatrix();
   const renderProfile = getActiveRenderProfile();
   // Gravity lensing disabled — was overwhelming gameplay. Re-enable by
-  // restoring previous values + updateHazardLensing(motionMul * renderProfile.lensingMul).
-  const lensMul = 0;
+  // flipping GRAVITY_LENSING_ENABLED and restoring nonzero shader defaults / profile multipliers.
+  const lensMul = GRAVITY_LENSING_ENABLED ? renderProfile.lensingMul : 0;
   lensingPass.uniforms.uIntensity.value = 0;
   lensingPass.uniforms.uBarrel.value    = 0;
   lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * renderProfile.glowMul;
@@ -774,7 +775,7 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
 function updateHazardLensing(visualMul: number) {
   const lensUniforms = lensingPass.uniforms;
   const lensData = lensUniforms.uLenses.value as THREE.Vector4[];
-  if (visualMul <= 0 || game.state !== 'run') {
+  if (!GRAVITY_LENSING_ENABLED || visualMul <= 0 || game.state !== 'run') {
     lensUniforms.uLensCount.value = 0;
     for (const lens of lensData) lens.set(0.5, 0.5, 0, 0);
     return;

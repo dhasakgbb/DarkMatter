@@ -71,13 +71,13 @@ class Photon {
     this.coreMat = new THREE.MeshBasicMaterial({ color: 0xccd8e8 });
     this.core = new THREE.Mesh(coreGeo, this.coreMat);
     const haloGeo = new THREE.SphereGeometry(1.8, 24, 16);
-    this.haloMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.32, depthWrite: false });
+    this.haloMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.18, depthWrite: false });
     this.halo = new THREE.Mesh(haloGeo, this.haloMat);
     const coronaGeo = new THREE.SphereGeometry(2.55, 32, 18);
     this.coronaMat = new THREE.MeshBasicMaterial({
       color: 0x88e0ff,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.055,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
@@ -261,9 +261,9 @@ class Photon {
     const pulse = 1 + Math.sin(performance.now() * 0.012) * 0.05 + (this.boosting ? 0.18 : 0) + flashBoost * 0.35;
     this.halo.scale.setScalar(pulse);
     this.corona.scale.setScalar(1.02 + (pulse - 1) * 0.48 + flashBoost * 0.22);
-    const rawHalo = 0.22 + (this.boosting ? 0.12 : 0) + (this.phaseTimer > 0 ? 0.18 : 0) + flashBoost * 0.22;
-    this.haloMat.opacity = Math.min(0.55, rawHalo);
-    this.coronaMat.opacity = Math.min(0.26, 0.08 + (this.boosting ? 0.05 : 0) + flashBoost * 0.10 + (this.phaseTimer > 0 ? 0.04 : 0));
+    const rawHalo = 0.14 + (this.boosting ? 0.07 : 0) + (this.phaseTimer > 0 ? 0.10 : 0) + flashBoost * 0.12;
+    this.haloMat.opacity = Math.min(0.34, rawHalo);
+    this.coronaMat.opacity = Math.min(0.14, 0.045 + (this.boosting ? 0.03 : 0) + flashBoost * 0.05 + (this.phaseTimer > 0 ? 0.025 : 0));
 
     this.trailCursor = (this.trailCursor + this.trailLen - 1) % this.trailLen;
     this.trailHistory[this.trailCursor].copy(this.group.position);
