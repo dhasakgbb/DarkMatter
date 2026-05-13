@@ -6,6 +6,7 @@ import { meta, saveMeta, saveCheckpoint, clearCheckpoint, type Checkpoint } from
 import { settings, applySettings } from './settings';
 import { newSeed, setRunSeed, computeEpochParams, computeCosmicConstants, seedToLabel, parseSeedLabel } from './seed';
 import { audio } from './audio';
+import { flowTarget, stepFlow } from './flow';
 import { scene, camera, composer, lensingPass, skyMat, stars, starMat, cosmicWeb, cosmicWebMat, bloom } from './scene';
 import { track } from './track';
 import { particleManager } from './particles';
@@ -299,6 +300,7 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   game.flowPeak = 0;
   game.flowPeakDwell = 0;
   game.cleanRunTime = 0;
+  game.timeSincePhase = 0;
   game._shiftedThisRun = false;
   if (!resumeSnapshot && (!meta.tutorialDone || meta.totalRuns < 2)) {
     game.tutorialActive = true; game.tutorialStep = 0; game.tutorialTime = 0;
@@ -625,15 +627,19 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
       );
       game.epochTimer += dt;
       game.runDistance = photon.distance;
-      // Flow signal: phaseStreak (skill chain) + cleanRunTime (no-hit dwell) +
-      // activity (boost+energy). Smoothed with τ≈0.4s so it survives a single
-      // hit's streak reset without snapping to zero.
+      // Flow signal: streak × clean-dwell (gated by recent engagement) × activity.
+      // Smoothed so a single hit's streak reset doesn't snap the meter to zero.
+      // See src/flow.ts for the pure compute (covered by flow.test.ts).
       game.cleanRunTime = (game.cleanRunTime || 0) + dt;
-      const flowStreak = Math.min(1, (game.phaseStreak || 0) / 8);
-      const flowClean = Math.min(1, game.cleanRunTime / 12);
-      const flowActivity = (photon.boosting ? 1 : 0.4) * Math.min(1, photon.energy / Math.max(1, photon.maxEnergy()));
-      const flowTarget = flowStreak * 0.5 + flowClean * 0.3 + flowActivity * 0.2;
-      game.flowLevel += (flowTarget - game.flowLevel) * Math.min(1, dt / 0.4);
+      game.timeSincePhase = (game.timeSincePhase || 0) + dt;
+      const target = flowTarget({
+        phaseStreak: game.phaseStreak || 0,
+        cleanRunTime: game.cleanRunTime,
+        timeSincePhase: game.timeSincePhase,
+        energyRatio: photon.energy / Math.max(1, photon.maxEnergy()),
+        boosting: photon.boosting,
+      });
+      game.flowLevel = stepFlow(game.flowLevel, target, dt);
       if (game.flowLevel > game.flowPeak) game.flowPeak = game.flowLevel;
       if (game.flowLevel >= 0.85) game.flowPeakDwell += dt;
       audio.setFlow(game.flowLevel);
@@ -724,8 +730,8 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
   camera.updateProjectionMatrix();
   const motionMul = settings.reducedMotion ? 0 : 1;
   const mobileVisualMul = IS_MOBILE ? 0.78 : 1;
-  lensingPass.uniforms.uIntensity.value = (0.0010 + (photon.boosting ? 0.0014 : 0) + Math.min(0.0008, speedFactor * 0.0004)) * motionMul * mobileVisualMul;
-  lensingPass.uniforms.uBarrel.value    = (0.014 + (photon.boosting ? 0.038 : 0) + Math.min(0.018, speedFactor * 0.009)) * motionMul * mobileVisualMul;
+  lensingPass.uniforms.uIntensity.value = (0.0013 + (photon.boosting ? 0.0019 : 0) + Math.min(0.0011, speedFactor * 0.00055)) * motionMul * mobileVisualMul;
+  lensingPass.uniforms.uBarrel.value    = (0.018 + (photon.boosting ? 0.050 : 0) + Math.min(0.024, speedFactor * 0.012)) * motionMul * mobileVisualMul;
   lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * (IS_MOBILE ? 0.86 : 1);
   updateHazardLensing(motionMul * mobileVisualMul);
   const bloomTarget = (IS_MOBILE ? 0.46 : 0.54) + Math.min(IS_MOBILE ? 0.10 : 0.14, speedFactor * (IS_MOBILE ? 0.06 : 0.08)) + (photon.boosting ? (IS_MOBILE ? 0.07 : 0.10) : 0) + game.trauma * (IS_MOBILE ? 0.04 : 0.06);
@@ -772,7 +778,7 @@ function updateHazardLensing(visualMul: number) {
     const screenY = 0.5 - lensProjectPoint.y * 0.5;
     const depthProximity = 1 - THREE.MathUtils.clamp(Math.max(0, dz) / HAZARD_LENS_FORWARD_DISTANCE, 0, 1);
     const edgeFade = 1 - THREE.MathUtils.clamp(Math.max(Math.abs(lensProjectPoint.x), Math.abs(lensProjectPoint.y)) - 0.82, 0, 0.34) / 0.34;
-    const baseStrength = hazard.type === 'eventHorizon' ? 0.018 : 0.007;
+    const baseStrength = hazard.type === 'eventHorizon' ? 0.023 : 0.0095;
     const strength = baseStrength * (0.58 + depthProximity * 0.42) * edgeFade * epochLensMul * visualMul;
     const radius = THREE.MathUtils.clamp(
       (hazard.type === 'eventHorizon' ? 0.35 : 0.25) + depthProximity * (hazard.type === 'eventHorizon' ? 0.12 : 0.09),

@@ -3,6 +3,7 @@ import { GUIDE_ARC_RADIUS, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGMENT_
 import { scene } from './scene';
 import type { Epoch } from './cosmology';
 import { game } from './state';
+import { skillBias } from './flow';
 
 export interface TrackFrame {
   fwd: THREE.Vector3;
@@ -142,8 +143,7 @@ class Track {
     let changed = false;
     // Adaptive twist: amplify (or relax) curvature for upcoming segments based
     // on flow signal. Tutorial epoch is exempt to protect onboarding.
-    const skillBias = game.epochIndex === 0 ? 0 : ((game.flowLevel || 0) - 0.5) * 0.4;
-    const twistScale = 1 + skillBias * 0.6;
+    const twistScale = 1 + skillBias(game.flowLevel || 0, game.epochIndex) * 0.6;
     while (this.segIndex < targetSegIdx + SEGMENTS_AHEAD) {
       const i = this.segIndex;
       const amp = this.twistAmp * twistScale;

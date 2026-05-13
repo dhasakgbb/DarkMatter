@@ -38,6 +38,7 @@ export interface RunState {
   flowPeak: number;
   flowPeakDwell: number;
   cleanRunTime: number;
+  timeSincePhase: number;
   perfectEpochThisRun: boolean;
   lastRunWasPerfect: boolean;
   newMemoriesThisRun: string[];
@@ -105,6 +106,7 @@ export const game: RunState = {
   flowPeak: 0,
   flowPeakDwell: 0,
   cleanRunTime: 0,
+  timeSincePhase: 0,
   perfectEpochThisRun: true,
   lastRunWasPerfect: false,
   newMemoriesThisRun: [],

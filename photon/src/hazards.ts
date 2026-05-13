@@ -4,6 +4,7 @@ import { WAVELENGTHS, CODEX_ENTRIES, type Epoch } from './cosmology';
 import { scene } from './scene';
 import { track } from './track';
 import { game } from './state';
+import { skillBias } from './flow';
 import { meta, saveMeta } from './meta';
 import { runRng } from './seed';
 import { particleManager } from './particles';
@@ -192,8 +193,8 @@ class HazardManager {
       // Adaptive difficulty: skill bias derived from flow signal nudges hazard
       // gap shorter when player is in the zone, wider when struggling.
       // Tutorial epoch (idx 0) is exempt so onboarding stays in the easy lane.
-      const skillBias = game.epochIndex === 0 ? 0 : ((game.flowLevel || 0) - 0.5) * 0.4;
-      const flowDensityScale = THREE.MathUtils.clamp(1 - skillBias, 0.74, 1.30);
+      const bias = skillBias(game.flowLevel || 0, game.epochIndex);
+      const flowDensityScale = 1 - bias; // bias ∈ [-0.2, +0.2] → scale ∈ [0.8, 1.2]
       while (this.lastSpawnDist < horizon) {
         const gap = (12 + rand() * 22) / epoch.hazardDensity * tutorialEase * flowDensityScale;
         this.lastSpawnDist += gap;

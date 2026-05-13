@@ -311,10 +311,11 @@ class Photon {
   phaseFlash() {
     game.phaseCount++;
     game.phaseStreak = (game.phaseStreak || 0) + 1;
-    // Chain reward: longer flash + brighter audio cue on streak milestones.
+    game.timeSincePhase = 0;
+    // Chain reward: longer flash + brighter audio cue every 3 phases.
     const streakBoost = Math.min(8, game.phaseStreak);
     this.phaseFlashTime = 0.45 * (1 + streakBoost * 0.08);
-    if (game.phaseStreak === 3 || game.phaseStreak === 6 || game.phaseStreak === 10) {
+    if (game.phaseStreak >= 3 && game.phaseStreak % 3 === 0) {
       audio.lineGate(game.phaseStreak);
     }
     meta.phasesLifetime = (meta.phasesLifetime || 0) + 1;

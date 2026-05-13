@@ -171,4 +171,30 @@ describe('audio runtime contracts', () => {
     expect(counters.oscillator).toBe(0);
     expect(counters.buffer).toBe(0);
   });
+
+  it('audio.setFlow forwards into the procedural synth wet bus + drone filter', () => {
+    const counters: CallCounters = { oscillator: 0, buffer: 0 };
+    installFakeAudio(counters);
+
+    audio.ensure();
+    audio.startDrone(EPOCHS[0]);
+    const synth = audio.synth!;
+    expect(synth).toBeTruthy();
+
+    const wetGain = synth.wet.gain as unknown as { setTargetAtTime: ReturnType<typeof vi.fn> };
+    const droneFilterFreq = synth.droneHandle!.filter!.frequency as unknown as { setTargetAtTime: ReturnType<typeof vi.fn> };
+    wetGain.setTargetAtTime.mockClear();
+    droneFilterFreq.setTargetAtTime.mockClear();
+
+    audio.setFlow(0.9);
+
+    expect(wetGain.setTargetAtTime).toHaveBeenCalledTimes(1);
+    expect(droneFilterFreq.setTargetAtTime).toHaveBeenCalledTimes(1);
+    expect(synth.intensity).toBeCloseTo(0.9, 5);
+
+    // Tiny deltas are no-ops to avoid zipper noise.
+    wetGain.setTargetAtTime.mockClear();
+    audio.setFlow(0.9009);
+    expect(wetGain.setTargetAtTime).not.toHaveBeenCalled();
+  });
 });
