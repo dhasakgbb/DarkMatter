@@ -25,9 +25,34 @@ class ParticleSystem {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(this.colors, 3));
-    const mat = new THREE.PointsMaterial({
-      size: 1.4, sizeAttenuation: true, vertexColors: true,
-      transparent: true, opacity: 1.0, depthWrite: false, blending: THREE.AdditiveBlending,
+    const mat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: { uSize: { value: IS_MOBILE ? 5.4 : 6.4 } },
+      vertexShader: `
+          attribute vec3 color;
+          uniform float uSize;
+          varying vec3 vColor;
+          void main(){
+            vColor = color;
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            gl_Position = projectionMatrix * mv;
+            gl_PointSize = uSize * clamp(260.0 / max(70.0, -mv.z), 0.35, 2.8);
+          }
+        `,
+      fragmentShader: `
+          varying vec3 vColor;
+          void main(){
+            vec2 p = gl_PointCoord - 0.5;
+            float d = length(p);
+            float core = smoothstep(0.22, 0.02, d);
+            float halo = smoothstep(0.50, 0.12, d) * 0.42;
+            float alpha = (core + halo) * max(max(vColor.r, vColor.g), vColor.b);
+            if (alpha < 0.01) discard;
+            gl_FragColor = vec4(vColor * (0.85 + core * 0.55), alpha);
+          }
+        `,
     });
     this.points = new THREE.Points(geo, mat);
     this.points.frustumCulled = false;

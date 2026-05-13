@@ -6,7 +6,7 @@ import { meta, saveMeta, saveCheckpoint, clearCheckpoint, type Checkpoint } from
 import { settings, applySettings } from './settings';
 import { newSeed, setRunSeed, computeEpochParams, computeCosmicConstants } from './seed';
 import { audio } from './audio';
-import { scene, camera, composer, lensingPass, skyMat, stars } from './scene';
+import { scene, camera, composer, lensingPass, skyMat, stars, starMat, cosmicWeb, cosmicWebMat, bloom } from './scene';
 import { track } from './track';
 import { particleManager } from './particles';
 import { echoSystem, spawnEchoPhoton } from './echoes';
@@ -21,6 +21,19 @@ import { comboMultiplier, showToast } from './utils';
 import { refreshTitleStats, refreshSettingsUI } from './ui';
 import { funLab } from './funlab/runtime';
 import { renderVibePrompt } from './funlab/ui';
+
+const FOAM_COLOR = new THREE.Color(0x99ddff);
+const foamPoint = new THREE.Vector3();
+const foamOffset = new THREE.Vector3();
+const idlePoint = new THREE.Vector3();
+const idleFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
+const idleLookPoint = new THREE.Vector3();
+const cameraPoint = new THREE.Vector3();
+const cameraFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
+const cameraTarget = new THREE.Vector3();
+const cameraLookBase = new THREE.Vector3();
+const cameraLookFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
+const cameraLookPoint = new THREE.Vector3();
 
 export function setState(s: GameStateName) {
   const prev = game.state;
@@ -74,6 +87,10 @@ export function setEpoch(idx: number) {
   skyMat.uniforms.uColorB.value.copy(e.paletteB);
   skyMat.uniforms.uPoint.value.copy(e.palettePoint);
   skyMat.uniforms.uRedshift.value = idx / Math.max(1, EPOCHS.length);
+  skyMat.uniforms.uMix.value = 0.6;
+  starMat.uniforms.uOpacity.value = 0.9;
+  cosmicWebMat.color.copy(e.palettePoint).lerp(e.paletteB, 0.28);
+  cosmicWebMat.opacity = e.isHeatDeath ? 0.035 : 0.10 + Math.min(0.05, idx * 0.006);
   scene.fog!.color.copy(e.fogColor);
   (scene.fog as THREE.Fog).near = e.fogNear; (scene.fog as THREE.Fog).far = e.fogFar;
   scene.background = e.fogColor.clone().multiplyScalar(0.4);
@@ -135,7 +152,7 @@ function heatDeathTick(dt: number, photonDist: number) {
   const total = e.duration;
   const visFade = THREE.MathUtils.clamp(1 - (t / 90), 0.05, 1);
   game.heatDeathFade = 1 - visFade;
-  if (stars && stars.material) (stars.material as THREE.PointsMaterial).opacity = 0.9 * visFade;
+  if (stars && stars.material) starMat.uniforms.uOpacity.value = 0.9 * visFade;
   if (skyMat && skyMat.uniforms.uMix) skyMat.uniforms.uMix.value = 0.6 * visFade;
   if ((meta.witnessedHeatDeath || 0) >= 1) {
     game._echoTime = (game._echoTime || 0) + dt;
@@ -207,6 +224,9 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   game.fieldStrain = 0;
   game.fieldStrainX = 0;
   game.fieldStrainY = 0;
+  game.gravityShear = 0;
+  game.gravityShearX = 0;
+  game.gravityShearY = 0;
   game._anyEpochSetThisRun = false;
   game.runDistance = 0;
   game.runEnergy = (resumeSnapshot && resumeSnapshot.runEnergy) || 0;
@@ -373,6 +393,10 @@ export function advanceEpoch() {
 // Wire callbacks the witness module needs without creating a circular import
 witnessHooks.refreshTitleStats = () => refreshTitleStats();
 witnessHooks.setStateTitle = () => setState('title');
+witnessHooks.showVibePrompt = (runId: string) => {
+  renderVibePrompt(runId, 'title');
+  setState('vibe');
+};
 
 function setLineEvent(text: string, time = 1.0) {
   game.lineEventText = text;
@@ -440,14 +464,21 @@ function loop() {
   const dt = realDt * game.timeScale;
 
   skyMat.uniforms.uTime.value += realDt;
+  starMat.uniforms.uTime.value += realDt;
+  const visualSpeed = game.state === 'run'
+    ? THREE.MathUtils.clamp(((game._speed || BASE_SPEED) - BASE_SPEED) / BASE_SPEED, 0, 1.8)
+    : 0;
+  starMat.uniforms.uSpeed.value += (visualSpeed - starMat.uniforms.uSpeed.value) * Math.min(1, realDt * 3.2);
   lensingPass.uniforms.uTime.value += realDt;
   stars.rotation.y += realDt * 0.003;
+  cosmicWeb.rotation.y += realDt * 0.0018;
+  cosmicWeb.rotation.x += realDt * 0.0007;
 
   if (game.state === 'run' && !game.dying && Math.random() < 0.05) {
     const foamD = photon.distance + 35 + Math.random() * 160;
-    const p = track.pointAt(foamD);
-    const off = new THREE.Vector3((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18, (Math.random() - 0.5) * 6);
-    particleManager.emitBurst(p.clone().add(off), 'foam', 3 + Math.floor(Math.random() * 4), new THREE.Color(0x99ddff));
+    const p = track.pointAt(foamD, foamPoint);
+    foamOffset.set((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18, (Math.random() - 0.5) * 6);
+    particleManager.emitBurst(p.add(foamOffset), 'foam', 3 + Math.floor(Math.random() * 4), FOAM_COLOR);
   }
 
   particleManager.update(realDt);
@@ -557,10 +588,10 @@ function loop() {
     }
     game._idleZ = (game._idleZ || 0) + realDt * 18;
     track.ensureAhead(Math.floor(game._idleZ / SEGMENT_LEN));
-    const p = track.pointAt(game._idleZ);
-    const frame = track.frameAt(game._idleZ);
+    const p = track.pointAt(game._idleZ, idlePoint);
+    const frame = track.frameAt(game._idleZ, idleFrame);
     camera.position.copy(p).addScaledVector(frame.up, 2);
-    const lookP = track.pointAt(game._idleZ + 14);
+    const lookP = track.pointAt(game._idleZ + 14, idleLookPoint);
     camera.lookAt(lookP);
     track.updateRings(game._idleZ);
     track.updateDust(game._idleZ);
@@ -577,26 +608,30 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
   const behind = 8.5;
   const upOffset = 2.4;
   const lookAhead = 14;
-  const p = track.pointAt(photon.distance - behind);
-  const frame = track.frameAt(photon.distance - behind);
-  const target = new THREE.Vector3()
-    .copy(p)
+  const p = track.pointAt(photon.distance - behind, cameraPoint);
+  const frame = track.frameAt(photon.distance - behind, cameraFrame);
+  const target = cameraTarget.copy(p)
     .addScaledVector(frame.right, photon.lateral * 0.42)
     .addScaledVector(frame.up, photon.vertical * 0.50 + upOffset);
   camera.position.lerp(target, Math.min(1, realDt * 5.8));
-  const look = track.pointAt(photon.distance + lookAhead);
-  const lookFrame = track.frameAt(photon.distance + lookAhead);
-  const lookPoint = new THREE.Vector3()
-    .copy(look)
+  const look = track.pointAt(photon.distance + lookAhead, cameraLookBase);
+  const lookFrame = track.frameAt(photon.distance + lookAhead, cameraLookFrame);
+  const lookPoint = cameraLookPoint.copy(look)
     .addScaledVector(lookFrame.right, photon.lateral * 0.26)
     .addScaledVector(lookFrame.up, photon.vertical * 0.30);
   camera.lookAt(lookPoint);
+  const speedFactor = Math.max(0, (currentSpeed - BASE_SPEED) / BASE_SPEED);
   const fovTarget = (settings.fov || 72) + (photon.boosting ? 9 : 0) + Math.max(0, currentSpeed - BASE_SPEED) * 0.03;
   camera.fov += (fovTarget - camera.fov) * Math.min(1, realDt * 8);
   camera.updateProjectionMatrix();
   const motionMul = settings.reducedMotion ? 0 : 1;
-  lensingPass.uniforms.uIntensity.value = (0.0014 + (photon.boosting ? 0.0020 : 0)) * motionMul;
-  lensingPass.uniforms.uBarrel.value    = (0.020 + (photon.boosting ? 0.060 : 0))  * motionMul;
+  lensingPass.uniforms.uIntensity.value = (0.0016 + (photon.boosting ? 0.0024 : 0) + Math.min(0.0014, speedFactor * 0.0007)) * motionMul;
+  lensingPass.uniforms.uBarrel.value    = (0.024 + (photon.boosting ? 0.066 : 0) + Math.min(0.032, speedFactor * 0.016)) * motionMul;
+  lensingPass.uniforms.uGlow.value = 0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0);
+  const bloomTarget = 0.54 + Math.min(0.14, speedFactor * 0.08) + (photon.boosting ? 0.10 : 0) + game.trauma * 0.06;
+  const bloomRadiusTarget = 0.62 + Math.min(0.12, speedFactor * 0.07) + (photon.boosting ? 0.06 : 0);
+  bloom.strength += (bloomTarget - bloom.strength) * Math.min(1, realDt * 3.5);
+  bloom.radius += (bloomRadiusTarget - bloom.radius) * Math.min(1, realDt * 2.8);
   if (game.trauma > 0 && !settings.reducedMotion) {
     const t2 = game.trauma * game.trauma;
     const time = performance.now() * 0.06;

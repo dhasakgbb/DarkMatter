@@ -97,7 +97,7 @@ UI:
 
 ## Runtime Contract
 
-Runtime assets live under `photon/public/audio/` and are declared in `photon/src/audio-manifest.json`.
+Runtime assets are declared in `photon/src/audio-manifest.json`. Small shipped assets that must survive the single-file build live under `photon/src/audio-assets/`; larger externally hosted assets can live under `photon/public/audio/` for dev/server builds.
 
 Rules:
 
@@ -106,7 +106,7 @@ Rules:
 - All loops must be seamless.
 - Loudness target: avoid clipping; leave headroom for SFX over music.
 - Filenames use lowercase kebab-case.
-- Manifest entries stay `enabled: false` until files exist and licensing is verified.
+- Manifest entries stay `enabled: false` until files exist and licensing is verified, except generated director-temp assets covered by `photon/public/audio/TEMP_LICENSE.md`.
 - Procedural audio in `photon/src/audio.ts` remains the fallback for every cue.
 
 ## Acceptance Tests

@@ -12,46 +12,58 @@ function pct(n: number) {
   return `${Math.round(n)}`;
 }
 
+function escapeHtml(value: unknown) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function byId<T extends HTMLElement>(id: string) {
   return document.getElementById(id) as T | null;
 }
 
 function axisBar(label: string, value: number, className = '') {
-  return `<div class="funlab-axis ${className}"><span>${label}</span><div><i style="width:${pct(value)}%"></i></div><b>${pct(value)}</b></div>`;
+  return `<div class="funlab-axis ${escapeHtml(className)}"><span>${escapeHtml(label)}</span><div><i style="width:${pct(value)}%"></i></div><b>${pct(value)}</b></div>`;
 }
 
 function recommendationCard(record: FunRunRecord) {
   return record.recommendations.map((rec) => `
-    <div class="funlab-rec risk-${rec.risk}">
-      <div class="funlab-rec-head"><span>${rec.finding}</span><b>${rec.confidence} confidence</b></div>
-      <p>${rec.suggestion}</p>
-      <ul>${rec.evidence.map((item) => `<li>${item}</li>`).join('')}</ul>
+    <div class="funlab-rec risk-${escapeHtml(rec.risk)}">
+      <div class="funlab-rec-head"><span>${escapeHtml(rec.finding)}</span><b>${escapeHtml(rec.confidence)} confidence</b></div>
+      <p>${escapeHtml(rec.suggestion)}</p>
+      <ul>${rec.evidence.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
     </div>
   `).join('');
 }
 
 function renderTimeline(record: FunRunRecord) {
   return record.events
-    .filter((event) => ['epoch-enter', 'gate-hit', 'gate-miss', 'speed-pad-hit', 'hazard-near-miss', 'hazard-hit', 'damage', 'phase-through', 'field-strain-peak', 'death', 'run-end', 'quit'].includes(event.type))
+    .filter((event) => ['epoch-enter', 'gate-hit', 'gate-miss', 'speed-pad-hit', 'gravity-sling', 'hazard-near-miss', 'hazard-hit', 'damage', 'phase-through', 'field-strain-peak', 'death', 'run-end', 'quit'].includes(event.type))
     .slice(-12)
     .map((event) => {
       const t = typeof event.t === 'number' ? `${event.t.toFixed(1)}s` : '';
       const detail = event.cause || event.epochName || (event.streak ? `x${event.streak}` : '');
-      return `<div><span>${t}</span><b>${event.type.replace(/-/g, ' ')}</b><em>${detail}</em></div>`;
+      return `<div><span>${escapeHtml(t)}</span><b>${escapeHtml(event.type.replace(/-/g, ' '))}</b><em>${escapeHtml(detail)}</em></div>`;
     }).join('');
 }
 
-export function renderVibePrompt(runId: string) {
+export function renderVibePrompt(runId: string, returnState: 'death' | 'title' = 'death') {
   const record = loadFunHistory().find((r) => r.id === runId);
   const panel = byId<HTMLElement>('vibe-panel');
-  if (panel) panel.dataset.runId = runId;
+  if (panel) {
+    panel.dataset.runId = runId;
+    panel.dataset.returnState = returnState;
+  }
   const summary = byId<HTMLElement>('vibe-summary');
   if (summary && record) {
     summary.innerHTML = `
-      <span>${record.summary.epochName}</span>
+      <span>${escapeHtml(record.summary.epochName)}</span>
       <span>${Math.round(record.summary.distance).toLocaleString()} drift</span>
-      <span>${record.fingerprint.funIndex}/100 Fun Index</span>
-      <span>${record.fingerprint.trust}/100 trust</span>
+      <span>${escapeHtml(record.fingerprint.funIndex)}/100 Fun Index</span>
+      <span>${escapeHtml(record.fingerprint.trust)}/100 trust</span>
     `;
   }
   for (const axis of AXES) setVibeRating(axis.key, axis.key === 'frustration' ? 2 : 4);
@@ -102,10 +114,10 @@ export function renderFunLabDashboard(selectedId?: string) {
   const selected = records.find((r) => r.id === selectedId) || records[0];
   if (list) {
     list.innerHTML = records.length ? records.map((record) => `
-      <button class="funlab-run ${record.id === selected?.id ? 'selected' : ''}" type="button" data-run-id="${record.id}">
-        <span>${record.summary.epochName}</span>
-        <b>${record.fingerprint.funIndex}</b>
-        <em>${new Date(record.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</em>
+      <button class="funlab-run ${record.id === selected?.id ? 'selected' : ''}" type="button" data-run-id="${escapeHtml(record.id)}">
+        <span>${escapeHtml(record.summary.epochName)}</span>
+        <b>${escapeHtml(record.fingerprint.funIndex)}</b>
+        <em>${escapeHtml(new Date(record.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}</em>
       </button>
     `).join('') : '<p class="funlab-empty">No runs recorded yet. Start a run and let the lab watch.</p>';
     for (const btn of Array.from(list.querySelectorAll('button'))) {
@@ -118,7 +130,7 @@ export function renderFunLabDashboard(selectedId?: string) {
     return;
   }
   const vibe = selected.vibe && !selected.vibe.skipped
-    ? `<p class="funlab-vibe">Vibe: fun ${selected.vibe.fun}/5, flow ${selected.vibe.flow}/5, frustration ${selected.vibe.frustration}/5, again ${selected.vibe.oneMoreRun}/5${selected.vibe.note ? ` · “${selected.vibe.note}”` : ''}</p>`
+    ? `<p class="funlab-vibe">Vibe: fun ${escapeHtml(selected.vibe.fun)}/5, flow ${escapeHtml(selected.vibe.flow)}/5, frustration ${escapeHtml(selected.vibe.frustration)}/5, again ${escapeHtml(selected.vibe.oneMoreRun)}/5${selected.vibe.note ? ` · "${escapeHtml(selected.vibe.note)}"` : ''}</p>`
     : '<p class="funlab-vibe">No vibe rating attached yet.</p>';
   detail.innerHTML = `
     <div class="funlab-fingerprint">
@@ -130,7 +142,7 @@ export function renderFunLabDashboard(selectedId?: string) {
       ${axisBar('Trust', selected.fingerprint.trust)}
     </div>
     ${vibe}
-    ${selected.fingerprint.uncertainty.length ? `<div class="funlab-uncertain">${selected.fingerprint.uncertainty.join(' ')}</div>` : ''}
+    ${selected.fingerprint.uncertainty.length ? `<div class="funlab-uncertain">${selected.fingerprint.uncertainty.map(escapeHtml).join(' ')}</div>` : ''}
     <h3>Tuning queue</h3>
     ${recommendationCard(selected)}
     <h3>Evidence timeline</h3>

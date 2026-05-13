@@ -54,6 +54,9 @@ export interface RunState {
   fieldStrain: number;
   fieldStrainX: number;
   fieldStrainY: number;
+  gravityShear: number;
+  gravityShearX: number;
+  gravityShearY: number;
   // Cinematic transition guard
   _anyEpochSetThisRun: boolean;
   // Cosmic seed and per-epoch seeded params
@@ -110,6 +113,9 @@ export const game: RunState = {
   fieldStrain: 0,
   fieldStrainX: 0,
   fieldStrainY: 0,
+  gravityShear: 0,
+  gravityShearX: 0,
+  gravityShearY: 0,
   _anyEpochSetThisRun: false,
   runSeed: 0,
   epochParams: {},

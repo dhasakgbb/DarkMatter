@@ -194,16 +194,25 @@ export function bindUI() {
     showToast('◇ Progress reset');
   });
   buildVibeControls();
+  const closeVibePrompt = () => {
+    const returnState = document.getElementById('vibe-panel')!.dataset.returnState || 'death';
+    if (returnState === 'title') {
+      refreshTitleStats();
+      setState('title');
+    } else {
+      setState('death');
+    }
+  };
   document.getElementById('btn-vibe-submit')!.addEventListener('click', () => {
     const runId = document.getElementById('vibe-panel')!.dataset.runId || funLab.pendingVibeRunId || funLab.lastRecordId;
     if (runId) funLab.attachVibe(runId, readVibeRating());
     renderFunLabDashboard(runId);
-    setState('death');
+    closeVibePrompt();
   });
   document.getElementById('btn-vibe-skip')!.addEventListener('click', () => {
     const runId = document.getElementById('vibe-panel')!.dataset.runId || funLab.pendingVibeRunId || funLab.lastRecordId;
     if (runId) funLab.skipVibe(runId);
-    setState('death');
+    closeVibePrompt();
   });
   document.getElementById('btn-vibe-again')!.addEventListener('click', () => {
     const runId = document.getElementById('vibe-panel')!.dataset.runId || funLab.pendingVibeRunId || funLab.lastRecordId;

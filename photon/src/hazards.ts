@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGMENT_LEN, SEGMENTS_AHEAD } from './constants';
+import { BOOST_MAX, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGMENT_LEN, SEGMENTS_AHEAD } from './constants';
 import { WAVELENGTHS, CODEX_ENTRIES, type Epoch } from './cosmology';
 import { scene } from './scene';
 import { track } from './track';
@@ -42,6 +42,9 @@ class HazardManager {
   geos: Record<string, THREE.BufferGeometry>;
   lastSpawnDist = 0;
   chainCounter = 0;
+  private readonly scratchPoint = new THREE.Vector3();
+  private readonly scratchFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
+  private readonly scratchMatrix = new THREE.Matrix4();
 
   constructor() {
     scene.add(this.group);
@@ -55,6 +58,64 @@ class HazardManager {
       horizon:   new THREE.CircleGeometry(12, 36),
     };
   }
+
+  private decorateGravityWell(mesh: THREE.Mesh) {
+    const lens = new THREE.Mesh(
+      new THREE.SphereGeometry(6.8, 24, 14),
+      new THREE.MeshBasicMaterial({
+        color: 0x7755ff,
+        transparent: true,
+        opacity: 0.10,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    const innerRing = new THREE.Mesh(
+      new THREE.TorusGeometry(4.5, 0.08, 8, 64),
+      new THREE.MeshBasicMaterial({
+        color: 0xff5de1,
+        transparent: true,
+        opacity: 0.42,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    const outerRing = new THREE.Mesh(
+      new THREE.TorusGeometry(7.2, 0.055, 8, 72),
+      new THREE.MeshBasicMaterial({
+        color: 0x86f7ff,
+        transparent: true,
+        opacity: 0.24,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    innerRing.rotation.x = Math.PI * 0.5;
+    outerRing.rotation.x = Math.PI * 0.5;
+    outerRing.rotation.y = Math.PI * 0.18;
+    mesh.add(lens, innerRing, outerRing);
+    (mesh.userData as any).wellLens = lens;
+    (mesh.userData as any).wellRings = [innerRing, outerRing];
+  }
+
+    private addHazardGlow(mesh: THREE.Mesh, type: string, hex: number) {
+      if (type === 'well') return;
+      const material = new THREE.MeshBasicMaterial({
+        color: hex,
+        transparent: true,
+        opacity: type === 'supernova' ? 0.20 : type === 'eventHorizon' ? 0.16 : 0.18,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
+      const glow = new THREE.Mesh(mesh.geometry, material);
+      const scale = type === 'supernova' ? 1.18 : type === 'eventHorizon' ? 1.12 : type === 'gluon' ? 1.22 : 1.34;
+      glow.scale.setScalar(scale);
+      mesh.add(glow);
+      (mesh.userData as any).hazardGlow = glow;
+      (mesh.userData as any).hazardGlowBaseScale = scale;
+      (mesh.userData as any).hazardGlowBaseOpacity = material.opacity;
+    }
 
   reset() {
     for (const h of this.list) this.group.remove(h.mesh);
@@ -129,13 +190,15 @@ class HazardManager {
     }
     const mat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: type === 'eventHorizon' ? 0.55 : 0.85, wireframe: type === 'gluon', side: isFrontFacing ? THREE.DoubleSide : THREE.FrontSide });
     const mesh = new THREE.Mesh(geo, mat);
+    if (type === 'well') this.decorateGravityWell(mesh);
+      else this.addHazardGlow(mesh, type, hex);
     const lat = isFrontFacing ? 0 : (Math.random() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.7;
     const ver = isFrontFacing ? 0 : (Math.random() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.7;
-    const p = track.pointAt(dist);
-    const frame = track.frameAt(dist);
+    const p = track.pointAt(dist, this.scratchPoint);
+    const frame = track.frameAt(dist, this.scratchFrame);
     mesh.position.copy(p).addScaledVector(frame.right, lat).addScaledVector(frame.up, ver);
     if (isFrontFacing) {
-      const mtx = new THREE.Matrix4().makeBasis(frame.right, frame.up, frame.fwd);
+      const mtx = this.scratchMatrix.makeBasis(frame.right, frame.up, frame.fwd);
       mesh.quaternion.setFromRotationMatrix(mtx);
       (mesh.userData as any).spinSpeed = type === 'supernova' ? 0.4 : 0;
     } else {
@@ -160,27 +223,59 @@ class HazardManager {
     const mat = new THREE.MeshBasicMaterial({ color: 0xfff7d0, transparent: true, opacity: 0.95 });
     const mesh = new THREE.Mesh(geo, mat);
     const halo = new THREE.Mesh(new THREE.SphereGeometry(1.4, 12, 8), new THREE.MeshBasicMaterial({ color: 0xfff7d0, transparent: true, opacity: 0.25, depthWrite: false }));
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(1.45, 0.045, 6, 28),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.34, depthWrite: false, blending: THREE.AdditiveBlending }),
+      );
+      ring.rotation.x = Math.PI * 0.5;
     mesh.add(halo);
+      mesh.add(ring);
+      (mesh.userData as any).pickupRing = ring;
     const lat = (Math.random() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.55;
     const ver = (Math.random() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.55;
-    const p = track.pointAt(dist);
-    const frame = track.frameAt(dist);
+    const p = track.pointAt(dist, this.scratchPoint);
+    const frame = track.frameAt(dist, this.scratchFrame);
     mesh.position.copy(p).addScaledVector(frame.right, lat).addScaledVector(frame.up, ver);
     this.group.add(mesh);
     this.list.push({ kind: 'pickup', type: 'pickup', dist, lateral: lat, vertical: ver, baseLateral: lat, baseVertical: ver, wlIdx: -1, dmg: 0, mesh, hit: false, hitRadius: 2.6 });
   }
 
   update(dt: number, photonDist: number, photonLat: number, photonVer: number, photonWL: number,
-         onHit: (dmg: number) => boolean, onCollect: (amt: number) => void, _currentEpoch: Epoch) {
+         onHit: (dmg: number) => boolean, onCollect: (amt: number) => void, currentEpoch: Epoch) {
     const HIT_WINDOW = 2.6;
     const animTime = performance.now() * 0.001;
     for (const h of this.list) {
       if (!h.isFrontFacing) {
         h.mesh.rotation.y += dt * ((h.mesh.userData as any).spinSpeed || 1.2);
         h.mesh.rotation.x += dt * 0.4;
+        if (h.type === 'well') {
+          const rings = (h.mesh.userData as any).wellRings as THREE.Mesh[] | undefined;
+          const lens = (h.mesh.userData as any).wellLens as THREE.Mesh | undefined;
+          if (rings) {
+            rings[0].rotation.z += dt * 1.85;
+            rings[1].rotation.z -= dt * 1.15;
+            const pulse = 1 + Math.sin(animTime * 4.2 + h.dist * 0.03) * 0.045;
+            rings[0].scale.setScalar(pulse);
+            rings[1].scale.setScalar(1.04 - (pulse - 1) * 0.75);
+          }
+          if (lens) {
+            const lensMat = lens.material as THREE.MeshBasicMaterial;
+            lensMat.opacity = 0.08 + Math.max(0, Math.sin(animTime * 3.4 + h.dist * 0.025)) * 0.05;
+          }
+        }
       } else if (h.type === 'supernova') {
         h.mesh.rotateZ(dt * (h.mesh.userData as any).spinSpeed);
       }
+        const hazardGlow = (h.mesh.userData as any).hazardGlow as THREE.Mesh | undefined;
+        if (hazardGlow) {
+          const baseScale = (h.mesh.userData as any).hazardGlowBaseScale || 1.2;
+          const baseOpacity = (h.mesh.userData as any).hazardGlowBaseOpacity || 0.16;
+          const glowPulse = 1 + Math.sin(animTime * 5.2 + h.dist * 0.041) * 0.055;
+          hazardGlow.scale.setScalar(baseScale * glowPulse);
+          (hazardGlow.material as THREE.MeshBasicMaterial).opacity = baseOpacity * (h.hit ? 0.38 : 1);
+        }
+        const pickupRing = (h.mesh.userData as any).pickupRing as THREE.Mesh | undefined;
+        if (pickupRing) pickupRing.rotation.z += dt * 2.4;
       if (h.movement) {
         const offset = Math.sin(animTime * h.movement.freq * Math.PI * 2 + h.movement.phase) * h.movement.amp;
         if (h.movement.axis === 'lateral') h.lateral = h.baseLateral + offset;
@@ -188,12 +283,26 @@ class HazardManager {
         h.lateral = THREE.MathUtils.clamp(h.lateral, -PLAYFIELD_HALF_WIDTH + h.hitRadius, PLAYFIELD_HALF_WIDTH - h.hitRadius);
         h.vertical = THREE.MathUtils.clamp(h.vertical, -PLAYFIELD_HALF_HEIGHT + h.hitRadius, PLAYFIELD_HALF_HEIGHT - h.hitRadius);
       }
-      const p = track.pointAt(h.dist);
-      const frame = track.frameAt(h.dist);
+      const p = track.pointAt(h.dist, this.scratchPoint);
+      const frame = track.frameAt(h.dist, this.scratchFrame);
       h.mesh.position.copy(p).addScaledVector(frame.right, h.lateral).addScaledVector(frame.up, h.vertical);
       if (h.isFrontFacing) {
-        const mtx = new THREE.Matrix4().makeBasis(frame.right, frame.up, frame.fwd);
+        const mtx = this.scratchMatrix.makeBasis(frame.right, frame.up, frame.fwd);
         h.mesh.quaternion.setFromRotationMatrix(mtx);
+      }
+      const dz = h.dist - photonDist;
+      if (!h.hit && h.type === 'well' && dz > -14 && dz < 86) {
+        const dx = h.lateral - photonLat;
+        const dy = h.vertical - photonVer;
+        const lateralDist = Math.max(0.001, Math.sqrt(dx * dx + dy * dy));
+        const zFalloff = 1 - Math.min(1, Math.abs(dz) / 86);
+        const lateralFalloff = 1 - Math.min(1, lateralDist / (PLAYFIELD_HALF_WIDTH * 1.18));
+        const strength = Math.max(0, zFalloff * lateralFalloff);
+        if (strength > 0) {
+          game.gravityShearX += (dx / lateralDist) * strength;
+          game.gravityShearY += (dy / lateralDist) * strength;
+          game.gravityShear = Math.min(1, Math.max(game.gravityShear || 0, strength));
+        }
       }
       // SPATIAL: emit a Doppler whoosh once as each hazard crosses the photon (4 units ahead → behind).
       // Only for non-pickup hazards (no whoosh on collectibles).
@@ -201,13 +310,22 @@ class HazardManager {
         const dzAhead = h.dist - photonDist;
         if (dzAhead < 5 && dzAhead > -2) {
           h.whooshed = true;
-          // Quieter for tiny fluctuations, louder for chunky hazards
-          const intensity = h.type === 'fluct' ? 0.5 : h.type === 'well' ? 1.4 : h.type === 'supernova' ? 1.6 : 0.8;
-          audio.whoosh(h.mesh.position, intensity, h.type);
+          const dx = h.lateral - photonLat;
+          const dy = h.vertical - photonVer;
+          const lateralDist = Math.sqrt(dx * dx + dy * dy);
+          const acousticRadius = h.type === 'well'
+            ? PLAYFIELD_HALF_WIDTH * 0.82
+            : h.type === 'supernova'
+              ? (h.hitRadius || 2.6) + 8
+              : (h.hitRadius || 2.6) + 5;
+          if (lateralDist <= acousticRadius) {
+            const proximity = 1 - Math.min(1, lateralDist / Math.max(1, acousticRadius));
+            const base = h.type === 'fluct' ? 0.35 : h.type === 'well' ? 1.0 : h.type === 'supernova' ? 1.25 : 0.65;
+            audio.whoosh(h.mesh.position, base * (0.35 + proximity * 0.65), h.type);
+          }
         }
       }
       if (h.hit) continue;
-      const dz = h.dist - photonDist;
       if (Math.abs(dz) > HIT_WINDOW) continue;
       const dx = h.lateral - photonLat;
       const dy = h.vertical - photonVer;
@@ -217,6 +335,20 @@ class HazardManager {
         if (!h.nearMissed && h.type !== 'pickup' && h.type !== 'finalPickup' && dist2 <= (r + 4.2) * (r + 4.2)) {
           h.nearMissed = true;
           funLab.record('hazard-near-miss', { epochIndex: game.epochIndex, distance: photonDist, cause: h.type });
+          if (h.type === 'well') {
+            const skim = THREE.MathUtils.clamp(1 - (Math.sqrt(dist2) - r) / 4.2, 0, 1);
+            const duration = 0.58 + skim * 0.64;
+            game.padBoostTime = Math.max(game.padBoostTime || 0, duration);
+            game.padBoostTotal = Math.max(game.padBoostTotal || 0, duration);
+            photon.boost = Math.min(BOOST_MAX, photon.boost + 10 + skim * 8);
+            photon.energy = Math.min(photon.maxEnergy(), photon.energy + 3 + skim * 4);
+            game.runEnergy += 7 + skim * 7;
+            game.lineEventText = 'GRAVITY SLING';
+            game.lineEventTime = 1.05;
+            funLab.record('gravity-sling', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: photonDist, cause: h.type, value: skim });
+            audio.speedPad();
+            particleManager.emitBurst(h.mesh.position, 'phase', 30, new THREE.Color(0xff5de1));
+          }
         }
         continue;
       }
@@ -224,13 +356,13 @@ class HazardManager {
       if (h.type === 'pickup' || h.type === 'finalPickup') {
         h.hit = true; h.mesh.visible = false;
         if (h.type === 'finalPickup') {
-          particleManager.emitBurst(h.mesh.position.clone(), 'death', 80, new THREE.Color(0xfafaff));
-          particleManager.emitBurst(h.mesh.position.clone(), 'death', 60, new THREE.Color(0xb888ff));
+          particleManager.emitBurst(h.mesh.position, 'death', 80, new THREE.Color(0xfafaff));
+          particleManager.emitBurst(h.mesh.position, 'death', 60, new THREE.Color(0xb888ff));
           triggerWitness();
         } else {
           funLab.record('pickup', { epochIndex: game.epochIndex, distance: photonDist, value: 20 });
           onCollect(20);
-          particleManager.emitBurst(h.mesh.position.clone(), 'pickup', 18, new THREE.Color(0xfff3a0));
+          particleManager.emitBurst(h.mesh.position, 'pickup', 18, new THREE.Color(0xfff3a0));
           meta.pickupsLifetime = (meta.pickupsLifetime || 0) + 1;
           saveMeta(meta);
           checkMemoryTriggers();
@@ -241,13 +373,13 @@ class HazardManager {
         (h.mesh.material as THREE.MeshBasicMaterial).opacity = 0.18;
         onCollect(6);
         photon.phaseFlash();
-        particleManager.emitBurst(h.mesh.position.clone(), 'phase', 14, WAVELENGTHS[h.wlIdx].color);
+        particleManager.emitBurst(h.mesh.position, 'phase', 14, WAVELENGTHS[h.wlIdx].color);
         if (h.chainId != null) {
           for (const other of this.list) {
             if (other !== h && other.chainId === h.chainId && !other.hit) {
               other.hit = true;
               (other.mesh.material as THREE.MeshBasicMaterial).opacity = 0.18;
-              particleManager.emitBurst(other.mesh.position.clone(), 'phase', 12, WAVELENGTHS[h.wlIdx].color);
+              particleManager.emitBurst(other.mesh.position, 'phase', 12, WAVELENGTHS[h.wlIdx].color);
             }
           }
           if (!meta.firstChainPhased) { meta.firstChainPhased = true; saveMeta(meta); checkMemoryTriggers(); }
@@ -256,7 +388,7 @@ class HazardManager {
           photon.distance += 95 + Math.random() * 55;
           photon.invulnTimer = Math.max(photon.invulnTimer, 1.15);
           photon.energy = Math.min(photon.maxEnergy(), photon.energy + 12);
-          particleManager.emitBurst(h.mesh.position.clone(), 'death', 22, new THREE.Color(0x66ffcc));
+          particleManager.emitBurst(h.mesh.position, 'death', 22, new THREE.Color(0x66ffcc));
           if (!meta.firstWormhole) { meta.firstWormhole = true; saveMeta(meta); checkMemoryTriggers(); }
           game.trauma = Math.min(1, game.trauma + 0.25);
         }
@@ -268,7 +400,7 @@ class HazardManager {
           h.hit = true;
           (h.mesh.material as THREE.MeshBasicMaterial).opacity = 0.25;
           const hitColor = h.wlIdx >= 0 ? WAVELENGTHS[h.wlIdx].color : new THREE.Color(0xff5566);
-          particleManager.emitBurst(h.mesh.position.clone(), 'hit', 22, hitColor);
+            particleManager.emitBurst(h.mesh.position, 'hit', 22, hitColor);
         }
         if (h.type === 'well') maybeUnlockCodexFn('GRAVWELL', CODEX_ENTRIES);
         if (h.type === 'gluon') maybeUnlockCodexFn('GLUON', CODEX_ENTRIES);

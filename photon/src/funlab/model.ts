@@ -4,6 +4,7 @@ const MEANINGFUL_EVENTS = new Set<FunRunEvent['type']>([
   'gate-hit',
   'gate-miss',
   'speed-pad-hit',
+  'gravity-sling',
   'hazard-near-miss',
   'hazard-hit',
   'phase-through',
@@ -108,6 +109,7 @@ export function summarizeRun(events: FunRunEvent[], fallbackRunId = `run-${Date.
     lineBreaks: count(ordered, 'line-break') + count(ordered, 'speed-chain-break'),
     speedPads: count(ordered, 'speed-pad-hit'),
     speedChainBreaks: count(ordered, 'speed-chain-break'),
+    gravitySlingshots: count(ordered, 'gravity-sling'),
     nearMisses: count(ordered, 'hazard-near-miss'),
     nearMissesPerMin: count(ordered, 'hazard-near-miss') / Math.max(1 / 60, durationSec / 60),
     hazardHits: count(ordered, 'hazard-hit'),
@@ -137,6 +139,7 @@ export function scoreRun(summary: FunRunSummary, vibe?: VibeRating): FunFingerpr
   const dopamineBase =
     clamp(summary.nearMissesPerMin * 8, 0, 30) +
     clamp(summary.speedPads * 9, 0, 24) +
+    clamp(summary.gravitySlingshots * 10, 0, 22) +
     clamp(summary.gateStreakPeak * 5, 0, 24) +
     clamp(summary.phases * 4, 0, 16) +
     clamp(summary.recoveryEvents * 7, 0, 14);
@@ -258,8 +261,8 @@ export function recommend(summary: FunRunSummary, fingerprint: FunFingerprint): 
     add({
       id: 'boredom-gap',
       finding: 'The run has low excitement density.',
-      evidence: [`${summary.boredomGapCount} boredom gaps`, `Longest quiet gap ${summary.longestBoredomGap.toFixed(1)}s`, `${summary.speedPads} speed pads`],
-      suggestion: 'Add a speed pad, gate, or readable hazard beat before the longest quiet gap.',
+      evidence: [`${summary.boredomGapCount} boredom gaps`, `Longest quiet gap ${summary.longestBoredomGap.toFixed(1)}s`, `${summary.speedPads} speed pads`, `${summary.gravitySlingshots} gravity slings`],
+      suggestion: 'Add a speed pad, gravity sling, gate, or readable hazard beat before the longest quiet gap.',
       confidence,
       risk: 'medium',
       axes: ['dopamine', 'oneMoreRun'],

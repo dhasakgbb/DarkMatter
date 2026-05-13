@@ -199,6 +199,23 @@ export function drawHud() {
     }
     hud.restore();
   }
+  if ((game.gravityShear || 0) > 0.08) {
+    const a = Math.min(0.22, 0.06 + game.gravityShear * 0.18);
+    hud.save();
+    const cx = w * (0.5 + Math.max(-0.28, Math.min(0.28, (game.gravityShearX || 0) * 0.16)));
+    const cy = h * (0.5 - Math.max(-0.22, Math.min(0.22, (game.gravityShearY || 0) * 0.12)));
+    const grad = hud.createRadialGradient(cx, cy, 24, cx, cy, Math.max(w, h) * 0.42);
+    grad.addColorStop(0, `rgba(255,122,217,${a})`);
+    grad.addColorStop(0.35, `rgba(136,224,255,${a * 0.28})`);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    hud.fillStyle = grad;
+    hud.fillRect(0, 0, w, h);
+    hud.font = '10px ui-monospace, monospace';
+    hud.textAlign = 'center';
+    hud.fillStyle = `rgba(255,255,255,${0.32 + game.gravityShear * 0.38})`;
+    hud.fillText('GRAVITY SHEAR', w / 2, Math.max(88, h * 0.16));
+    hud.restore();
+  }
   if (game.lineEventTime > 0 && game.lineEventText) {
     const alpha = Math.min(1, game.lineEventTime / 0.25);
     hud.save();

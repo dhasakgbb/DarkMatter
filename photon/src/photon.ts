@@ -16,11 +16,24 @@ class Photon {
   group: THREE.Group;
   core: THREE.Mesh;
   halo: THREE.Mesh;
+  corona: THREE.Mesh;
   coreMat: THREE.MeshBasicMaterial;
   haloMat: THREE.MeshBasicMaterial;
+  coronaMat: THREE.MeshBasicMaterial;
   trail: THREE.Line;
   trailLen = 64;
-  trailHistory: THREE.Vector3[] = [];
+  trailHistory: THREE.Vector3[] = Array.from({ length: this.trailLen }, () => new THREE.Vector3());
+  trailCursor = 0;
+  trailCount = 0;
+  private readonly trackPoint = new THREE.Vector3();
+  private readonly lookPoint = new THREE.Vector3();
+  private readonly offset = new THREE.Vector3();
+  private readonly lookOffset = new THREE.Vector3();
+  private readonly trackFrame = {
+    fwd: new THREE.Vector3(),
+    right: new THREE.Vector3(),
+    up: new THREE.Vector3(),
+  };
 
   distance = 0;
   lateral = 0;
@@ -60,8 +73,18 @@ class Photon {
     const haloGeo = new THREE.SphereGeometry(1.8, 24, 16);
     this.haloMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.32, depthWrite: false });
     this.halo = new THREE.Mesh(haloGeo, this.haloMat);
+    const coronaGeo = new THREE.SphereGeometry(2.55, 32, 18);
+    this.coronaMat = new THREE.MeshBasicMaterial({
+      color: 0x88e0ff,
+      transparent: true,
+      opacity: 0.12,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+    });
+    this.corona = new THREE.Mesh(coronaGeo, this.coronaMat);
     this.group = new THREE.Group();
-    this.group.add(this.core); this.group.add(this.halo);
+    this.group.add(this.corona); this.group.add(this.core); this.group.add(this.halo);
     scene.add(this.group);
     const trailGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(this.trailLen * 3);
@@ -84,7 +107,8 @@ class Photon {
     this.alive = true; this.invulnTimer = 0; this.phaseTimer = 0;
     this.wavelength = variant.startWavelength;
     this.setColorFromWavelength(true);
-    this.trailHistory.length = 0;
+    this.trailCursor = 0;
+    this.trailCount = 0;
   }
 
   maxEnergy(): number {
@@ -94,8 +118,8 @@ class Photon {
 
   setColorFromWavelength(immediate = false) {
     const w = WAVELENGTHS[this.wavelength];
-    if (immediate) { this.coreMat.color.copy(w.color); this.haloMat.color.copy(w.color); }
-    else { this.coreMat.color.lerp(w.color, 0.4); this.haloMat.color.lerp(w.color, 0.4); }
+    if (immediate) { this.coreMat.color.copy(w.color); this.haloMat.color.copy(w.color); this.coronaMat.color.copy(w.color); }
+    else { this.coreMat.color.lerp(w.color, 0.4); this.haloMat.color.lerp(w.color, 0.4); this.coronaMat.color.lerp(w.color, 0.4); }
   }
 
   shift(idx: number): boolean {
@@ -126,6 +150,16 @@ class Photon {
     if (input.right) ax += lateralAcc;
     if (input.up)    ay += lateralAcc * 0.85;
     if (input.down)  ay -= lateralAcc * 0.85;
+    const shear = game.gravityShear || 0;
+    if (shear > 0) {
+      ax += (game.gravityShearX || 0) * 118;
+      ay += (game.gravityShearY || 0) * 106;
+      this.boost = Math.max(0, this.boost - 2.2 * shear * dt);
+      this.energy = Math.max(0, this.energy - 0.7 * shear * dt);
+    }
+    game.gravityShear = 0;
+    game.gravityShearX = 0;
+    game.gravityShearY = 0;
     this.lateralVel += ax * dt;
     this.verticalVel += ay * dt;
     if (!input.left && !input.right) this.lateralVel *= Math.pow(0.0008, dt);
@@ -208,17 +242,16 @@ class Photon {
     if (this.phaseTimer > 0) this.phaseTimer -= dt;
     if (this.shiftCooldown > 0) this.shiftCooldown -= dt;
 
-    const p = track.pointAt(this.distance);
-    const frame = track.frameAt(this.distance);
-    const offset = new THREE.Vector3()
+    const p = track.pointAt(this.distance, this.trackPoint);
+    const frame = track.frameAt(this.distance, this.trackFrame);
+    const offset = this.offset.set(0, 0, 0)
       .addScaledVector(frame.right, this.lateral)
       .addScaledVector(frame.up, this.vertical);
     this.group.position.copy(p).add(offset);
-    const lookAhead = track.pointAt(this.distance + 8).add(
-      new THREE.Vector3()
+    const lookAhead = track.pointAt(this.distance + 8, this.lookPoint)
+      .add(this.lookOffset.set(0, 0, 0)
         .addScaledVector(frame.right, this.lateral + this.lateralVel * 0.05)
-        .addScaledVector(frame.up, this.vertical + this.verticalVel * 0.05)
-    );
+        .addScaledVector(frame.up, this.vertical + this.verticalVel * 0.05));
     this.group.lookAt(lookAhead);
     const targetRoll = -THREE.MathUtils.clamp(this.lateralVel / 52, -1, 1) * 0.55;
     this._currentRoll += (targetRoll - this._currentRoll) * Math.min(1, dt * 9);
@@ -228,16 +261,19 @@ class Photon {
     const flashBoost = this.phaseFlashTime > 0 ? this.phaseFlashTime / 0.45 : 0;
     const pulse = 1 + Math.sin(performance.now() * 0.012) * 0.05 + (this.boosting ? 0.18 : 0) + flashBoost * 0.35;
     this.halo.scale.setScalar(pulse);
+    this.corona.scale.setScalar(1.02 + (pulse - 1) * 0.48 + flashBoost * 0.22);
     const rawHalo = 0.22 + (this.boosting ? 0.12 : 0) + (this.phaseTimer > 0 ? 0.18 : 0) + flashBoost * 0.22;
     this.haloMat.opacity = Math.min(0.55, rawHalo);
+    this.coronaMat.opacity = Math.min(0.26, 0.08 + (this.boosting ? 0.05 : 0) + flashBoost * 0.10 + (this.phaseTimer > 0 ? 0.04 : 0));
 
-    this.trailHistory.unshift(this.group.position.clone());
-    if (this.trailHistory.length > this.trailLen) this.trailHistory.length = this.trailLen;
+    this.trailCursor = (this.trailCursor + this.trailLen - 1) % this.trailLen;
+    this.trailHistory[this.trailCursor].copy(this.group.position);
+    this.trailCount = Math.min(this.trailCount + 1, this.trailLen);
     const posArr = this.trail.geometry.attributes.position.array as Float32Array;
     const colArr = this.trail.geometry.attributes.color.array as Float32Array;
     const baseColor = WAVELENGTHS[this.wavelength].color;
     for (let i = 0; i < this.trailLen; i++) {
-      const h = this.trailHistory[Math.min(i, this.trailHistory.length - 1)] || this.group.position;
+      const h = i < this.trailCount ? this.trailHistory[(this.trailCursor + i) % this.trailLen] : this.group.position;
       posArr[i*3+0] = h.x; posArr[i*3+1] = h.y; posArr[i*3+2] = h.z;
       const fade = 1 - i / this.trailLen;
       colArr[i*3+0] = baseColor.r * fade;

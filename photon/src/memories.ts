@@ -2,6 +2,7 @@ import { MEMORIES, VARIANTS, type Memory } from './cosmology';
 import { meta, saveMeta } from './meta';
 import { game } from './state';
 import { showToast } from './utils';
+import { audio } from './audio';
 
 // LIVING MEMORIES: returns evolved body if conditions met, else original.
 export function memoryBody(m: Memory): string {
@@ -22,6 +23,7 @@ export function unlockMemory(id: string) {
   saveMeta(meta);
   game.newMemoriesThisRun = game.newMemoriesThisRun || [];
   game.newMemoriesThisRun.push(id);
+  audio.memoryUnlock();
   showToast(`✦ Memory: ${m.id.replace(/-/g, ' ')}`);
 }
 

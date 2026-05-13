@@ -8,6 +8,11 @@ import { runRng } from './seed';
 
 type RacingKind = 'gate' | 'pad';
 
+interface RacingMaterialLayer {
+  material: THREE.MeshBasicMaterial;
+  opacityScale: number;
+}
+
 function gameSeedPhase() {
   return ((game.runSeed || 0) % 997) * 0.0063;
 }
@@ -19,6 +24,7 @@ export interface RacingEntity {
   vertical: number;
   radius: number;
   object: THREE.Object3D;
+  materialLayers: RacingMaterialLayer[];
   hit: boolean;
   missed: boolean;
 }
@@ -31,6 +37,12 @@ class RacingLineManager {
   private gateInnerGeo = new THREE.TorusGeometry(2.55, 0.07, 6, 36);
   private padGeo = new THREE.TorusGeometry(3.4, 0.16, 8, 36);
   private padStripeGeo = new THREE.TorusGeometry(1.75, 0.07, 6, 28);
+  private readonly scratchPoint = new THREE.Vector3();
+  private readonly scratchFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
+  private readonly scratchMatrix = new THREE.Matrix4();
+  private readonly linePoint = new THREE.Vector3();
+  private readonly lineAhead = new THREE.Vector3();
+  private readonly lineFrame = { fwd: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3() };
 
   constructor() {
     scene.add(this.group);
@@ -86,10 +98,8 @@ class RacingLineManager {
       const dz = e.dist - photonDist;
       const nearFade = e.kind === 'pad' ? THREE.MathUtils.smoothstep(dz, -2, 18) : 1;
       const materialOpacity = (e.kind === 'gate' ? 0.9 : 0.74) * nearFade;
-      e.object.traverse(obj => {
-        const mat = (obj as THREE.Mesh).material as THREE.MeshBasicMaterial | undefined;
-        if (mat && mat.opacity != null) mat.opacity = e.hit || e.missed ? 0.12 : materialOpacity;
-      });
+      const opacity = e.hit || e.missed ? 0.12 : materialOpacity;
+      for (const layer of e.materialLayers) layer.material.opacity = opacity * layer.opacityScale;
       const pulse = 1 + Math.sin(t * (e.kind === 'gate' ? 5.6 : 9.2) + e.dist * 0.07) * (e.kind === 'gate' ? 0.025 : 0.045);
       e.object.scale.setScalar(pulse);
       e.object.visible = e.kind === 'pad' ? dz > -4 : dz > -34;
@@ -101,8 +111,8 @@ class RacingLineManager {
       if (Math.abs(dz) <= HIT_WINDOW && inside) {
         e.hit = true;
         e.object.visible = false;
-        if (e.kind === 'pad') onPad(e.object.position.clone());
-        else onGate(e.object.position.clone());
+        if (e.kind === 'pad') onPad(e.object.position);
+        else onGate(e.object.position);
       } else if (e.kind === 'gate' && dz < -HIT_WINDOW) {
         e.missed = true;
         onMiss();
@@ -111,9 +121,9 @@ class RacingLineManager {
   }
 
   private racingLineAt(dist: number) {
-    const p = track.pointAt(dist);
-    const ahead = track.pointAt(dist + 78);
-    const frame = track.frameAt(dist);
+    const p = track.pointAt(dist, this.linePoint);
+    const ahead = track.pointAt(dist + 78, this.lineAhead);
+    const frame = track.frameAt(dist, this.lineFrame);
     const bend = ahead.sub(p);
     const routeWaveA = Math.sin(dist * 0.021 + gameSeedPhase());
     const routeWaveB = Math.sin(dist * 0.013 + 1.8);
@@ -130,29 +140,48 @@ class RacingLineManager {
   private spawnGate(dist: number, lateral: number, vertical: number) {
     const group = new THREE.Group();
     group.name = 'racing-line-gate';
-    const ring = new THREE.Mesh(
-      this.gateGeo,
-      new THREE.MeshBasicMaterial({
-        color: 0x88e0ff,
-        transparent: true,
-        opacity: 0.78,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      }),
-    );
-    const inner = new THREE.Mesh(
-      this.gateInnerGeo,
-      new THREE.MeshBasicMaterial({
-        color: 0xff7ad9,
-        transparent: true,
-        opacity: 0.55,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      }),
-    );
-    group.add(ring, inner);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0x88e0ff,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const glow = new THREE.Mesh(this.gateGeo, glowMat);
+    glow.scale.setScalar(1.18);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x88e0ff,
+      transparent: true,
+      opacity: 0.78,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const ring = new THREE.Mesh(this.gateGeo, ringMat);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: 0xff7ad9,
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const inner = new THREE.Mesh(this.gateInnerGeo, innerMat);
+    group.add(glow, ring, inner);
     this.group.add(group);
-    const e: RacingEntity = { kind: 'gate', dist, lateral, vertical, radius: 7.0, object: group, hit: false, missed: false };
+    const e: RacingEntity = {
+      kind: 'gate',
+      dist,
+      lateral,
+      vertical,
+      radius: 7.0,
+      object: group,
+      materialLayers: [
+        { material: glowMat, opacityScale: 0.34 },
+        { material: ringMat, opacityScale: 1.0 },
+        { material: innerMat, opacityScale: 0.68 },
+      ],
+      hit: false,
+      missed: false,
+    };
     this.place(e);
     this.list.push(e);
   }
@@ -160,41 +189,61 @@ class RacingLineManager {
   private spawnPad(dist: number, lateral: number, vertical: number) {
     const group = new THREE.Group();
     group.name = 'speed-pad';
-    const pad = new THREE.Mesh(
-      this.padGeo,
-      new THREE.MeshBasicMaterial({
-        color: 0xff7ad9,
-        transparent: true,
-        opacity: 0.68,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      }),
-    );
-    const stripe = new THREE.Mesh(
-      this.padStripeGeo,
-      new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.58,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      }),
-    );
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0xff7ad9,
+      transparent: true,
+      opacity: 0.18,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const glow = new THREE.Mesh(this.padGeo, glowMat);
+    glow.scale.setScalar(1.26);
+    const padMat = new THREE.MeshBasicMaterial({
+      color: 0xff7ad9,
+      transparent: true,
+      opacity: 0.68,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const pad = new THREE.Mesh(this.padGeo, padMat);
+    const stripeMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.58,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const stripe = new THREE.Mesh(this.padStripeGeo, stripeMat);
     stripe.position.z = 0.04;
-    group.add(pad, stripe);
+    group.add(glow, pad, stripe);
     this.group.add(group);
-    const e: RacingEntity = { kind: 'pad', dist, lateral, vertical, radius: 4.6, object: group, hit: false, missed: false };
+    const e: RacingEntity = {
+      kind: 'pad',
+      dist,
+      lateral,
+      vertical,
+      radius: 4.6,
+      object: group,
+      materialLayers: [
+        { material: glowMat, opacityScale: 0.34 },
+        { material: padMat, opacityScale: 0.92 },
+        { material: stripeMat, opacityScale: 0.82 },
+      ],
+      hit: false,
+      missed: false,
+    };
     this.place(e);
     this.list.push(e);
   }
 
   private place(e: RacingEntity) {
-    const p = track.pointAt(e.dist);
-    const frame = track.frameAt(e.dist);
+    const p = track.pointAt(e.dist, this.scratchPoint);
+    const frame = track.frameAt(e.dist, this.scratchFrame);
     e.object.position.copy(p).addScaledVector(frame.right, e.lateral).addScaledVector(frame.up, e.vertical);
-    const mtx = new THREE.Matrix4().makeBasis(frame.right, frame.up, frame.fwd);
+    const mtx = this.scratchMatrix.makeBasis(frame.right, frame.up, frame.fwd);
     e.object.quaternion.setFromRotationMatrix(mtx);
   }
 }

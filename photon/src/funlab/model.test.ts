@@ -71,6 +71,22 @@ describe('Fun Lab model', () => {
     expect(summary.damageTotal).toBe(40);
   });
 
+  it('treats gravity slingshots as dopamine events', () => {
+    const events = [
+      ev('run-start', 0, { epochIndex: 4, epochName: 'First Stars' }),
+      ev('hazard-near-miss', 4, { cause: 'well' }),
+      ev('gravity-sling', 4.1, { cause: 'well', value: 0.8 }),
+      ev('gate-hit', 7, { streak: 1 }),
+      ev('gravity-sling', 11, { cause: 'well', value: 0.6 }),
+      ev('run-end', 18, { distance: 1200, epochIndex: 4, epochName: 'First Stars' }),
+    ];
+
+    const { summary, fingerprint } = analyzeRun(events, { fun: 4, flow: 4, frustration: 1, oneMoreRun: 4, at: 18_000 });
+
+    expect(summary.gravitySlingshots).toBe(2);
+    expect(fingerprint.dopamine).toBeGreaterThan(45);
+  });
+
   it('detects boredom gaps and recommends excitement density', () => {
     const events = [
       ev('run-start', 0, { epochIndex: 3, epochName: 'Dark Ages' }),

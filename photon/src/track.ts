@@ -4,6 +4,22 @@ import { scene } from './scene';
 import type { Epoch } from './cosmology';
 import { game } from './state';
 
+export interface TrackFrame {
+  fwd: THREE.Vector3;
+  right: THREE.Vector3;
+  up: THREE.Vector3;
+}
+
+function makeTrackFrame(): TrackFrame {
+  return {
+    fwd: new THREE.Vector3(),
+    right: new THREE.Vector3(),
+    up: new THREE.Vector3(),
+  };
+}
+
+const WORLD_UP = new THREE.Vector3(0, 1, 0);
+
 class Track {
   points: THREE.Vector3[] = [];
   segIndex = 0;
@@ -12,18 +28,27 @@ class Track {
   ringGroup = new THREE.Group();
   routeGroup = new THREE.Group();
   routeLines: THREE.Line[] = [];
+  routeBeads!: THREE.Points;
   dustGroup = new THREE.Group();
   dust!: THREE.Points;
   twistFreq = 0.012;
   twistAmp = 10;
   _ringSeed = Math.random() * 1000;
+  private readonly scratchMatrix = new THREE.Matrix4();
+  private readonly ringPoint = new THREE.Vector3();
+  private readonly ringFrame = makeTrackFrame();
+  private readonly routePoint = new THREE.Vector3();
+  private readonly routeFrame = makeTrackFrame();
+  private readonly beadPoint = new THREE.Vector3();
+  private readonly beadFrame = makeTrackFrame();
+  private readonly dustPoint = new THREE.Vector3();
 
   constructor() {
     scene.add(this.ringGroup);
     scene.add(this.routeGroup);
     scene.add(this.dustGroup);
     const ringGeo = new THREE.RingGeometry(GUIDE_ARC_RADIUS - 0.22, GUIDE_ARC_RADIUS + 0.22, 72, 1, 0, Math.PI * 0.72);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.24, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x88e0ff, transparent: true, opacity: 0.30, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
     for (let i = 0; i < 42; i++) {
       const m = new THREE.Mesh(ringGeo, ringMat.clone());
       m.frustumCulled = false;
@@ -48,6 +73,22 @@ class Track {
       this.routeGroup.add(line);
       this.routeLines.push(line);
     }
+    const beadCount = IS_MOBILE ? 52 : 88;
+    const beadGeo = new THREE.BufferGeometry();
+    beadGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(beadCount * 3), 3));
+    const beadMat = new THREE.PointsMaterial({
+      color: 0x88e0ff,
+      size: IS_MOBILE ? 1.25 : 1.55,
+      sizeAttenuation: true,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    this.routeBeads = new THREE.Points(beadGeo, beadMat);
+    this.routeBeads.frustumCulled = false;
+    this.routeGroup.add(this.routeBeads);
+
     const N = IS_MOBILE ? 220 : 480;
     const g = new THREE.BufferGeometry();
     const positions = new Float32Array(N * 3);
@@ -57,7 +98,7 @@ class Track {
       positions[i*3+2] = Math.random() * SEGMENT_LEN * SEGMENTS_AHEAD;
     }
     g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const dustMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, transparent: true, opacity: 0.5, depthWrite: false });
+    const dustMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.72, transparent: true, opacity: 0.58, depthWrite: false, blending: THREE.AdditiveBlending });
     this.dust = new THREE.Points(g, dustMat);
     this.dust.frustumCulled = false;
     this.dustGroup.add(this.dust);
@@ -73,10 +114,12 @@ class Track {
       const mat = line.material as THREE.LineBasicMaterial;
       mat.color.copy(epoch.palettePoint).lerp(epoch.paletteB, Math.abs((line.userData as any).lane) * 0.45);
     }
+    (this.routeBeads.material as THREE.PointsMaterial).color.copy(epoch.palettePoint).lerp(epoch.paletteA, 0.22);
     (this.dust.material as THREE.PointsMaterial).color.copy(epoch.palettePoint).multiplyScalar(0.7);
   }
 
   ensureAhead(targetSegIdx: number) {
+    let changed = false;
     while (this.segIndex < targetSegIdx + SEGMENTS_AHEAD) {
       const i = this.segIndex;
       const x = Math.sin(i * this.twistFreq) * this.twistAmp + Math.sin(i * this.twistFreq * 0.31 + 1.7) * this.twistAmp * 0.7;
@@ -84,36 +127,37 @@ class Track {
       const z = i * SEGMENT_LEN;
       this.points.push(new THREE.Vector3(x, y, z));
       this.segIndex++;
+      changed = true;
     }
     if (this.points.length > SEGMENTS_AHEAD + SEGMENTS_BEHIND + 10) {
       this.points.splice(0, this.points.length - (SEGMENTS_AHEAD + SEGMENTS_BEHIND));
+      changed = true;
     }
-    this.curve = new THREE.CatmullRomCurve3(this.points, false, 'catmullrom', 0.5);
+    if (changed || !this.curve) this.curve = new THREE.CatmullRomCurve3(this.points, false, 'catmullrom', 0.5);
   }
 
-  pointAt(d: number): THREE.Vector3 {
-    if (!this.curve) return new THREE.Vector3();
+  pointAt(d: number, target = new THREE.Vector3()): THREE.Vector3 {
+    if (!this.curve) return target.set(0, 0, 0);
     const firstZ = this.points[0].z;
     const lastZ = this.points[this.points.length - 1].z;
     const u = THREE.MathUtils.clamp((d - firstZ) / (lastZ - firstZ), 0, 1);
-    return this.curve.getPoint(u);
+    return this.curve.getPoint(u, target);
   }
-  tangentAt(d: number): THREE.Vector3 {
-    if (!this.curve) return new THREE.Vector3(0, 0, 1);
+  tangentAt(d: number, target = new THREE.Vector3()): THREE.Vector3 {
+    if (!this.curve) return target.set(0, 0, 1);
     const firstZ = this.points[0].z;
     const lastZ = this.points[this.points.length - 1].z;
     const u = THREE.MathUtils.clamp((d - firstZ) / (lastZ - firstZ), 0, 1);
-    return this.curve.getTangent(u).normalize();
+    return this.curve.getTangent(u, target).normalize();
   }
   // "right" here means SCREEN-right from the chase-cam's perspective (post lookAt convention).
-  frameAt(d: number) {
-    const fwd = this.tangentAt(d);
-    const worldUp = new THREE.Vector3(0, 1, 0);
-    let right = new THREE.Vector3().crossVectors(fwd, worldUp);
-    if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
-    right.normalize();
-    const up = new THREE.Vector3().crossVectors(right, fwd).normalize();
-    return { fwd, right, up };
+  frameAt(d: number, target: TrackFrame = makeTrackFrame()) {
+    this.tangentAt(d, target.fwd);
+    target.right.crossVectors(target.fwd, WORLD_UP);
+    if (target.right.lengthSq() < 1e-4) target.right.set(1, 0, 0);
+    target.right.normalize();
+    target.up.crossVectors(target.right, target.fwd).normalize();
+    return target;
   }
 
   updateRings(photonZ: number) {
@@ -123,16 +167,16 @@ class Track {
     let idx = 0;
     for (let d = startD; d <= endD && idx < this.ringPool.length; d += RING_SPACING, idx++) {
       const m = this.ringPool[idx];
-      const p = this.pointAt(d);
-      const frame = this.frameAt(d);
+      const p = this.pointAt(d, this.ringPoint);
+      const frame = this.frameAt(d, this.ringFrame);
       m.position.copy(p);
-      const mtx = new THREE.Matrix4().makeBasis(frame.right, frame.up, frame.fwd);
+      const mtx = this.scratchMatrix.makeBasis(frame.right, frame.up, frame.fwd);
       m.quaternion.setFromRotationMatrix(mtx);
       const distToPhoton = d - photonZ;
       const t = THREE.MathUtils.smoothstep(distToPhoton, -20, 60);
       const farFade = 1 - THREE.MathUtils.clamp((distToPhoton - 200) / 200, 0, 1);
       const shimmer = 0.86 + 0.10 * Math.sin(time * 2.7 + d * 0.09) + 0.06 * Math.sin(time * 7.3 + d * 0.31);
-      (m.material as THREE.MeshBasicMaterial).opacity = (0.04 + 0.20 * t * farFade) * shimmer;
+      (m.material as THREE.MeshBasicMaterial).opacity = (0.055 + 0.255 * t * farFade) * shimmer;
       const sc = 1 + Math.sin(d * 0.21 + time * 3.3) * 0.018;
       m.scale.set(sc, sc, 1);
       m.rotateZ(((m.userData as any).arcAngle || 0) + time * ((m.userData as any).arcDrift || 0));
@@ -151,8 +195,8 @@ class Track {
       const arr = line.geometry.attributes.position.array as Float32Array;
       for (let i = 0; i < samples; i++) {
         const d = startD + i * step;
-        const p = this.pointAt(d);
-        const frame = this.frameAt(d);
+        const p = this.pointAt(d, this.routePoint);
+        const frame = this.frameAt(d, this.routeFrame);
         const wave = Math.sin(d * 0.018 + this._ringSeed + lane * 1.9);
         const slow = Math.cos(d * 0.011 + lane * 2.4);
         const lateral = lane * PLAYFIELD_HALF_WIDTH * 0.25 + wave * PLAYFIELD_HALF_WIDTH * 0.20;
@@ -162,9 +206,30 @@ class Track {
       }
       line.geometry.attributes.position.needsUpdate = true;
       const mat = line.material as THREE.LineBasicMaterial;
-      mat.opacity = lane === 0 ? 0.20 : 0.12;
+      mat.opacity = lane === 0 ? 0.26 : 0.16;
       line.visible = true;
     }
+    const beads = this.routeBeads.geometry.attributes.position.array as Float32Array;
+    const beadCount = beads.length / 3;
+    const time = performance.now() * 0.001;
+    for (let i = 0; i < beadCount; i++) {
+      const d = photonZ + 24 + i * 7.5;
+      const p = this.pointAt(d, this.beadPoint);
+      const frame = this.frameAt(d, this.beadFrame);
+      const wave = Math.sin(d * 0.019 + this._ringSeed);
+      const slow = Math.cos(d * 0.012 + 1.6);
+      const shimmer = Math.sin(time * 5.0 + i * 0.7) * 0.55 + 0.45;
+      const lateral = wave * PLAYFIELD_HALF_WIDTH * 0.18;
+      const vertical = slow * PLAYFIELD_HALF_HEIGHT * 0.16 + shimmer * 0.7;
+      const q = p.addScaledVector(frame.right, lateral).addScaledVector(frame.up, vertical);
+      beads[i*3+0] = q.x;
+      beads[i*3+1] = q.y;
+      beads[i*3+2] = q.z;
+    }
+    this.routeBeads.geometry.attributes.position.needsUpdate = true;
+    const beadMat = this.routeBeads.material as THREE.PointsMaterial;
+    beadMat.opacity = 0.56 + 0.22 * Math.sin(time * 2.6);
+    this.routeBeads.visible = true;
   }
 
   updateDust(photonZ: number) {
@@ -185,7 +250,7 @@ class Track {
       }
     }
     this.dust.geometry.attributes.position.needsUpdate = true;
-    const p = this.pointAt(photonZ + span * 0.3);
+    const p = this.pointAt(photonZ + span * 0.3, this.dustPoint);
     this.dustGroup.position.set(p.x * 0.3, p.y * 0.3, 0);
   }
 }

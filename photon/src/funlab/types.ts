@@ -11,6 +11,7 @@ export type FunEventType =
   | 'line-break'
   | 'speed-pad-hit'
   | 'speed-chain-break'
+  | 'gravity-sling'
   | 'hazard-near-miss'
   | 'hazard-hit'
   | 'phase-through'
@@ -61,6 +62,7 @@ export interface FunRunSummary {
   lineBreaks: number;
   speedPads: number;
   speedChainBreaks: number;
+  gravitySlingshots: number;
   nearMisses: number;
   nearMissesPerMin: number;
   hazardHits: number;

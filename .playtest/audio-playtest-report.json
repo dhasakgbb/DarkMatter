@@ -1,0 +1,149 @@
+{
+  "url": "http://127.0.0.1:5178/",
+  "screenshots": {
+    "title": "/Users/damian/GitHub/DarkMatter/.playtest/audio-title.png",
+    "run": "/Users/damian/GitHub/DarkMatter/.playtest/audio-run.png"
+  },
+  "traceSummary": {
+    "total": 48,
+    "byCue": {
+      "uiTick": 1,
+      "engineLoop": 3,
+      "Inflationary": 2,
+      "memoryUnlock": 4,
+      "uiClick": 2,
+      "gravityWellWhoosh": 8,
+      "railScrape": 3,
+      "hazardWhoosh": 3,
+      "lineGate": 4,
+      "speedPad": 4,
+      "gateMiss": 3,
+      "Stellar": 1,
+      "epochRiser": 2,
+      "uiSwoosh": 1,
+      "pickup": 1,
+      "wavelengthShift": 3,
+      "damageHit": 1,
+      "death": 1,
+      "witnessChime": 1
+    },
+    "bySource": {
+      "procedural": 5,
+      "asset": 41,
+      "music": 2
+    },
+    "first": [
+      {
+        "cue": "uiTick",
+        "source": "procedural",
+        "at": 1470
+      },
+      {
+        "cue": "engineLoop",
+        "source": "procedural",
+        "at": 1600.199999988079,
+        "detail": "preload fallback"
+      },
+      {
+        "cue": "Inflationary",
+        "source": "procedural",
+        "at": 1601.8999999761581,
+        "detail": "drone"
+      },
+      {
+        "cue": "memoryUnlock",
+        "source": "procedural",
+        "at": 1607
+      },
+      {
+        "cue": "uiClick",
+        "source": "procedural",
+        "at": 1608
+      },
+      {
+        "cue": "engineLoop",
+        "source": "asset",
+        "at": 1803,
+        "detail": "loop"
+      },
+      {
+        "cue": "Inflationary",
+        "source": "music",
+        "at": 1803.199999988079,
+        "detail": "2 stems"
+      },
+      {
+        "cue": "memoryUnlock",
+        "source": "asset",
+        "at": 2829.800000011921,
+        "detail": "1 variants"
+      }
+    ],
+    "last": [
+      {
+        "cue": "death",
+        "source": "asset",
+        "at": 13599.5,
+        "detail": "2 variants"
+      },
+      {
+        "cue": "witnessChime",
+        "source": "asset",
+        "at": 13599.5,
+        "detail": "1 variants"
+      },
+      {
+        "cue": "epochRiser",
+        "source": "asset",
+        "at": 13599.5,
+        "detail": "2 variants"
+      },
+      {
+        "cue": "hazardWhoosh",
+        "source": "asset",
+        "at": 13599.600000023842,
+        "detail": "3 variants"
+      },
+      {
+        "cue": "gravityWellWhoosh",
+        "source": "asset",
+        "at": 13599.600000023842,
+        "detail": "2 variants"
+      },
+      {
+        "cue": "gateMiss",
+        "source": "asset",
+        "at": 14306.199999988079,
+        "detail": "3 variants"
+      },
+      {
+        "cue": "gravityWellWhoosh",
+        "source": "asset",
+        "at": 14525.800000011921,
+        "detail": "2 variants"
+      },
+      {
+        "cue": "speedPad",
+        "source": "asset",
+        "at": 14556.199999988079,
+        "detail": "4 variants"
+      }
+    ]
+  },
+  "pageState": "run-or-none",
+  "gameState": "run",
+  "audioState": "AudioContext present",
+  "audioModule": {
+    "hasContext": true,
+    "contextState": "running",
+    "sfxBuffers": 17,
+    "musicBuffers": 9
+  },
+  "directCueResult": {
+    "hasContext": true,
+    "sfxBuffers": 17,
+    "musicBuffers": 9,
+    "traceLength": 45
+  },
+  "cdpEvents": []
+}

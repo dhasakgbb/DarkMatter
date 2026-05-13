@@ -23,9 +23,10 @@ Use this every time a purchased, commissioned, or generated audio asset enters t
 
 ## Runtime Import
 
-- Place runtime files under `photon/public/audio/music/` or `photon/public/audio/sfx/`.
+- Place small shipped runtime files under `photon/src/audio-assets/music/` or `photon/src/audio-assets/sfx/` so the single-file build can inline them.
+- Use `photon/public/audio/music/` or `photon/public/audio/sfx/` only for larger external assets in dev/server builds.
 - Add or update entries in `photon/src/audio-manifest.json`.
-- Keep `enabled: false` until the file exists and license is clear.
+- Keep `enabled: false` until the file exists and license is clear, unless it is covered by the director-temp generated-audio notice.
 - Enable one cue group at a time.
 - Run `npm run typecheck`.
 - Run `npm run build`.

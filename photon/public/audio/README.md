@@ -1,8 +1,8 @@
 # Photon Runtime Audio
 
-This folder is the browser-shipped audio drop zone.
+This folder is the optional external browser audio drop zone.
 
-Use `photon/src/audio-manifest.json` to declare music stems and SFX. Keep entries disabled until the referenced files exist and the license is cleared. The game will silently fall back to procedural Web Audio cues whenever a declared asset is missing, disabled, or not decoded yet.
+Use `photon/src/audio-manifest.json` to declare music stems and SFX. Small assets that must work in the generated single-file build should live under `photon/src/audio-assets/` instead, where Vite can inline them. Larger externally hosted assets can live here for dev/server builds. The game will silently fall back to procedural Web Audio cues whenever a declared asset is missing, disabled, or not decoded yet.
 
 Recommended runtime format:
 
