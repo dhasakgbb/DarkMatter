@@ -8,6 +8,7 @@ import { runRng } from './seed';
 import { getActiveRenderProfile } from './renderProfile';
 import { pickNextRacingCue } from './racingCue';
 import { activeTutorialNeed, tutorialRacingTuning } from './tutorial';
+import { epochMechanics } from './epochMechanics';
 
 type RacingKind = 'gate' | 'pad';
 
@@ -72,14 +73,15 @@ class RacingLineManager {
     if (!epoch.isHeatDeath) {
       const tutorialNeed = activeTutorialNeed(game.tutorialActive, game.tutorialStep);
       const tutorialTuning = tutorialRacingTuning(tutorialNeed);
+      const mechanics = epochMechanics(epoch.name);
       while (this.lastSpawnDist < horizon) {
-        const gap = tutorialTuning.gapBase + runRng() * tutorialTuning.gapRange;
+        const gap = (tutorialTuning.gapBase + runRng() * tutorialTuning.gapRange) * mechanics.racingGapMul;
         this.lastSpawnDist += gap / Math.max(0.75, epoch.speedMul);
         const targetLine = tutorialTuning.centered ? { lateral: 0, vertical: 0 } : this.racingLineAt(this.lastSpawnDist);
         const line = this.smoothGateTarget(this.lastSpawnDist, targetLine);
         this.spawnGate(this.lastSpawnDist, line.lateral, line.vertical);
 
-        if (runRng() < tutorialTuning.padChance) {
+        if (runRng() < Math.min(0.99, tutorialTuning.padChance * mechanics.padChanceMul)) {
           const padDist = this.lastSpawnDist + (tutorialTuning.centered ? 12 + runRng() * 12 : 16 + runRng() * 20);
           const padLine = tutorialTuning.centered ? line : this.racingLineAt(padDist);
           const padTarget = this.limitRouteStep({

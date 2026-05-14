@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { BOOST_MAX, IS_MOBILE, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGMENT_LEN, SEGMENTS_AHEAD } from './constants';
 import { WAVELENGTHS, CODEX_ENTRIES, type Epoch } from './cosmology';
 import { activeTutorialNeed, tutorialHazardGapScale, tutorialPhaseWavelength } from './tutorial';
+import { epochHazardWeight, epochMechanics } from './epochMechanics';
 import { scene } from './scene';
 import { track } from './track';
 import { game } from './state';
@@ -266,12 +267,13 @@ class HazardManager {
       // Tutorial epoch (idx 0) is exempt so onboarding stays in the easy lane.
       const bias = skillBias(game.flowLevel || 0, game.epochIndex);
       const flowDensityScale = 1 - bias; // bias ∈ [-0.2, +0.2] → scale ∈ [0.8, 1.2]
+      const mechanics = epochMechanics(epoch.name);
       while (this.lastSpawnDist < horizon) {
-        const gap = (16 + rand() * 26) / epoch.hazardDensity * tutorialEase * flowDensityScale;
+        const gap = (16 + rand() * 26) / epoch.hazardDensity * tutorialEase * flowDensityScale * mechanics.hazardGapMul;
         this.lastSpawnDist += gap;
         this.spawnAt(epoch, this.lastSpawnDist);
         const just = this.list[this.list.length - 1];
-        if (just && just.kind === 'gluon' && rand() < 0.45) {
+        if (just && just.kind === 'gluon' && rand() < mechanics.gluonChainChance) {
           const chainId = ++this.chainCounter;
           just.chainId = chainId;
           for (let i = 1; i <= 2; i++) {
@@ -279,7 +281,7 @@ class HazardManager {
           }
           this.lastSpawnDist += 11;
         }
-        if (rand() < 0.55 * epoch.pickupDensity) {
+        if (rand() < Math.min(0.92, 0.55 * epoch.pickupDensity * mechanics.pickupChanceMul)) {
           this.spawnPickup(epoch, this.lastSpawnDist + 2 + rand() * 6);
         }
       }
@@ -301,7 +303,7 @@ class HazardManager {
       const kinds = epoch.hazardKinds;
       const weights = kinds.map(k => {
         const base = k === params?.dominantKind ? 2 : 1;
-        return k === 'darkMatterFilament' ? base * 0.22 : base;
+        return epochHazardWeight(epoch.name, k, base);
       });
       const total = weights.reduce((a, b) => a + b, 0);
       const r = rand() * total;

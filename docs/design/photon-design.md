@@ -104,6 +104,7 @@ This is the only ending. There is no boss. There is no explosion. There is no wi
 | Upgrades | Stays mechanically. Copy gets reframed in second person. |
 | Variants | Each variant gets a Memory-themed unlock condition and lore. |
 | Dark matter filaments | A rare invisible-mass route event. The player detects it by lensing/shear before seeing a reward label, reinforcing that unseen mass is known by gravitational effect, not by glow. |
+| Epoch mechanics | Each era changes pressure and payoff, not only palette: quark plasma favors gluon chains, recombination opens into racing-line payoff, galactic structure raises dark-matter encounter odds, and black-hole time sharpens horizon threat. |
 | Science Mode | Baseline quantitative HUD, sonification, and post-run path analysis: redshift, flow, dark-matter signal, E=hc/lambda, wavelength stretch, proper vs comoving distance, scale factor, CMB temperature, matter/dark-energy fractions, and expansion drift are always part of the run. Phase chains show a small which-path interference cue that resolves on resonance. The science layer is the game, not a side mode. |
 | Endless mode | Removed. Replaced with the actual remaining epochs ending in Heat Death. |
 
