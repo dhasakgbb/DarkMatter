@@ -23,6 +23,7 @@ import { drawHud, showEpochToast } from './hud';
 import { comboMultiplier, showToast } from './utils';
 import { refreshTitleStats, refreshSettingsUI } from './ui';
 import { funLab } from './funlab/runtime';
+import { runFeelNudge, runFeelRows, runFeelStateLabel } from './funlab/runReport';
 
 const FOAM_COLOR = new THREE.Color(0x99ddff);
 const BACKGROUND_COLOR = new THREE.Color();
@@ -399,7 +400,7 @@ export function endRun() {
   const e = EPOCHS[Math.min(reachedIdx, EPOCHS.length - 1)];
   const manualEnd = !!game.manualEndRequested;
   const endCause = manualEnd ? 'manual end run' : absorptionLineFor(e);
-  funLab.finishRun(manualEnd ? 'quit' : 'death', {
+  const funRecord = funLab.finishRun(manualEnd ? 'quit' : 'death', {
     epochIndex: reachedIdx,
     epochName: e.name,
     distance: game.runDistance,
@@ -434,6 +435,29 @@ export function endRun() {
     const d = document.createElement('div');
     d.innerHTML = `<span>${k}</span><span>${v}</span>`;
     stats.appendChild(d);
+  }
+  const feelWrap = document.getElementById('death-feel');
+  if (feelWrap) {
+    feelWrap.innerHTML = '';
+    const rows = runFeelRows(funRecord);
+    if (rows.length > 0) {
+      feelWrap.style.display = '';
+      feelWrap.innerHTML = '<div class="run-feel-head"><span>Run feel</span><b>' + runFeelStateLabel(funRecord) + '</b></div><div class="run-feel-grid"></div><div class="run-feel-note"></div>';
+      const grid = feelWrap.querySelector('.run-feel-grid') as HTMLElement;
+      for (const rowData of rows) {
+        const row = document.createElement('div');
+        const labelEl = document.createElement('span');
+        const valueEl = document.createElement('b');
+        labelEl.textContent = rowData.label;
+        valueEl.textContent = rowData.value;
+        row.append(labelEl, valueEl);
+        grid.appendChild(row);
+      }
+      const note = feelWrap.querySelector('.run-feel-note') as HTMLElement;
+      note.textContent = runFeelNudge(funRecord);
+    } else {
+      feelWrap.style.display = 'none';
+    }
   }
   const nextWrap = document.getElementById('death-next');
   if (nextWrap) {

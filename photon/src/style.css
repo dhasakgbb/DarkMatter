@@ -19,6 +19,15 @@ button.primary { background: linear-gradient(90deg, rgba(136,224,255,0.18), rgba
 .stats div { display: flex; justify-content: space-between; border-bottom: 1px dotted rgba(255,255,255,0.10); padding: 4px 0; }
 .stats div span:last-child { color: #88e0ff; }
 
+.run-feel { margin: 10px 0 12px; border: 1px solid rgba(180,200,255,0.16); background: rgba(255,255,255,0.035); padding: 11px 13px; border-radius: 3px; }
+.run-feel-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 7px; }
+.run-feel-head span { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: #88e0ff; opacity: 0.82; }
+.run-feel-head b { color: #ff7ad9; font-size: 10px; letter-spacing: 0.16em; font-weight: 400; text-transform: uppercase; }
+.run-feel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px 10px; font-size: 10px; }
+.run-feel-grid div { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted rgba(255,255,255,0.08); padding: 3px 0; }
+.run-feel-grid span { opacity: 0.55; }
+.run-feel-grid b { color: #dff8ff; font-weight: 400; text-align: right; }
+.run-feel-note { margin-top: 8px; font-size: 10px; line-height: 1.55; opacity: 0.62; }
 .next-signal { margin: 10px 0 12px; border-left: 2px solid #ff7ad9; background: rgba(255,122,217,0.055); padding: 10px 13px; font-size: 11px; line-height: 1.55; }
 .next-signal span { display: block; margin-bottom: 4px; color: #ff7ad9; font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.8; }
 .next-signal b { color: #dff8ff; font-weight: 400; }
@@ -182,6 +191,7 @@ html.needs-landscape #orientation-lock { display: flex; pointer-events: auto; }
   button { width: 100%; max-width: 280px; }
   .row { gap: 10px; }
   .key { padding: 1px 6px; font-size: 10px; }
+  .run-feel-grid { grid-template-columns: 1fr; }
   .path-analysis-grid { grid-template-columns: 1fr; }
   .funlab-summary { grid-template-columns: 1fr 1fr; }
   .funlab-grid { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: clamp(360px, calc(100dvh - 260px), 560px); max-height: none; }
