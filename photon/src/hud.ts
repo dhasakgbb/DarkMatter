@@ -196,6 +196,10 @@ export function drawHud() {
     hud.fillStyle = 'rgba(136,224,255,0.42)';
     hud.fillText(`ΔE since recombination ${lossPct.toFixed(0)}%`, w - 20, 176);
   }
+  if (game.scienceMode && !IS_MOBILE) {
+    hud.fillStyle = 'rgba(255,255,255,0.44)';
+    hud.fillText(`ψ coherence ${Math.round((game.wave?.coherence || 0) * 100)}%  ·  phase ${game.wave?.phaseDegrees || 0}°`, w - 20, 176);
+  }
   if (e.isHeatDeath) {
     const micro = HEAT_DEATH_MICRO_LINES.find(line => game.epochTimer >= line.at && game.epochTimer < line.at + 8);
     if (micro) {

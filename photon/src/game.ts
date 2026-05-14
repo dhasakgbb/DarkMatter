@@ -27,6 +27,7 @@ import { runFeelExport, runFeelNudge, runFeelRows, runFeelStateLabel } from './f
 import { analyzePhysicsRun, type PhysicsInsightReport } from './physicsInsight';
 import { birthSequenceFrame, shouldTriggerPrimordialLensing } from './birthSequence';
 import { epochFeelFrame, type EpochFeelFrame } from './epochFeel';
+import { waveDualityFrame, type WaveDualityFrame } from './waveDuality';
 
 const FOAM_COLOR = new THREE.Color(0x99ddff);
 const BACKGROUND_COLOR = new THREE.Color();
@@ -83,6 +84,19 @@ function resetFeelState() {
   game.feelAudio = 0;
   game.feelDensity = 1;
   game.feelClearAnnounced = false;
+  game.wave = {
+    coherence: 0,
+    phaseAlignment: 0,
+    fringeSpacing: 1,
+    scatter: 0,
+    interference: 0,
+    diffraction: 0,
+    causticBoost: 0,
+    resonanceBonus: 0,
+    analysisCoherence: 0,
+    wavefrontIntensity: 0,
+    phaseDegrees: 0,
+  };
 }
 
 declare global {
@@ -280,7 +294,7 @@ function heatDeathTick(dt: number, photonDist: number) {
   updateLateEpochRedshift(dt, e);
   const entropy = Math.max(THREE.MathUtils.clamp(t / Math.max(1, total), 0, 1), game.feelEntropyFade || 0);
   audio.setHeatDeathProgress(entropy);
-  const visFade = THREE.MathUtils.clamp(1 - entropy * 0.96, 0.04, 1);
+  const visFade = THREE.MathUtils.clamp(1 - entropy * 0.88, 0.12, 1);
   game.heatDeathFade = 1 - visFade;
   if (stars && stars.material) {
     starMat.uniforms.uOpacity.value = 0.9 * visFade;
@@ -315,6 +329,10 @@ function applyFeelFrame(frame: EpochFeelFrame) {
   game.feelDensity = frame.densityMul;
 }
 
+function applyWaveFrame(frame: WaveDualityFrame) {
+  game.wave = frame;
+}
+
 function updateEpochFeel(realDt: number) {
   const active = game.state === 'run' && !game.dying && !game.witnessing;
   const e = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
@@ -346,7 +364,35 @@ function updateEpochFeel(realDt: number) {
   const birth = active && game.epochIndex === 0
     ? birthSequenceFrame(game.epochTimer, { scienceMode: game.scienceMode, mobile: IS_MOBILE || !!settings.reducedMotion || !!game.reducedMotion })
     : birthSequenceFrame(15, { scienceMode: false, mobile: IS_MOBILE });
+  const wave = active
+    ? waveDualityFrame({
+        epochIndex: game.epochIndex,
+        epochName: e.name,
+        epochTimer: game.epochTimer,
+        epochDuration: e.duration,
+        wavelengthIndex: photon.wavelength,
+        phaseStreak: game.phaseStreak || 0,
+        shiftedThisRun: !!game._shiftedThisRun,
+        darkMatterSignal: game.darkMatterSignal || 0,
+        scienceMode: game.scienceMode,
+        mobile: IS_MOBILE,
+        reducedMotion: !!settings.reducedMotion || !!game.reducedMotion,
+      })
+    : waveDualityFrame({
+        epochIndex: game.epochIndex,
+        epochName: e.name,
+        epochTimer: e.duration,
+        epochDuration: e.duration,
+        wavelengthIndex: photon.wavelength,
+        phaseStreak: 0,
+        shiftedThisRun: false,
+        darkMatterSignal: 0,
+        scienceMode: false,
+        mobile: IS_MOBILE,
+        reducedMotion: true,
+      });
   applyFeelFrame(feel);
+  applyWaveFrame(wave);
   game.birthFlash = birth.flash;
   game.birthNoiseAmp = birth.noiseAmp;
   game.birthBloom = birth.bloomMul;
@@ -1243,6 +1289,19 @@ export function renderGameToText() {
         lensing: Math.round((game.feelLensing || 0) * 1000) / 1000,
         audioIntensity: Math.round((game.feelAudio || 0) * 1000) / 1000,
         density: Math.round((game.feelDensity || 1) * 1000) / 1000,
+      },
+      wave: {
+        coherence: Math.round((game.wave?.coherence || 0) * 1000) / 1000,
+        phaseAlignment: Math.round((game.wave?.phaseAlignment || 0) * 1000) / 1000,
+        fringeSpacing: Math.round((game.wave?.fringeSpacing || 1) * 1000) / 1000,
+        scatter: Math.round((game.wave?.scatter || 0) * 1000) / 1000,
+        interference: Math.round((game.wave?.interference || 0) * 1000) / 1000,
+        diffraction: Math.round((game.wave?.diffraction || 0) * 1000) / 1000,
+        causticBoost: Math.round((game.wave?.causticBoost || 0) * 1000) / 1000,
+        resonanceBonus: Math.round((game.wave?.resonanceBonus || 0) * 1000) / 1000,
+        analysisCoherence: game.wave?.analysisCoherence || 0,
+        wavefrontIntensity: Math.round((game.wave?.wavefrontIntensity || 0) * 1000) / 1000,
+        phaseDegrees: game.wave?.phaseDegrees || 0,
       },
       photonEquation: {
         energyEv: Number(photonEquation.energyEv.toPrecision(4)),

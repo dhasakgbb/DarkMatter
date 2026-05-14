@@ -478,8 +478,10 @@ class HazardManager {
         }
         if (!h.nearMissed && dz < 18 && dz > -4 && strength > 0.06) {
           h.nearMissed = true;
-          game.lineEventText = 'MASS DETECTED';
+          game.lineEventText = (game.wave?.causticBoost || 0) > 0.12 ? 'WAVE CAUSTIC' : 'MASS DETECTED';
           game.lineEventTime = 1.1;
+          if ((game.wave?.causticBoost || 0) > 0.10) onCollect(2 + game.wave.causticBoost * 4);
+          particleManager.emitBurst(h.mesh.position, 'phase', 8 + Math.round((game.wave?.diffraction || 0) * 14), new THREE.Color(0x7d5cff));
           meta.darkMatterDetections = (meta.darkMatterDetections || 0) + 1;
           saveMeta(meta);
           checkMemoryTriggers();
@@ -580,10 +582,12 @@ class HazardManager {
         h.hit = true;
         funLab.record('phase-through', { epochIndex: game.epochIndex, distance: photonDist, cause: h.type, value: h.dmg });
         (h.mesh.material as THREE.MeshBasicMaterial).opacity = 0.18;
-        onCollect(6);
+        const waveReward = Math.min(4, Math.max(0, (game.wave?.resonanceBonus || 0) * 5 + (game.wave?.phaseAlignment || 0) * 1.4));
+        onCollect(6 + waveReward);
         photon.phaseFlash();
         audio.phaseChime(h.wlIdx);
-        particleManager.emitBurst(h.mesh.position, 'phase', 14, WAVELENGTHS[h.wlIdx].color);
+        if ((game.wave?.phaseAlignment || 0) > 0.72) audio.lineGate(game.phaseStreak || 1);
+        particleManager.emitBurst(h.mesh.position, 'phase', 14 + Math.round(waveReward * 2), WAVELENGTHS[h.wlIdx].color);
         if (h.chainId != null) {
           for (const other of this.list) {
             if (other !== h && other.chainId === h.chainId && !other.hit) {

@@ -117,11 +117,11 @@ export function epochFeelFrame(input: EpochFeelInput): EpochFeelFrame {
     gravityDread = clamp01(0.22 * (1 - entropyFade));
     clarity = clamp01(0.18 - entropyFade * 0.10);
     fluctuationNoise = 0.03 * (1 - entropyFade) * scienceMul;
-    bloomMul = 1 - entropyFade * 0.22;
-    exposureAdd = -entropyFade * 0.12;
+    bloomMul = 1 - entropyFade * 0.18;
+    exposureAdd = -entropyFade * 0.08;
     lensingPulse = 0;
     audioIntensity = clamp01(0.32 - entropyFade * 0.20);
-    densityMul = 0.32 - entropyFade * 0.24;
+    densityMul = 0.34 - entropyFade * 0.20;
   }
 
   return {

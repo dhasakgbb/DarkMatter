@@ -1,5 +1,6 @@
 import { photonEquationSnapshot, scienceSnapshot } from './science';
 import { readJsonStorage, writeStorage } from './storage';
+import { waveDualityFrame } from './waveDuality';
 
 export const PHYSICS_SEED_BOOKMARKS_KEY = 'photon-seed-bookmarks-v1';
 const MAX_BOOKMARKS = 8;
@@ -60,6 +61,13 @@ export interface PhysicsInsightReport {
     lineChain: number;
     label: string;
   };
+  wave: {
+    coherence: number;
+    phaseAlignment: number;
+    diffraction: number;
+    causticBoost: number;
+    analysisCoherence: number;
+  };
   discovery: {
     darkMatterObserved: boolean;
     note: string;
@@ -95,9 +103,28 @@ function resonanceLabel(phaseChain: number) {
   return 'unresolved phase';
 }
 
+function wavelengthIndexForKey(key: string) {
+  if (key === 'gamma') return 0;
+  if (key === 'radio') return 2;
+  return 1;
+}
+
 export function analyzePhysicsRun(input: PhysicsInsightInput): PhysicsInsightReport {
   const science = scienceSnapshot(input.epochIndex, input.epochTimer, input.epochDuration);
   const photonEquation = photonEquationSnapshot(input.wavelengthKey, science.redshiftZ, input.runDistance);
+  const wave = waveDualityFrame({
+    epochIndex: input.epochIndex,
+    epochName: input.epochName,
+    epochTimer: input.epochTimer,
+    epochDuration: input.epochDuration,
+    wavelengthIndex: wavelengthIndexForKey(input.wavelengthKey),
+    phaseStreak: input.phaseStreak,
+    shiftedThisRun: input.phaseStreak > 0,
+    darkMatterSignal: input.darkMatterDetections > 0 ? 0.72 : 0,
+    scienceMode: input.scienceMode,
+    mobile: false,
+    reducedMotion: false,
+  });
   const emittedEnergyEv = photonEquation.energyEv * Math.max(1, 1 + science.redshiftZ);
   const energyLostPercent = clamp((1 - photonEquation.energyEv / Math.max(emittedEnergyEv, Number.EPSILON)) * 100);
   const epochProgress = clamp(input.epochTimer / Math.max(1, input.epochDuration), 0, 1);
@@ -164,6 +191,13 @@ export function analyzePhysicsRun(input: PhysicsInsightInput): PhysicsInsightRep
       phaseChain: input.phaseStreak,
       lineChain: input.bestLineStreak,
       label: resonanceLabel(input.phaseStreak),
+    },
+    wave: {
+      coherence: wave.coherence,
+      phaseAlignment: wave.phaseAlignment,
+      diffraction: wave.diffraction,
+      causticBoost: wave.causticBoost,
+      analysisCoherence: wave.analysisCoherence,
     },
     discovery: { darkMatterObserved, note },
     bookmarkHint,

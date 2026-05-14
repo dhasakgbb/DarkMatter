@@ -4,6 +4,7 @@
 import { VARIANTS, type Variant } from './cosmology';
 import { meta } from './meta';
 import type { EpochFeelPhase } from './epochFeel';
+import type { WaveDualityFrame } from './waveDuality';
 import type { RacingCue } from './racingCue';
 
 export type GameStateName = 'title' | 'run' | 'upgrade' | 'death' | 'codex' | 'pause' | 'memories' | 'form';
@@ -105,6 +106,7 @@ export interface RunState {
   feelAudio: number;
   feelDensity: number;
   feelClearAnnounced: boolean;
+  wave: WaveDualityFrame;
   primordialLensingArmed: boolean;
   primordialLensingTriggered: boolean;
   primordialLensingTime: number;
@@ -190,6 +192,19 @@ export const game: RunState = {
   feelAudio: 0,
   feelDensity: 1,
   feelClearAnnounced: false,
+  wave: {
+    coherence: 0,
+    phaseAlignment: 0,
+    fringeSpacing: 1,
+    scatter: 0,
+    interference: 0,
+    diffraction: 0,
+    causticBoost: 0,
+    resonanceBonus: 0,
+    analysisCoherence: 0,
+    wavefrontIntensity: 0,
+    phaseDegrees: 0,
+  },
   primordialLensingArmed: false,
   primordialLensingTriggered: false,
   primordialLensingTime: 0,

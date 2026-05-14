@@ -93,6 +93,13 @@ describe('physics insight analysis', () => {
       },
       insight: { score: expect.any(Number), label: expect.any(String), components: expect.any(Object) },
       resonance: { phaseChain: 9, label: expect.any(String) },
+      wave: {
+        coherence: expect.any(Number),
+        phaseAlignment: expect.any(Number),
+        diffraction: expect.any(Number),
+        causticBoost: expect.any(Number),
+        analysisCoherence: expect.any(Number),
+      },
       bookmarkHint: expect.any(String),
     });
   });

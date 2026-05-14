@@ -288,8 +288,10 @@ class Photon {
     const pulse = 1 + Math.sin(performance.now() * 0.012) * 0.05 + (this.boosting ? 0.18 : 0) + flashBoost * 0.35;
     this.halo.scale.setScalar(pulse);
     this.corona.scale.setScalar(1.02 + (pulse - 1) * 0.48 + flashBoost * 0.22);
-    const coherenceGlow = game.feelCoherence || 0;
-    const rawHalo = 0.14 + (this.boosting ? 0.07 : 0) + (this.phaseTimer > 0 ? 0.10 : 0) + flashBoost * 0.12 + coherenceGlow * 0.08;
+    const wave = game.wave;
+    const coherenceGlow = Math.max(game.feelCoherence || 0, (wave?.coherence || 0) * 0.72);
+    const waveIntensity = wave?.wavefrontIntensity || 0;
+    const rawHalo = 0.14 + (this.boosting ? 0.07 : 0) + (this.phaseTimer > 0 ? 0.10 : 0) + flashBoost * 0.12 + coherenceGlow * 0.08 + waveIntensity * 0.04;
     this.haloMat.opacity = Math.min(0.34, rawHalo);
     this.coronaMat.opacity = Math.min(0.16, 0.045 + (this.boosting ? 0.03 : 0) + flashBoost * 0.05 + coherenceGlow * 0.04 + (this.phaseTimer > 0 ? 0.025 : 0));
 
@@ -301,12 +303,18 @@ class Photon {
     const baseColor = WAVELENGTHS[this.wavelength].color;
     for (let i = 0; i < this.trailLen; i++) {
       const h = i < this.trailCount ? this.trailHistory[(this.trailCursor + i) % this.trailLen] : this.group.position;
-      const wave = coherenceGlow > 0 ? Math.sin(performance.now() * 0.012 + i * 0.62) * coherenceGlow * (1 - i / this.trailLen) : 0;
-      posArr[i*3+0] = h.x + wave * 0.22;
-      posArr[i*3+1] = h.y - wave * 0.14;
+      const fringe = Math.max(0.36, wave?.fringeSpacing || 1);
+      const scatter = wave?.scatter || 0;
+      const interference = wave?.interference || 0;
+      const waveOffset = waveIntensity > 0
+        ? Math.sin(performance.now() * 0.012 + i * 0.62 / fringe) * waveIntensity * (1 - i / this.trailLen)
+        : 0;
+      const fray = scatter > 0 ? Math.sin(i * 1.73 + performance.now() * 0.006) * scatter * 0.035 : 0;
+      posArr[i*3+0] = h.x + waveOffset * 0.26 + fray;
+      posArr[i*3+1] = h.y - waveOffset * 0.16 - fray * 0.6;
       posArr[i*3+2] = h.z;
       const fade = 1 - i / this.trailLen;
-      const coherenceBright = 1 + coherenceGlow * 0.55;
+      const coherenceBright = 1 + coherenceGlow * 0.45 + (wave?.resonanceBonus || 0) * 0.42 - interference * 0.18;
       colArr[i*3+0] = Math.min(1, baseColor.r * fade * coherenceBright);
       colArr[i*3+1] = Math.min(1, baseColor.g * fade * coherenceBright);
       colArr[i*3+2] = Math.min(1, baseColor.b * fade * coherenceBright);
