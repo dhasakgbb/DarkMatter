@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatComovingDistance, formatPhotonEnergy, formatScienceValue, formatTemperature, formatWavelength, photonEquationSnapshot, scienceSnapshot } from './science';
+import { formatComovingDistance, formatPhotonEnergy, formatScienceValue, formatTemperature, formatWavelength, photonEnergyLossPercent, photonEquationSnapshot, scienceSnapshot } from './science';
 
 describe('science telemetry', () => {
   it('maps recombination near the observed CMB release redshift', () => {
@@ -36,5 +36,23 @@ describe('science telemetry', () => {
     expect(formatPhotonEnergy(visible.energyEv)).toBe('2.25 eV');
     expect(formatComovingDistance(0.004)).toBe('4.00 Mpc');
     expect(formatWavelength(550e-9)).toBe('550 nm');
+  });
+});
+
+describe('photonEnergyLossPercent', () => {
+  it('returns 0 at emission (z=0)', () => {
+    expect(photonEnergyLossPercent('visible', 0)).toBe(0);
+  });
+
+  it('returns ~50% when redshift halves the energy', () => {
+    // observed = emitted * (1+z); energy ∝ 1/observed; so loss = z/(1+z).
+    const loss = photonEnergyLossPercent('visible', 1);
+    expect(loss).toBeGreaterThan(49);
+    expect(loss).toBeLessThan(51);
+  });
+
+  it('clamps NaN and infinities to 0', () => {
+    expect(photonEnergyLossPercent('visible', Number.NaN)).toBe(0);
+    expect(photonEnergyLossPercent('visible', -1)).toBe(0);
   });
 });

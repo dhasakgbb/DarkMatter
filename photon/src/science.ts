@@ -121,3 +121,11 @@ export function formatTemperature(kelvin: number) {
   if (kelvin >= 100) return `${kelvin.toFixed(0)} K`;
   return `${kelvin.toFixed(2)} K`;
 }
+
+export function photonEnergyLossPercent(wavelengthKey: string, redshiftZ: number): number {
+  if (!Number.isFinite(redshiftZ) || redshiftZ <= 0) return 0;
+  const eq = photonEquationSnapshot(wavelengthKey, redshiftZ, 0);
+  const emittedEnergyEv = (HC_EV_M / eq.emittedWavelengthM);
+  if (emittedEnergyEv <= 0) return 0;
+  return Math.max(0, Math.min(100, (1 - eq.energyEv / emittedEnergyEv) * 100));
+}

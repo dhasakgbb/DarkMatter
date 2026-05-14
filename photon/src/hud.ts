@@ -6,7 +6,7 @@ import { EPOCHS, WAVELENGTHS, TUTORIAL_STEPS } from './cosmology';
 import { photon } from './photon';
 import { BASE_SPEED, BOOST_MAX, IS_MOBILE, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH } from './constants';
 import { cosmicTimeLabel, comboMultiplier } from './utils';
-import { formatComovingDistance, formatPhotonEnergy, formatScienceValue, formatTemperature, photonEquationSnapshot, scienceSnapshot } from './science';
+import { formatComovingDistance, formatPhotonEnergy, formatScienceValue, formatTemperature, photonEnergyLossPercent, photonEquationSnapshot, scienceSnapshot } from './science';
 import { seedToLabel } from './seed';
 import { WAVELENGTH_SEGMENT_GAP, WAVELENGTH_SEGMENT_HEIGHT, WAVELENGTH_SEGMENT_WIDTH, wavelengthStartX, wavelengthTotalWidth } from './hudLayout';
 import { renderPixelRatio } from './renderProfile';
@@ -191,6 +191,11 @@ export function drawHud() {
   hud.fillText(`drift ${Math.round(science.expansionDrift * 100)}%`, w - 20, 148);
   hud.fillStyle = 'rgba(136,224,255,0.54)';
   hud.fillText(`E=hc/λ ${formatPhotonEnergy(photonEquation.energyEv)}  ·  Dc ${formatComovingDistance(photonEquation.comovingDistanceGpc)}`, w - 20, 162);
+  if (game.scienceMode) {
+    const lossPct = photonEnergyLossPercent(WAVELENGTHS[photon.wavelength]?.key || 'visible', science.redshiftZ);
+    hud.fillStyle = 'rgba(136,224,255,0.42)';
+    hud.fillText(`ΔE since recombination ${lossPct.toFixed(0)}%`, w - 20, 176);
+  }
   if (e.isHeatDeath) {
     const micro = HEAT_DEATH_MICRO_LINES.find(line => game.epochTimer >= line.at && game.epochTimer < line.at + 8);
     if (micro) {
