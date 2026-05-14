@@ -38,3 +38,29 @@ export function runFeelNudge(record: FunRunRecord | null | undefined) {
   if (!step) return 'Collect a longer run so the universe has enough signal to answer.';
   return step.action;
 }
+
+export function runFeelExport(record: FunRunRecord | null | undefined) {
+  if (!record) return null;
+  return {
+    state: record.dopamineEngine.state,
+    stateLabel: runFeelStateLabel(record),
+    score: record.dopamineEngine.score,
+    rewardCadenceSec: record.dopamineEngine.rewardCadenceSec,
+    rewardEventsPerMin: record.dopamineEngine.rewardEventsPerMin,
+    pressure: record.dopamineEngine.pressure,
+    mastery: record.dopamineEngine.mastery,
+    safety: record.dopamineEngine.safety,
+    novelty: record.dopamineEngine.novelty,
+    dopamine: record.fingerprint.dopamine,
+    flow: record.fingerprint.flow,
+    oneMoreRun: record.fingerprint.oneMoreRun,
+    frustration: record.fingerprint.frustration,
+    readability: record.fingerprint.readability,
+    funIndex: record.fingerprint.funIndex,
+    trust: record.fingerprint.trust,
+    uncertainty: record.fingerprint.uncertainty,
+    nextNudge: runFeelNudge(record),
+    tuning: record.dopamineEngine.tuning,
+    guardrails: record.dopamineEngine.guardrails,
+  };
+}

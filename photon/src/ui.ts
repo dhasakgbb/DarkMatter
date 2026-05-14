@@ -152,9 +152,9 @@ export function bindUI() {
     const payload = window.__PHOTON_PATH_ANALYSIS_JSON || '{}';
     try {
       await navigator.clipboard?.writeText(payload);
-      showToast('◇ Path JSON copied');
+      showToast('◇ Run JSON copied');
     } catch {
-      showToast('◇ Path JSON ready in diagnostics');
+      showToast('◇ Run JSON ready in diagnostics');
     }
   });
   document.getElementById('btn-codex')!.addEventListener('click', () => { refreshCodex(); setState('codex'); });

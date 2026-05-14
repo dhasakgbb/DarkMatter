@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runFeelNudge, runFeelRows, runFeelStateLabel } from './runReport';
+import { runFeelExport, runFeelNudge, runFeelRows, runFeelStateLabel } from './runReport';
 import type { FunRunRecord } from './types';
 
 function record(overrides: Partial<FunRunRecord> = {}): FunRunRecord {
@@ -59,9 +59,20 @@ describe('run feel report', () => {
     expect(runFeelNudge(record())).toBe('Thread a gate into a speed pad before the quiet gap.');
   });
 
+  it('exports serializable run-feel telemetry for copied run JSON', () => {
+    expect(runFeelExport(record())).toMatchObject({
+      state: 'underfed',
+      stateLabel: 'Underfed',
+      rewardCadenceSec: 8.4,
+      dopamine: 62,
+      nextNudge: 'Thread a gate into a speed pad before the quiet gap.',
+    });
+  });
+
   it('handles missing records defensively', () => {
     expect(runFeelRows(null)).toEqual([]);
     expect(runFeelStateLabel(null)).toBe('No signal');
     expect(runFeelNudge(null)).toContain('longer run');
+    expect(runFeelExport(null)).toBeNull();
   });
 });

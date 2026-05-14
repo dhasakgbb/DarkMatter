@@ -23,7 +23,7 @@ import { drawHud, showEpochToast } from './hud';
 import { comboMultiplier, showToast } from './utils';
 import { refreshTitleStats, refreshSettingsUI } from './ui';
 import { funLab } from './funlab/runtime';
-import { runFeelNudge, runFeelRows, runFeelStateLabel } from './funlab/runReport';
+import { runFeelExport, runFeelNudge, runFeelRows, runFeelStateLabel } from './funlab/runReport';
 
 const FOAM_COLOR = new THREE.Color(0x99ddff);
 const BACKGROUND_COLOR = new THREE.Color();
@@ -479,6 +479,7 @@ export function endRun() {
     photon: { wavelength: wavelengthKey, emittedWavelengthM: photonEquation.emittedWavelengthM, observedWavelengthM: photonEquation.observedWavelengthM, energyEv: photonEquation.energyEv },
     path: { properDistanceUnits: Math.round(game.runDistance), comovingDistanceGpc: photonEquation.comovingDistanceGpc, redshiftZ: scienceTelemetry.redshiftZ, energyLostPercent },
     run: { flowPeak: game.flowPeak, bestLineStreak: game.bestLineStreakThisRun || 0, phaseStreak: game.phaseStreak || 0, darkMatterDetections: meta.darkMatterDetections || 0 },
+    feel: runFeelExport(funRecord),
   };
   window.__PHOTON_PATH_ANALYSIS_JSON = JSON.stringify(analysis, null, 2);
   const analysisWrap = document.getElementById('death-analysis');
@@ -492,7 +493,7 @@ export function endRun() {
       ['Comoving path', formatComovingDistance(photonEquation.comovingDistanceGpc)],
       ['Peak flow', Math.round((game.flowPeak || 0) * 100) + '%'],
     ];
-    analysisWrap.innerHTML = '<div class="path-analysis-head"><span>Photon path analysis</span><b>' + e.name + '</b></div><div class="path-analysis-grid"></div><div class="path-analysis-note">Seeded run record: proper track distance, cosmological redshift, wavelength stretch, and energy loss are exported as JSON.</div>';
+    analysisWrap.innerHTML = '<div class="path-analysis-head"><span>Photon path analysis</span><b>' + e.name + '</b></div><div class="path-analysis-grid"></div><div class="path-analysis-note">Seeded run record: proper track distance, cosmological redshift, wavelength stretch, energy loss, and run-feel telemetry are exported as JSON.</div>';
     const grid = analysisWrap.querySelector('.path-analysis-grid') as HTMLElement;
     for (const [label, value] of rows) {
       const row = document.createElement('div');
