@@ -3,7 +3,7 @@ import { BOOST_MAX, IS_MOBILE, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGM
 import { WAVELENGTHS, CODEX_ENTRIES, type Epoch } from './cosmology';
 import { activeTutorialNeed, tutorialHazardGapScale, tutorialPhaseWavelength } from './tutorial';
 import { epochHazardWeight, epochMechanics } from './epochMechanics';
-import { scene } from './scene';
+import { scene, lensingPass } from './scene';
 import { track } from './track';
 import { game } from './state';
 import { skillBias } from './flow';
@@ -493,16 +493,32 @@ class HazardManager {
           game.darkMatterDeflectionArcsec = 0.18 + strength * 2.4;
         }
         if (!h.nearMissed && dz < 18 && dz > -4 && strength > 0.06) {
-          h.nearMissed = true;
-          game.lineEventText = (game.wave?.causticBoost || 0) > 0.12 ? 'WAVE CAUSTIC' : 'MASS DETECTED';
-          game.lineEventTime = 1.1;
-          if ((game.wave?.causticBoost || 0) > 0.10) onCollect(2 + game.wave.causticBoost * 4);
-          particleManager.emitBurst(h.mesh.position, 'phase', 8 + Math.round((game.wave?.diffraction || 0) * 14), new THREE.Color(0x7d5cff));
-          meta.darkMatterDetections = (meta.darkMatterDetections || 0) + 1;
-          saveMeta(meta);
-          checkMemoryTriggers();
-          maybeUnlockCodexFn('DARKMATTER', CODEX_ENTRIES);
-          funLab.record('dark-matter-detection', { epochIndex: game.epochIndex, epochName: currentEpoch.name, distance: photonDist, value: strength });
+          const floored = applyFloorIfPending(game, strength);
+          const effectiveStrength = floored.strength;
+          const tier = tierForStrength(effectiveStrength);
+          if (tier > 0) {
+            h.nearMissed = true;
+            game.lineEventText = (game.wave?.causticBoost || 0) > 0.12 ? 'WAVE CAUSTIC' : 'MASS DETECTED';
+            game.lineEventTime = 1.1;
+            if ((game.wave?.causticBoost || 0) > 0.10) onCollect(2 + game.wave.causticBoost * 4);
+            particleManager.emitBurst(h.mesh.position, 'phase', 8 + Math.round((game.wave?.diffraction || 0) * 14), new THREE.Color(0x7d5cff));
+            meta.darkMatterDetections = (meta.darkMatterDetections || 0) + 1;
+            game.lensingEventsThisRun = (game.lensingEventsThisRun || 0) + 1;
+            saveMeta(meta);
+            checkMemoryTriggers();
+            maybeUnlockCodexFn('DARKMATTER', CODEX_ENTRIES);
+            funLab.record('dark-matter-detection', {
+              epochIndex: game.epochIndex,
+              epochName: currentEpoch.name,
+              distance: photonDist,
+              value: effectiveStrength,
+              tier,
+              flooredFromPending: floored.consumed,
+            } as Parameters<typeof funLab.record>[1]);
+            if (tier === 3 && game.scienceMode) {
+              lensingPass.uniforms.uIntensity.value = Math.max(lensingPass.uniforms.uIntensity.value as number, 0.45);
+            }
+          }
         }
       }
       // SPATIAL: emit a Doppler whoosh once as each hazard crosses the photon (4 units ahead → behind).
