@@ -7,6 +7,7 @@ import { game } from './state';
 import { runRng } from './seed';
 import { getActiveRenderProfile } from './renderProfile';
 import { pickNextRacingCue } from './racingCue';
+import { activeTutorialNeed, tutorialRacingTuning } from './tutorial';
 
 type RacingKind = 'gate' | 'pad';
 
@@ -69,18 +70,21 @@ class RacingLineManager {
   ensureAhead(epoch: Epoch, photonDist: number) {
     const horizon = photonDist + SEGMENT_LEN * SEGMENTS_AHEAD - 42;
     if (!epoch.isHeatDeath) {
+      const tutorialNeed = activeTutorialNeed(game.tutorialActive, game.tutorialStep);
+      const tutorialTuning = tutorialRacingTuning(tutorialNeed);
       while (this.lastSpawnDist < horizon) {
-        const gap = 56 + runRng() * 32;
+        const gap = tutorialTuning.gapBase + runRng() * tutorialTuning.gapRange;
         this.lastSpawnDist += gap / Math.max(0.75, epoch.speedMul);
-        const line = this.smoothGateTarget(this.lastSpawnDist, this.racingLineAt(this.lastSpawnDist));
+        const targetLine = tutorialTuning.centered ? { lateral: 0, vertical: 0 } : this.racingLineAt(this.lastSpawnDist);
+        const line = this.smoothGateTarget(this.lastSpawnDist, targetLine);
         this.spawnGate(this.lastSpawnDist, line.lateral, line.vertical);
 
-        if (runRng() < 0.92) {
-          const padDist = this.lastSpawnDist + 16 + runRng() * 20;
-          const padLine = this.racingLineAt(padDist);
+        if (runRng() < tutorialTuning.padChance) {
+          const padDist = this.lastSpawnDist + (tutorialTuning.centered ? 12 + runRng() * 12 : 16 + runRng() * 20);
+          const padLine = tutorialTuning.centered ? line : this.racingLineAt(padDist);
           const padTarget = this.limitRouteStep({
-            lateral: THREE.MathUtils.lerp(line.lateral, padLine.lateral, 0.65) + (runRng() - 0.5) * 2.2,
-            vertical: THREE.MathUtils.lerp(line.vertical, padLine.vertical, 0.65) + (runRng() - 0.5) * 1.6,
+            lateral: THREE.MathUtils.lerp(line.lateral, padLine.lateral, 0.65) + (runRng() - 0.5) * (tutorialTuning.centered ? 0.8 : 2.2),
+            vertical: THREE.MathUtils.lerp(line.vertical, padLine.vertical, 0.65) + (runRng() - 0.5) * (tutorialTuning.centered ? 0.6 : 1.6),
           }, line, 9.5, 6.5);
           this.spawnPad(padDist, padTarget.lateral, padTarget.vertical);
         }

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { BOOST_MAX, IS_MOBILE, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH, SEGMENT_LEN, SEGMENTS_AHEAD } from './constants';
 import { WAVELENGTHS, CODEX_ENTRIES, type Epoch } from './cosmology';
+import { activeTutorialNeed, tutorialHazardGapScale, tutorialPhaseWavelength } from './tutorial';
 import { scene } from './scene';
 import { track } from './track';
 import { game } from './state';
@@ -252,7 +253,8 @@ class HazardManager {
 
   ensureAhead(epoch: Epoch, photonDist: number) {
     const horizon = photonDist + SEGMENT_LEN * SEGMENTS_AHEAD - 20;
-    const tutorialEase = (game.tutorialActive && game.tutorialStep < 2) ? 2.0 : 1.0;
+    const tutorialNeed = activeTutorialNeed(game.tutorialActive, game.tutorialStep);
+    const tutorialEase = tutorialHazardGapScale(tutorialNeed);
     if (epoch.isHeatDeath) {
       while (this.lastSpawnDist < horizon) {
         this.lastSpawnDist += 40 + rand() * 50;
@@ -308,7 +310,9 @@ class HazardManager {
       for (let i = 0; i < kinds.length; i++) { acc += weights[i]; if (r <= acc) { kind = kinds[i]; break; } }
     }
     let geo: THREE.BufferGeometry, hex: number, wlIdx: number, dmg: number, type: string;
-    const wl = chainOpts?.forceWl ?? Math.floor(rand() * 3);
+    const tutorialNeed = activeTutorialNeed(game.tutorialActive, game.tutorialStep);
+    const fallbackWavelength = chainOpts?.forceWl ?? Math.floor(rand() * 3);
+    const wl = tutorialPhaseWavelength(tutorialNeed, photon.wavelength, fallbackWavelength);
     let hitRadius = 2.6;
     let isFrontFacing = false;
     let cannotPhase = false;
@@ -335,8 +339,12 @@ class HazardManager {
       material.blending = THREE.AdditiveBlending;
     }
     this.addMaterialDetail(mesh, type, hex);
-    const lat = isFrontFacing ? 0 : (rand() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.7;
-    const ver = isFrontFacing ? 0 : (rand() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.7;
+    let lat = isFrontFacing ? 0 : (rand() - 0.5) * PLAYFIELD_HALF_WIDTH * 1.7;
+    let ver = isFrontFacing ? 0 : (rand() - 0.5) * PLAYFIELD_HALF_HEIGHT * 1.7;
+    if (tutorialNeed === 'phase' && !isFrontFacing) {
+      lat = THREE.MathUtils.clamp(photon.lateral + (rand() - 0.5) * 8, -PLAYFIELD_HALF_WIDTH * 0.55, PLAYFIELD_HALF_WIDTH * 0.55);
+      ver = THREE.MathUtils.clamp(photon.vertical + (rand() - 0.5) * 6, -PLAYFIELD_HALF_HEIGHT * 0.55, PLAYFIELD_HALF_HEIGHT * 0.55);
+    }
     const p = track.pointAt(dist, this.scratchPoint);
     const frame = track.frameAt(dist, this.scratchFrame);
     mesh.position.copy(p).addScaledVector(frame.right, lat).addScaledVector(frame.up, ver);
