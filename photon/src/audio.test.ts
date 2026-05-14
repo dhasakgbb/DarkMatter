@@ -317,7 +317,6 @@ describe('audio runtime contracts', () => {
     audio.setRedshift(1);
     const cutoffAtOne = lastTarget(nodes.filter.frequency);
 
-    // 8000 Hz at z=0 (clamped to 8800 ceil) -> falls to ~4592 at z=1.
     expect(cutoffAtZero).toBeGreaterThan(7500);
     expect(cutoffAtOne).toBeGreaterThan(4200);
     expect(cutoffAtOne).toBeLessThan(5000);

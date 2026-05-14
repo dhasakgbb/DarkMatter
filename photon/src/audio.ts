@@ -177,7 +177,7 @@ class AudioEngine {
   }
 
   setScienceModeAutomation(enabled: boolean) {
-    this.scienceModeAutomation = !!enabled;
+    this.scienceModeAutomation = enabled;
     this.applyScienceAutomation();
   }
 
