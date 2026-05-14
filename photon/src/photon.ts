@@ -362,7 +362,7 @@ class Photon {
     if (game.phaseStreak >= 2) {
       const streakAmp = game.scienceMode && game.phaseStreak >= 5 ? 1 + Math.min(0.5, (game.phaseStreak - 5) * 0.06) : 1;
       const lobeCount = settings.reducedMotion ? 2 : Math.round((game.phaseStreak % 3 === 0 ? 7 : 4) * streakAmp);
-      const spread = Math.min(1.6, (0.45 + game.phaseStreak * 0.08) * streakAmp);
+      const spread = Math.min(game.scienceMode ? 1.6 : 1.3, (0.45 + game.phaseStreak * 0.08) * streakAmp);
       interferenceLeft.set(-spread, 0.16, -0.35);
       interferenceRight.set(spread, -0.16, -0.35);
       particleManager.emit(this.group.position, WAVELENGTHS[this.wavelength].color, lobeCount, { speed: 8, life: settings.reducedMotion ? 0.22 : 0.38, drag: 0.93, dirBias: interferenceLeft });
