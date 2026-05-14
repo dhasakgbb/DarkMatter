@@ -4,6 +4,7 @@ This is the practical board for getting Photon to studio-grade audio. The answer
 
 - Custom score and hero SFX for identity.
 - Premium libraries for source layers and fast coverage.
+- Hugging Face / AI-audio candidates for reference, prompt exploration, and micro-audition briefs.
 - Temporary in-game director audio for testing cue timing before final assets arrive.
 
 ## Decision
@@ -68,7 +69,28 @@ License rule:
 - Add a local `AUDIO_LICENSES.md` with source, license holder, date, project, and allowed use.
 - Do not use assets with attribution-only, non-commercial, unclear YouTube Content ID, or extraction-hostile terms unless legal signs off.
 
-## Lane 3: Temporary Director Audio
+## Lane 3: Hugging Face / AI-Audio Candidate Forge
+
+Goal: move faster on direction without treating model output as final licensed material.
+
+Use `node tools/audio_candidate_forge.mjs --write` to generate the Photon prompt matrix from `photon/src/audio-manifest.json`. Generate music and SFX candidates outside runtime asset folders first, preferably under `photon/output/audio-candidate-forge/`, then inventory them with:
+
+```bash
+node tools/audio_candidate_forge.mjs --write --candidate-root photon/output/audio-candidate-forge
+```
+
+Reference lanes:
+
+| Lane | Use | License Posture |
+|---|---|---|
+| `facebook/musicgen-medium` | Stellar/Galactic epoch stem studies and composer references | `cc-by-nc-4.0`, reference-only unless separate commercial rights are obtained |
+| `facebook/musicgen-stereo-large` | Wide music references and identity sketches | `cc-by-nc-4.0`, reference-only unless separate commercial rights are obtained |
+| `cvssp/audioldm2` | SFX sketches, whooshes, impact/transition textures | `cc-by-nc-sa-4.0`, reference-only unless separate commercial rights are obtained |
+| `cvssp/audioldm2-music` | Heat Death and long texture studies | `cc-by-nc-sa-4.0`, reference-only unless separate commercial rights are obtained |
+
+Do not ship these outputs as final runtime assets until the license ledger proves commercial game use, trailers, social clips, streams, storefront media, and soundtrack release needs are cleared.
+
+## Lane 4: Temporary Director Audio
 
 Goal: get timing, gain, and game feel right before final assets arrive.
 

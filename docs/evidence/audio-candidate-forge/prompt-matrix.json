@@ -1,0 +1,1228 @@
+{
+  "modelLanes": [
+    {
+      "id": "musicgen-medium",
+      "model": "facebook/musicgen-medium",
+      "url": "https://hf.co/facebook/musicgen-medium",
+      "license": "cc-by-nc-4.0",
+      "allowedUse": "reference-only unless separate commercial rights are obtained",
+      "bestFor": "epoch music loops, pulse beds, restrained melodic motion"
+    },
+    {
+      "id": "musicgen-stereo-large",
+      "model": "facebook/musicgen-stereo-large",
+      "url": "https://hf.co/facebook/musicgen-stereo-large",
+      "license": "cc-by-nc-4.0",
+      "allowedUse": "reference-only unless separate commercial rights are obtained",
+      "bestFor": "wide music references and final-composer briefing material"
+    },
+    {
+      "id": "audioldm2",
+      "model": "cvssp/audioldm2",
+      "url": "https://hf.co/cvssp/audioldm2",
+      "license": "cc-by-nc-sa-4.0",
+      "allowedUse": "reference-only unless separate commercial rights are obtained",
+      "bestFor": "SFX sketches, transition textures, gravity pressure, one-shot variations"
+    },
+    {
+      "id": "audioldm2-music",
+      "model": "cvssp/audioldm2-music",
+      "url": "https://hf.co/cvssp/audioldm2-music",
+      "license": "cc-by-nc-sa-4.0",
+      "allowedUse": "reference-only unless separate commercial rights are obtained",
+      "bestFor": "longer music mood studies and Heat Death texture studies"
+    }
+  ],
+  "matrix": [
+    {
+      "id": "music-inflationary-pulse",
+      "kind": "music",
+      "cue": "Inflationary",
+      "stem": "pulse",
+      "targetPath": "music/inflationary/pulse.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable pulse music stem for the Inflationary epoch. Epoch intent: Explosive spacetime pressure with unstable fast motion. Epoch style: violent spacetime expansion, fast pressure pulses, unstable low-end surges, no heroic melody. Stem role: rhythmic propulsion stem with clear tempo and low transient clutter. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-inflationary-texture",
+      "kind": "music",
+      "cue": "Inflationary",
+      "stem": "texture",
+      "targetPath": "music/inflationary/texture.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable texture music stem for the Inflationary epoch. Epoch intent: Explosive spacetime pressure with unstable fast motion. Epoch style: violent spacetime expansion, fast pressure pulses, unstable low-end surges, no heroic melody. Stem role: wide atmospheric layer with motion but no lead melody. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-quark-plasma-pulse",
+      "kind": "music",
+      "cue": "Quark Plasma",
+      "stem": "pulse",
+      "targetPath": "music/quark-plasma/pulse.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable pulse music stem for the Quark Plasma epoch. Epoch intent: Dense heat, granular impacts, charged collisions. Epoch style: granular heat, charged collisions, dense but readable transient motion. Stem role: rhythmic propulsion stem with clear tempo and low transient clutter. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-quark-plasma-texture",
+      "kind": "music",
+      "cue": "Quark Plasma",
+      "stem": "texture",
+      "targetPath": "music/quark-plasma/texture.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable texture music stem for the Quark Plasma epoch. Epoch intent: Dense heat, granular impacts, charged collisions. Epoch style: granular heat, charged collisions, dense but readable transient motion. Stem role: wide atmospheric layer with motion but no lead melody. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-recombination-motion",
+      "kind": "music",
+      "cue": "Recombination",
+      "stem": "motion",
+      "targetPath": "music/recombination/motion.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable motion music stem for the Recombination epoch. Epoch intent: The fog opens and the mix widens. Epoch style: fog clearing into open stereo space, calmer harmonic bloom, less density. Stem role: side-band movement stem that makes speed feel faster without masking SFX. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-recombination-texture",
+      "kind": "music",
+      "cue": "Recombination",
+      "stem": "texture",
+      "targetPath": "music/recombination/texture.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable texture music stem for the Recombination epoch. Epoch intent: The fog opens and the mix widens. Epoch style: fog clearing into open stereo space, calmer harmonic bloom, less density. Stem role: wide atmospheric layer with motion but no lead melody. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-first-stars-pulse",
+      "kind": "music",
+      "cue": "First Stars",
+      "stem": "pulse",
+      "targetPath": "music/first-stars/pulse.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable pulse music stem for the First Stars epoch. Epoch intent: Blue-hot ignition with danger under the bloom. Epoch style: blue-hot ignition, bright reward shimmer over restrained danger. Stem role: rhythmic propulsion stem with clear tempo and low transient clutter. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-first-stars-reward",
+      "kind": "music",
+      "cue": "First Stars",
+      "stem": "reward",
+      "targetPath": "music/first-stars/reward.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable reward music stem for the First Stars epoch. Epoch intent: Blue-hot ignition with danger under the bloom. Epoch style: blue-hot ignition, bright reward shimmer over restrained danger. Stem role: subtle lift layer that can bloom during clean driving. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-galactic-pulse",
+      "kind": "music",
+      "cue": "Galactic",
+      "stem": "pulse",
+      "targetPath": "music/galactic/pulse.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable pulse music stem for the Galactic epoch. Epoch intent: Curved racing-line confidence and magnetic sweep. Epoch style: confident curved racing line, magnetic sweep, forward momentum. Stem role: rhythmic propulsion stem with clear tempo and low transient clutter. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-galactic-motion",
+      "kind": "music",
+      "cue": "Galactic",
+      "stem": "motion",
+      "targetPath": "music/galactic/motion.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable motion music stem for the Galactic epoch. Epoch intent: Curved racing-line confidence and magnetic sweep. Epoch style: confident curved racing line, magnetic sweep, forward momentum. Stem role: side-band movement stem that makes speed feel faster without masking SFX. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-stellar-pulse",
+      "kind": "music",
+      "cue": "Stellar",
+      "stem": "pulse",
+      "targetPath": "music/stellar/pulse.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable pulse music stem for the Stellar epoch. Epoch intent: Main high-speed dopamine layer, brightest and busiest. Epoch style: main high-speed racing identity, clean pulse, readable bass, motion and danger stems. Stem role: rhythmic propulsion stem with clear tempo and low transient clutter. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-stellar-bass",
+      "kind": "music",
+      "cue": "Stellar",
+      "stem": "bass",
+      "targetPath": "music/stellar/bass.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable bass music stem for the Stellar epoch. Epoch intent: Main high-speed dopamine layer, brightest and busiest. Epoch style: main high-speed racing identity, clean pulse, readable bass, motion and danger stems. Stem role: controlled low stem with browser and laptop-speaker headroom. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-stellar-motion",
+      "kind": "music",
+      "cue": "Stellar",
+      "stem": "motion",
+      "targetPath": "music/stellar/motion.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable motion music stem for the Stellar epoch. Epoch intent: Main high-speed dopamine layer, brightest and busiest. Epoch style: main high-speed racing identity, clean pulse, readable bass, motion and danger stems. Stem role: side-band movement stem that makes speed feel faster without masking SFX. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-stellar-danger",
+      "kind": "music",
+      "cue": "Stellar",
+      "stem": "danger",
+      "targetPath": "music/stellar/danger.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable danger music stem for the Stellar epoch. Epoch intent: Main high-speed dopamine layer, brightest and busiest. Epoch style: main high-speed racing identity, clean pulse, readable bass, motion and danger stems. Stem role: thin tension stem that reads as risk without trailer-riser spam. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-degenerate-bass",
+      "kind": "music",
+      "cue": "Degenerate",
+      "stem": "bass",
+      "targetPath": "music/degenerate/bass.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable bass music stem for the Degenerate epoch. Epoch intent: Cooler, heavier, rarer movement. Epoch style: cooler heavy matter, rarer movement, weight without clutter. Stem role: controlled low stem with browser and laptop-speaker headroom. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-degenerate-texture",
+      "kind": "music",
+      "cue": "Degenerate",
+      "stem": "texture",
+      "targetPath": "music/degenerate/texture.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable texture music stem for the Degenerate epoch. Epoch intent: Cooler, heavier, rarer movement. Epoch style: cooler heavy matter, rarer movement, weight without clutter. Stem role: wide atmospheric layer with motion but no lead melody. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-black-hole-bass",
+      "kind": "music",
+      "cue": "Black Hole",
+      "stem": "bass",
+      "targetPath": "music/black-hole/bass.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable bass music stem for the Black Hole epoch. Epoch intent: Sparse gravity pressure and long low-frequency bends. Epoch style: sparse gravity pressure, long bends, near-silence around low-frequency mass. Stem role: controlled low stem with browser and laptop-speaker headroom. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-black-hole-texture",
+      "kind": "music",
+      "cue": "Black Hole",
+      "stem": "texture",
+      "targetPath": "music/black-hole/texture.ogg",
+      "durationSeconds": 45,
+      "loop": true,
+      "modelLane": "musicgen-medium",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 45-second loopable texture music stem for the Black Hole epoch. Epoch intent: Sparse gravity pressure and long low-frequency bends. Epoch style: sparse gravity pressure, long bends, near-silence around low-frequency mass. Stem role: wide atmospheric layer with motion but no lead melody. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "speed feels stronger without clutter"
+      ]
+    },
+    {
+      "id": "music-heat-death-low-tone",
+      "kind": "music",
+      "cue": "Heat Death",
+      "stem": "low-tone",
+      "targetPath": "music/heat-death/low-tone.ogg",
+      "durationSeconds": 60,
+      "loop": true,
+      "modelLane": "audioldm2-music",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 60-second loopable low-tone music stem for the Heat Death epoch. Epoch intent: A single low tone, vanishing texture, and authored silence. Epoch style: authored absence, vanishing texture, sparse low tone, emotionally cold but intentional. Stem role: minimal low tone with long decay, no ordinary race groove. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "silence/restraint is intentional and authored"
+      ]
+    },
+    {
+      "id": "music-heat-death-vanishing-texture",
+      "kind": "music",
+      "cue": "Heat Death",
+      "stem": "vanishing-texture",
+      "targetPath": "music/heat-death/vanishing-texture.ogg",
+      "durationSeconds": 60,
+      "loop": false,
+      "modelLane": "audioldm2-music",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a 60-second loopable vanishing-texture music stem for the Heat Death epoch. Epoch intent: A single low tone, vanishing texture, and authored silence. Epoch style: authored absence, vanishing texture, sparse low tone, emotionally cold but intentional. Stem role: slowly disappearing high-air texture with silence as a feature. Deliver a dry stem that can layer with other stems; no mastering limiter pumping.",
+      "acceptance": [
+        "exports as WAV master plus OGG runtime copy",
+        "loop clicks are absent or documented",
+        "does not mask speedPad, lineGate, gateMiss, railScrape, damageHit, or death",
+        "silence/restraint is intentional and authored"
+      ]
+    },
+    {
+      "id": "sfx-pickup-01",
+      "kind": "sfx",
+      "cue": "pickup",
+      "variant": 1,
+      "targetPath": "sfx/pickup/pickup-01.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for pickup, variation 1 of 4. Cue role: short luminous reward pickup, tiny pitch lift, clean transient, no arcade coin cliche. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-pickup-02",
+      "kind": "sfx",
+      "cue": "pickup",
+      "variant": 2,
+      "targetPath": "sfx/pickup/pickup-02.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for pickup, variation 2 of 4. Cue role: short luminous reward pickup, tiny pitch lift, clean transient, no arcade coin cliche. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-pickup-03",
+      "kind": "sfx",
+      "cue": "pickup",
+      "variant": 3,
+      "targetPath": "sfx/pickup/pickup-03.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for pickup, variation 3 of 4. Cue role: short luminous reward pickup, tiny pitch lift, clean transient, no arcade coin cliche. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-pickup-04",
+      "kind": "sfx",
+      "cue": "pickup",
+      "variant": 4,
+      "targetPath": "sfx/pickup/pickup-04.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for pickup, variation 4 of 4. Cue role: short luminous reward pickup, tiny pitch lift, clean transient, no arcade coin cliche. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-speedpad-01",
+      "kind": "sfx",
+      "cue": "speedPad",
+      "variant": 1,
+      "targetPath": "sfx/speed-pad/speed-pad-01.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for speedPad, variation 1 of 4. Cue role: instant acceleration shove, bright leading edge, low body, satisfying but not explosive. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-speedpad-02",
+      "kind": "sfx",
+      "cue": "speedPad",
+      "variant": 2,
+      "targetPath": "sfx/speed-pad/speed-pad-02.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for speedPad, variation 2 of 4. Cue role: instant acceleration shove, bright leading edge, low body, satisfying but not explosive. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-speedpad-03",
+      "kind": "sfx",
+      "cue": "speedPad",
+      "variant": 3,
+      "targetPath": "sfx/speed-pad/speed-pad-03.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for speedPad, variation 3 of 4. Cue role: instant acceleration shove, bright leading edge, low body, satisfying but not explosive. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-speedpad-04",
+      "kind": "sfx",
+      "cue": "speedPad",
+      "variant": 4,
+      "targetPath": "sfx/speed-pad/speed-pad-04.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for speedPad, variation 4 of 4. Cue role: instant acceleration shove, bright leading edge, low body, satisfying but not explosive. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-linegate-01",
+      "kind": "sfx",
+      "cue": "lineGate",
+      "variant": 1,
+      "targetPath": "sfx/line-gate/line-gate-01.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for lineGate, variation 1 of 6. Cue role: precise racing-line confirmation tick, musical but very short, rewards clean driving. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-linegate-02",
+      "kind": "sfx",
+      "cue": "lineGate",
+      "variant": 2,
+      "targetPath": "sfx/line-gate/line-gate-02.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for lineGate, variation 2 of 6. Cue role: precise racing-line confirmation tick, musical but very short, rewards clean driving. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-linegate-03",
+      "kind": "sfx",
+      "cue": "lineGate",
+      "variant": 3,
+      "targetPath": "sfx/line-gate/line-gate-03.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for lineGate, variation 3 of 6. Cue role: precise racing-line confirmation tick, musical but very short, rewards clean driving. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-linegate-04",
+      "kind": "sfx",
+      "cue": "lineGate",
+      "variant": 4,
+      "targetPath": "sfx/line-gate/line-gate-04.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for lineGate, variation 4 of 6. Cue role: precise racing-line confirmation tick, musical but very short, rewards clean driving. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-linegate-05",
+      "kind": "sfx",
+      "cue": "lineGate",
+      "variant": 5,
+      "targetPath": "sfx/line-gate/line-gate-05.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for lineGate, variation 5 of 6. Cue role: precise racing-line confirmation tick, musical but very short, rewards clean driving. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-linegate-06",
+      "kind": "sfx",
+      "cue": "lineGate",
+      "variant": 6,
+      "targetPath": "sfx/line-gate/line-gate-06.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for lineGate, variation 6 of 6. Cue role: precise racing-line confirmation tick, musical but very short, rewards clean driving. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-gatemiss-01",
+      "kind": "sfx",
+      "cue": "gateMiss",
+      "variant": 1,
+      "targetPath": "sfx/gate-miss/gate-miss-01.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for gateMiss, variation 1 of 3. Cue role: dry negative cue, quick downward bend, informative not punishingly loud. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-gatemiss-02",
+      "kind": "sfx",
+      "cue": "gateMiss",
+      "variant": 2,
+      "targetPath": "sfx/gate-miss/gate-miss-02.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for gateMiss, variation 2 of 3. Cue role: dry negative cue, quick downward bend, informative not punishingly loud. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-gatemiss-03",
+      "kind": "sfx",
+      "cue": "gateMiss",
+      "variant": 3,
+      "targetPath": "sfx/gate-miss/gate-miss-03.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for gateMiss, variation 3 of 3. Cue role: dry negative cue, quick downward bend, informative not punishingly loud. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-railscrape-01",
+      "kind": "sfx",
+      "cue": "railScrape",
+      "variant": 1,
+      "targetPath": "sfx/rail-scrape/rail-scrape-01.ogg",
+      "durationSeconds": 0.65,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for railScrape, variation 1 of 5. Cue role: energy rail friction scrape, tense stereo motion, non-fatiguing over repeats. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-railscrape-02",
+      "kind": "sfx",
+      "cue": "railScrape",
+      "variant": 2,
+      "targetPath": "sfx/rail-scrape/rail-scrape-02.ogg",
+      "durationSeconds": 0.65,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for railScrape, variation 2 of 5. Cue role: energy rail friction scrape, tense stereo motion, non-fatiguing over repeats. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-railscrape-03",
+      "kind": "sfx",
+      "cue": "railScrape",
+      "variant": 3,
+      "targetPath": "sfx/rail-scrape/rail-scrape-03.ogg",
+      "durationSeconds": 0.65,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for railScrape, variation 3 of 5. Cue role: energy rail friction scrape, tense stereo motion, non-fatiguing over repeats. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-railscrape-04",
+      "kind": "sfx",
+      "cue": "railScrape",
+      "variant": 4,
+      "targetPath": "sfx/rail-scrape/rail-scrape-04.ogg",
+      "durationSeconds": 0.65,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for railScrape, variation 4 of 5. Cue role: energy rail friction scrape, tense stereo motion, non-fatiguing over repeats. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-railscrape-05",
+      "kind": "sfx",
+      "cue": "railScrape",
+      "variant": 5,
+      "targetPath": "sfx/rail-scrape/rail-scrape-05.ogg",
+      "durationSeconds": 0.65,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for railScrape, variation 5 of 5. Cue role: energy rail friction scrape, tense stereo motion, non-fatiguing over repeats. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-wavelengthshift-01",
+      "kind": "sfx",
+      "cue": "wavelengthShift",
+      "variant": 1,
+      "targetPath": "sfx/wavelength-shift/gamma.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for wavelengthShift, variation 1 of 3. Cue role: spectral state change, gamma bright snap, visible balanced chime, radio warm drop. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-wavelengthshift-02",
+      "kind": "sfx",
+      "cue": "wavelengthShift",
+      "variant": 2,
+      "targetPath": "sfx/wavelength-shift/visible.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for wavelengthShift, variation 2 of 3. Cue role: spectral state change, gamma bright snap, visible balanced chime, radio warm drop. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-wavelengthshift-03",
+      "kind": "sfx",
+      "cue": "wavelengthShift",
+      "variant": 3,
+      "targetPath": "sfx/wavelength-shift/radio.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for wavelengthShift, variation 3 of 3. Cue role: spectral state change, gamma bright snap, visible balanced chime, radio warm drop. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-damagehit-01",
+      "kind": "sfx",
+      "cue": "damageHit",
+      "variant": 1,
+      "targetPath": "sfx/damage-hit/damage-hit-01.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for damageHit, variation 1 of 5. Cue role: clear impact with photon-energy loss, punchy and brief, no muddy explosion. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-damagehit-02",
+      "kind": "sfx",
+      "cue": "damageHit",
+      "variant": 2,
+      "targetPath": "sfx/damage-hit/damage-hit-02.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for damageHit, variation 2 of 5. Cue role: clear impact with photon-energy loss, punchy and brief, no muddy explosion. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-damagehit-03",
+      "kind": "sfx",
+      "cue": "damageHit",
+      "variant": 3,
+      "targetPath": "sfx/damage-hit/damage-hit-03.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for damageHit, variation 3 of 5. Cue role: clear impact with photon-energy loss, punchy and brief, no muddy explosion. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-damagehit-04",
+      "kind": "sfx",
+      "cue": "damageHit",
+      "variant": 4,
+      "targetPath": "sfx/damage-hit/damage-hit-04.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for damageHit, variation 4 of 5. Cue role: clear impact with photon-energy loss, punchy and brief, no muddy explosion. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-damagehit-05",
+      "kind": "sfx",
+      "cue": "damageHit",
+      "variant": 5,
+      "targetPath": "sfx/damage-hit/damage-hit-05.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for damageHit, variation 5 of 5. Cue role: clear impact with photon-energy loss, punchy and brief, no muddy explosion. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-death-01",
+      "kind": "sfx",
+      "cue": "death",
+      "variant": 1,
+      "targetPath": "sfx/death/death-absorbed-01.ogg",
+      "durationSeconds": 2.4,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for death, variation 1 of 2. Cue role: absorption ending cue, authored failure, cosmic but not melodramatic. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-death-02",
+      "kind": "sfx",
+      "cue": "death",
+      "variant": 2,
+      "targetPath": "sfx/death/death-absorbed-02.ogg",
+      "durationSeconds": 2.4,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for death, variation 2 of 2. Cue role: absorption ending cue, authored failure, cosmic but not melodramatic. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-witnesschime-01",
+      "kind": "sfx",
+      "cue": "witnessChime",
+      "variant": 1,
+      "targetPath": "sfx/witness/witness-chime-01.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for witnessChime, single signature version. Cue role: rare memory/witness chime, fragile and meaningful. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-hazardwhoosh-01",
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "variant": 1,
+      "targetPath": "sfx/hazard-whoosh/hazard-whoosh-01.ogg",
+      "durationSeconds": 1.1,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for hazardWhoosh, variation 1 of 6. Cue role: fast object pass-by, Doppler-like threat read, leaves room for steering cues. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-hazardwhoosh-02",
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "variant": 2,
+      "targetPath": "sfx/hazard-whoosh/hazard-whoosh-02.ogg",
+      "durationSeconds": 1.1,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for hazardWhoosh, variation 2 of 6. Cue role: fast object pass-by, Doppler-like threat read, leaves room for steering cues. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-hazardwhoosh-03",
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "variant": 3,
+      "targetPath": "sfx/hazard-whoosh/hazard-whoosh-03.ogg",
+      "durationSeconds": 1.1,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for hazardWhoosh, variation 3 of 6. Cue role: fast object pass-by, Doppler-like threat read, leaves room for steering cues. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-hazardwhoosh-04",
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "variant": 4,
+      "targetPath": "sfx/hazard-whoosh/hazard-whoosh-04.ogg",
+      "durationSeconds": 1.1,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for hazardWhoosh, variation 4 of 6. Cue role: fast object pass-by, Doppler-like threat read, leaves room for steering cues. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-hazardwhoosh-05",
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "variant": 5,
+      "targetPath": "sfx/hazard-whoosh/hazard-whoosh-05.ogg",
+      "durationSeconds": 1.1,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for hazardWhoosh, variation 5 of 6. Cue role: fast object pass-by, Doppler-like threat read, leaves room for steering cues. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-hazardwhoosh-06",
+      "kind": "sfx",
+      "cue": "hazardWhoosh",
+      "variant": 6,
+      "targetPath": "sfx/hazard-whoosh/hazard-whoosh-06.ogg",
+      "durationSeconds": 1.1,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for hazardWhoosh, variation 6 of 6. Cue role: fast object pass-by, Doppler-like threat read, leaves room for steering cues. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-gravitywellwhoosh-01",
+      "kind": "sfx",
+      "cue": "gravityWellWhoosh",
+      "variant": 1,
+      "targetPath": "sfx/gravity-well-whoosh/gravity-well-whoosh-01.ogg",
+      "durationSeconds": 1.1,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for gravityWellWhoosh, variation 1 of 4. Cue role: massive curved gravity pass-by, low pressure plus bending air, spatially readable. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-gravitywellwhoosh-02",
+      "kind": "sfx",
+      "cue": "gravityWellWhoosh",
+      "variant": 2,
+      "targetPath": "sfx/gravity-well-whoosh/gravity-well-whoosh-02.ogg",
+      "durationSeconds": 1.1,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for gravityWellWhoosh, variation 2 of 4. Cue role: massive curved gravity pass-by, low pressure plus bending air, spatially readable. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-gravitywellwhoosh-03",
+      "kind": "sfx",
+      "cue": "gravityWellWhoosh",
+      "variant": 3,
+      "targetPath": "sfx/gravity-well-whoosh/gravity-well-whoosh-03.ogg",
+      "durationSeconds": 1.1,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for gravityWellWhoosh, variation 3 of 4. Cue role: massive curved gravity pass-by, low pressure plus bending air, spatially readable. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-gravitywellwhoosh-04",
+      "kind": "sfx",
+      "cue": "gravityWellWhoosh",
+      "variant": 4,
+      "targetPath": "sfx/gravity-well-whoosh/gravity-well-whoosh-04.ogg",
+      "durationSeconds": 1.1,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for gravityWellWhoosh, variation 4 of 4. Cue role: massive curved gravity pass-by, low pressure plus bending air, spatially readable. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-engineloop-01",
+      "kind": "sfx",
+      "cue": "engineLoop",
+      "variant": 1,
+      "targetPath": "sfx/engine/engine-loop.ogg",
+      "durationSeconds": 6,
+      "loop": true,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for engineLoop, single signature version. Cue role: continuous photon motion bed, loopable, subtle, no motor literalism. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-uitick-01",
+      "kind": "sfx",
+      "cue": "uiTick",
+      "variant": 1,
+      "targetPath": "sfx/ui/ui-tick.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for uiTick, single signature version. Cue role: small UI tick, clean synthetic click, soft enough for menus. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-uiclick-01",
+      "kind": "sfx",
+      "cue": "uiClick",
+      "variant": 1,
+      "targetPath": "sfx/ui/ui-click.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for uiClick, single signature version. Cue role: positive UI confirm, crisp and restrained. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-uiswoosh-01",
+      "kind": "sfx",
+      "cue": "uiSwoosh",
+      "variant": 1,
+      "targetPath": "sfx/ui/ui-swoosh.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for uiSwoosh, single signature version. Cue role: short panel transition sweep, no big trailer whoosh. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-epochriser-01",
+      "kind": "sfx",
+      "cue": "epochRiser",
+      "variant": 1,
+      "targetPath": "sfx/epoch-riser/epoch-riser-01.ogg",
+      "durationSeconds": 3.5,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for epochRiser, variation 1 of 2. Cue role: epoch transition lift, cosmic scale, not EDM riser spam. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-epochriser-02",
+      "kind": "sfx",
+      "cue": "epochRiser",
+      "variant": 2,
+      "targetPath": "sfx/epoch-riser/epoch-riser-02.ogg",
+      "durationSeconds": 3.5,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for epochRiser, variation 2 of 2. Cue role: epoch transition lift, cosmic scale, not EDM riser spam. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    },
+    {
+      "id": "sfx-memoryunlock-01",
+      "kind": "sfx",
+      "cue": "memoryUnlock",
+      "variant": 1,
+      "targetPath": "sfx/memory-unlock/memory-unlock-01.ogg",
+      "durationSeconds": 0.45,
+      "loop": false,
+      "modelLane": "audioldm2",
+      "prompt": "Photon is a browser cosmic racing game. The player is a photon racing from the Big Bang to Heat Death. Audio must make speed, route precision, danger, and cosmic time readable. Avoid generic synthwave, EDM drops, trailer riser spam, distorted clipping, and melodic clutter. Leave space for short SFX and laptop speakers. Create a short game SFX cue for memoryUnlock, single signature version. Cue role: meaningful unlock cue, warm but restrained. Target short duration, clear attack, controlled tail, no clipping, no spoken voice, no copyrighted motif.",
+      "acceptance": [
+        "attack is readable during a fast run",
+        "tail clears before common cue repetition becomes annoying",
+        "peak headroom leaves room for music",
+        "variant is recognizably same cue but not identical to siblings"
+      ]
+    }
+  ]
+}

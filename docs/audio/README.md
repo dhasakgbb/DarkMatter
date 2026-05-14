@@ -20,6 +20,7 @@ Photon has one audible runtime audio path: manifest-driven assets loaded by `pho
 | [audio-direction.md](audio-direction.md) | Creative north star, final deliverables, runtime contract, and acceptance tests. |
 | [asset-ingest-checklist.md](asset-ingest-checklist.md) | Step-by-step checklist for adding licensed, commissioned, or generated runtime assets. |
 | [director-temp-audio.md](director-temp-audio.md) | Scope, license posture, and regeneration instructions for the temporary generated pack. |
+| [hf-audio-candidate-forge.md](hf-audio-candidate-forge.md) | Offline Hugging Face prompt matrix, candidate inventory, and license firewall for music/SFX exploration. |
 | [procurement-board.md](procurement-board.md) | Custom-audio hiring plan, source-library lanes, and micro-audition brief. |
 | [audio-engagement-metrics.md](audio-engagement-metrics.md) | Automated waveform scoring, Photon dopamine bar, and human playtest rubric. |
 | [micro-audition-handoff.md](micro-audition-handoff.md) | Paid micro-audition deliverables, score gates, and vendor handoff package. |
@@ -34,6 +35,8 @@ Run from the repository root unless the command changes directory explicitly.
 | Audit manifest paths and OGG decode health | `node tools/audit_audio_manifest.mjs` |
 | Emit machine-readable audit JSON | `node tools/audit_audio_manifest.mjs --json` |
 | Regenerate director-temp assets | `python3 tools/generate_director_audio.py` |
+| Generate HF candidate prompt matrix | `node tools/audio_candidate_forge.mjs --write` |
+| Inventory HF/local candidate files | `node tools/audio_candidate_forge.mjs --write --candidate-root photon/output/audio-candidate-forge` |
 | Run audio/unit coverage | `cd photon && npm test` |
 | Run typecheck | `cd photon && npm run typecheck` |
 | Build runtime bundle | `cd photon && npm run build` |
@@ -47,6 +50,7 @@ Run from the repository root unless the command changes directory explicitly.
 |---|---|---|
 | Gameplay engineer | [audio-pipeline-audit.md](audio-pipeline-audit.md) | Check cue map before adding or renaming audio calls. |
 | Sound designer/composer | [audio-direction.md](audio-direction.md) | Use [procurement-board.md](procurement-board.md) for deliverable expectations. |
+| AI-audio operator | [hf-audio-candidate-forge.md](hf-audio-candidate-forge.md) | Generate prompt matrix and keep model output behind the license ledger. |
 | Asset implementer | [asset-ingest-checklist.md](asset-ingest-checklist.md) | Run `node tools/audit_audio_manifest.mjs` after manifest edits. |
 | Maintainer | [audio-pipeline-audit.md](audio-pipeline-audit.md) | Review risks and verification log before calling an audio pass complete. |
 | Audio reviewer | [audio-engagement-metrics.md](audio-engagement-metrics.md) | Run the scorer and compare results against the human playtest bar. |
