@@ -125,6 +125,8 @@ function resetAudio() {
   audio.scienceFlow = 0;
   audio.scienceDarkMatter = 0;
   audio.heatDeathProgress = 0;
+  audio.scienceResonanceStreak = 0;
+  audio.scienceModeAutomation = false;
 }
 
 
@@ -287,5 +289,39 @@ describe('audio runtime contracts', () => {
     expect(counters.oscillator).toBe(0);
     expect(counters.buffer).toBe(0);
     expect(counters.convolver).toBe(0);
+  });
+
+  it('defaults to linear automation so non-science callers preserve existing behavior', () => {
+    const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
+    installFakeAudio(counters);
+    const nodes = startFakeMusic();
+
+    expect(audio.scienceModeAutomation).toBe(false);
+    audio.setRedshift(0.75);
+    audio.setFlow(0.5);
+    audio.setDarkMatterSignal(0.6);
+    expect(lastTarget(nodes.filter.frequency)).toBeGreaterThan(3500);
+    expect(lastTarget(nodes.filter.frequency)).toBeLessThan(4700);
+  });
+
+  it('applies the exponential redshift curve when science-mode automation is enabled', () => {
+    const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
+    installFakeAudio(counters);
+    const nodes = startFakeMusic();
+
+    audio.setScienceModeAutomation(true);
+    audio.setFlow(0);
+    audio.setDarkMatterSignal(0);
+    audio.setRedshift(0);
+    const cutoffAtZero = lastTarget(nodes.filter.frequency);
+    audio.setRedshift(1);
+    const cutoffAtOne = lastTarget(nodes.filter.frequency);
+
+    // 8000 Hz at z=0 (clamped to 8800 ceil) -> falls to ~4592 at z=1.
+    expect(cutoffAtZero).toBeGreaterThan(7500);
+    expect(cutoffAtOne).toBeGreaterThan(4200);
+    expect(cutoffAtOne).toBeLessThan(5000);
+    expect(cutoffAtOne).toBeLessThan(cutoffAtZero);
+    audio.setScienceModeAutomation(false); // reset for other tests
   });
 });

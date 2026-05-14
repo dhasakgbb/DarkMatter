@@ -120,6 +120,9 @@ function clamp01(value: number) {
   return clamp(Number.isFinite(value) ? value : 0, 0, 1);
 }
 
+const REDSHIFT_FILTER_EXPONENT = 0.8;
+const REDSHIFT_FILTER_CEILING_HZ = 8000;
+
 class AudioEngine {
   ctx: AudioContext | null = null;
   master: GainNode | null = null;
@@ -136,6 +139,8 @@ class AudioEngine {
   scienceFlow = 0;
   scienceDarkMatter = 0;
   heatDeathProgress = 0;
+  scienceResonanceStreak = 0;
+  scienceModeAutomation = false;
   _boostCurrent = 0;
 
   readonly mode = 'asset' as const;
@@ -168,6 +173,11 @@ class AudioEngine {
 
   setHeatDeathProgress(progress: number) {
     this.heatDeathProgress = clamp01(progress);
+    this.applyScienceAutomation();
+  }
+
+  setScienceModeAutomation(enabled: boolean) {
+    this.scienceModeAutomation = !!enabled;
     this.applyScienceAutomation();
   }
 
@@ -499,7 +509,10 @@ class AudioEngine {
     if (this.studioMusicNodes) {
       const nodes = this.studioMusicNodes;
       const heatMul = nodes.heatDeath ? 1 - heatFade * 0.9 : 1;
-      const cutoff = clamp(6200 - redshift * 4300 + flow * 1800 + darkMatter * 700 - heatFade * 1100, 520, 8800);
+      const expRedshiftCutoff = REDSHIFT_FILTER_CEILING_HZ * Math.pow(1 + redshift, -REDSHIFT_FILTER_EXPONENT);
+      const linearRedshiftCutoff = 6200 - redshift * 4300;
+      const redshiftCutoff = this.scienceModeAutomation ? expRedshiftCutoff : linearRedshiftCutoff;
+      const cutoff = clamp(redshiftCutoff + flow * 1800 + darkMatter * 700 - heatFade * 1100, 520, 8800);
       nodes.filter.frequency.setTargetAtTime(cutoff, t, 0.18);
       nodes.filter.Q.setTargetAtTime(0.62 + flow * 0.36 + darkMatter * 0.24, t, 0.18);
       nodes.delay.delayTime.setTargetAtTime(clamp(0.08 + redshift * 0.30 + flow * 0.06 + darkMatter * 0.11 + heatFade * 0.18, 0.04, 0.72), t, 0.24);
