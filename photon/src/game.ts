@@ -481,6 +481,8 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   applyMetaUpgrades();
   applyMemoryResonances(photon);
   applySettings();
+  audio.setScienceModeAutomation(game.scienceMode);
+  audio.setResonanceStreak(0);
   game.runSeed = (resumeSnapshot && resumeSnapshot.runSeed != null) ? resumeSnapshot.runSeed
               : (overrideSeed != null) ? (overrideSeed >>> 0)
               : newSeed();
