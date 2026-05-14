@@ -12,6 +12,8 @@ const JOYSTICK_LEFT_INSET = 20;
 const JOYSTICK_BOTTOM_INSET = 18;
 const JOYSTICK_LATERAL_RANGE = PLAYFIELD_HALF_WIDTH * 0.78;
 const JOYSTICK_VERTICAL_RANGE = PLAYFIELD_HALF_HEIGHT * 0.72;
+const BOOST_ZONE_LEFT_RATIO = 0.58;
+const BOOST_ZONE_TOP_INSET = 14;
 
 export interface TouchTarget {
   lateral: number;
@@ -72,6 +74,13 @@ export function touchTargetForClientPoint(clientX: number, clientY: number, view
 export function isJoystickTouchPoint(clientX: number, clientY: number, viewportWidth: number, viewportHeight: number) {
   const joystick = joystickGeometry(viewportWidth, viewportHeight);
   return Math.hypot(clientX - joystick.centerX, clientY - joystick.centerY) <= joystick.hitRadius;
+}
+
+export function isBoostTouchPoint(clientX: number, clientY: number, viewportWidth: number, viewportHeight: number) {
+  if (isWavelengthTouchPoint(clientX, clientY, viewportWidth, viewportHeight)) return false;
+  if (isJoystickTouchPoint(clientX, clientY, viewportWidth, viewportHeight)) return false;
+  if (clientY < BOOST_ZONE_TOP_INSET || clientY > viewportHeight - TOUCH_CONTROL_BOTTOM_INSET) return false;
+  return clientX >= viewportWidth * BOOST_ZONE_LEFT_RATIO;
 }
 
 export function joystickTargetForClientPoint(clientX: number, clientY: number, viewportWidth: number, viewportHeight: number): JoystickTarget {

@@ -110,7 +110,7 @@ function tutorialCopy(step: typeof TUTORIAL_STEPS[number]) {
   if (step.needs === 'boost') {
     return {
       ...step,
-      text: 'COLLECT YELLOW ORBS  ·  USE TWO FINGERS TO BOOST',
+      text: 'COLLECT YELLOW ORBS  ·  PRESS RIGHT SIDE TO BOOST',
       hint: 'Boost recharges when released',
     };
   }

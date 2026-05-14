@@ -49,6 +49,16 @@ describe('mobile touch controls', () => {
     expect(isJoystickTouchPoint(406, 352, 812, 375)).toBe(false);
   });
 
+  it('reserves a right-side boost zone without stealing joystick or wavelength touches', async () => {
+    const { isBoostTouchPoint, joystickGeometry } = await loadTouchControls();
+    const joystick = joystickGeometry(812, 375);
+
+    expect(isBoostTouchPoint(690, 190, 812, 375)).toBe(true);
+    expect(isBoostTouchPoint(220, 190, 812, 375)).toBe(false);
+    expect(isBoostTouchPoint(joystick.centerX, joystick.centerY, 812, 375)).toBe(false);
+    expect(isBoostTouchPoint(406, 352, 812, 375)).toBe(false);
+  });
+
   it('maps joystick deflection to clamped analog steering targets', async () => {
     const { joystickGeometry, joystickTargetForClientPoint } = await loadTouchControls();
     const joystick = joystickGeometry(812, 375);

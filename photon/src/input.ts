@@ -9,7 +9,7 @@ import { startRun, pause, resume } from './game';
 import { endWitness } from './witness';
 import { refreshSettingsUI } from './ui';
 import { wavelengthIndexAt } from './hudLayout';
-import { isJoystickTouchPoint, isWavelengthTouchPoint, joystickTargetForClientPoint } from './touchControls';
+import { isBoostTouchPoint, isJoystickTouchPoint, isWavelengthTouchPoint, joystickTargetForClientPoint } from './touchControls';
 import { requestLandscapeLock } from './orientation';
 
 export const input = {
@@ -70,11 +70,13 @@ function applyTouchInput(touches: TouchList) {
     return;
   }
   let activeGameplayTouches = 0;
+  let boostTouch = false;
   let trackingTouch: Touch | null = null;
   for (let i = 0; i < touches.length; i++) {
     const touch = touches[i];
     if (isWavelengthTouch(touch)) continue;
     activeGameplayTouches++;
+    if (isBoostTouch(touch)) boostTouch = true;
     if (!isJoystickTouch(touch)) continue;
     if (touch.identifier === steeringTouchId) trackingTouch = touch;
     trackingTouch ??= touch;
@@ -90,7 +92,7 @@ function applyTouchInput(touches: TouchList) {
     steeringTouchId = null;
     updateJoystickVisual();
   }
-  if (activeGameplayTouches >= 2) input.boost = true;
+  if (activeGameplayTouches >= 2 || boostTouch) input.boost = true;
 }
 
 function isWavelengthTouch(touch: Pick<Touch, 'clientX' | 'clientY'>) {
@@ -99,6 +101,10 @@ function isWavelengthTouch(touch: Pick<Touch, 'clientX' | 'clientY'>) {
 
 function isJoystickTouch(touch: Pick<Touch, 'clientX' | 'clientY'>) {
   return isJoystickTouchPoint(touch.clientX, touch.clientY, window.innerWidth, window.innerHeight);
+}
+
+function isBoostTouch(touch: Pick<Touch, 'clientX' | 'clientY'>) {
+  return isBoostTouchPoint(touch.clientX, touch.clientY, window.innerWidth, window.innerHeight);
 }
 
 function handleWavelengthTouch(touches: TouchList) {
