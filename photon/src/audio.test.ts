@@ -339,7 +339,6 @@ describe('audio runtime contracts', () => {
     const gainAtMaxed = lastTarget(nodes.scienceGain.gain);
 
     expect(gainAtFive).toBeGreaterThan(gainAtZero);
-    // Boost caps at 0.25 (streak * 0.05, min(0.25, ...)).
     expect(gainAtMaxed - gainAtZero).toBeLessThanOrEqual(0.26);
     audio.setScienceModeAutomation(false);
   });

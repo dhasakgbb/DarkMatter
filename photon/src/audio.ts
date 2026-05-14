@@ -182,7 +182,7 @@ class AudioEngine {
   }
 
   setResonanceStreak(n: number) {
-    this.scienceResonanceStreak = Math.max(0, Math.floor(Number.isFinite(n) ? n : 0));
+    this.scienceResonanceStreak = Math.max(0, n);
     this.applyScienceAutomation();
   }
 
