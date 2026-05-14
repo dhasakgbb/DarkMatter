@@ -6,6 +6,7 @@
 
 export interface FlowInputs {
   phaseStreak: number;
+  lineStreak?: number;
   cleanRunTime: number;
   timeSincePhase: number;
   energyRatio: number; // photon.energy / max
@@ -14,6 +15,7 @@ export interface FlowInputs {
 
 export interface FlowParams {
   streakSat: number;        // streak value at which streak contribution saturates
+  lineSat: number;          // racing-line streak value at which mastery contribution saturates
   cleanSat: number;         // seconds of no-hit dwell at which clean contribution saturates
   cleanGrace: number;       // seconds since last phase before clean starts decaying
   cleanDecay: number;       // seconds over which clean fully decays once past grace
@@ -22,6 +24,7 @@ export interface FlowParams {
 
 export const DEFAULT_FLOW_PARAMS: FlowParams = {
   streakSat: 8,
+  lineSat: 6,
   cleanSat: 12,
   cleanGrace: 6,
   cleanDecay: 6,
@@ -30,7 +33,9 @@ export const DEFAULT_FLOW_PARAMS: FlowParams = {
 
 /** Compute the un-smoothed flow target [0,1] from current run inputs. */
 export function flowTarget(inputs: FlowInputs, params: FlowParams = DEFAULT_FLOW_PARAMS): number {
-  const streak = clamp01(inputs.phaseStreak / params.streakSat);
+  const phase = clamp01(inputs.phaseStreak / params.streakSat);
+  const line = clamp01((inputs.lineStreak || 0) / params.lineSat);
+  const mastery = Math.max(phase, line);
   const cleanRaw = clamp01(inputs.cleanRunTime / params.cleanSat);
   // Engagement gate: clean dwell only counts while you're still actually
   // phasing things. After cleanGrace seconds without a phase, contribution
@@ -38,7 +43,7 @@ export function flowTarget(inputs: FlowInputs, params: FlowParams = DEFAULT_FLOW
   const engagement = clamp01(1 - Math.max(0, inputs.timeSincePhase - params.cleanGrace) / params.cleanDecay);
   const clean = cleanRaw * engagement;
   const activity = (inputs.boosting ? 1 : 0.4) * clamp01(inputs.energyRatio);
-  return streak * 0.5 + clean * 0.3 + activity * 0.2;
+  return mastery * 0.5 + clean * 0.3 + activity * 0.2;
 }
 
 /** Advance the smoothed flow level toward its target by one frame. */

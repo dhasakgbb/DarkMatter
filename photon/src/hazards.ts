@@ -265,7 +265,7 @@ class HazardManager {
       const bias = skillBias(game.flowLevel || 0, game.epochIndex);
       const flowDensityScale = 1 - bias; // bias ∈ [-0.2, +0.2] → scale ∈ [0.8, 1.2]
       while (this.lastSpawnDist < horizon) {
-        const gap = (12 + rand() * 22) / epoch.hazardDensity * tutorialEase * flowDensityScale;
+        const gap = (16 + rand() * 26) / epoch.hazardDensity * tutorialEase * flowDensityScale;
         this.lastSpawnDist += gap;
         this.spawnAt(epoch, this.lastSpawnDist);
         const just = this.list[this.list.length - 1];
@@ -507,7 +507,19 @@ class HazardManager {
       if (dist2 > r * r) {
         if (!h.nearMissed && h.type !== 'pickup' && h.type !== 'finalPickup' && dist2 <= (r + 4.2) * (r + 4.2)) {
           h.nearMissed = true;
-          funLab.record('hazard-near-miss', { epochIndex: game.epochIndex, distance: photonDist, cause: h.type });
+          const skim = THREE.MathUtils.clamp(1 - (Math.sqrt(dist2) - r) / 4.2, 0, 1);
+          funLab.record('hazard-near-miss', { epochIndex: game.epochIndex, distance: photonDist, cause: h.type, value: skim });
+          if (h.type !== 'well') {
+            photon.boost = Math.min(BOOST_MAX, photon.boost + 4 + skim * 6);
+            photon.energy = Math.min(photon.maxEnergy(), photon.energy + 1 + skim * 2);
+            game.runEnergy += 2 + skim * 4;
+            if ((game.lineEventTime || 0) <= 0.2) {
+              game.lineEventText = 'CLOSE PASS';
+              game.lineEventTime = 0.62 + skim * 0.36;
+            }
+            const color = h.wlIdx >= 0 ? WAVELENGTHS[h.wlIdx].color : DEFAULT_HIT_COLOR;
+            particleManager.emitBurst(h.mesh.position, 'foam', 8, color);
+          }
           if (h.type === 'well') {
             const skim = THREE.MathUtils.clamp(1 - (Math.sqrt(dist2) - r) / 4.2, 0, 1);
             const duration = 0.58 + skim * 0.64;

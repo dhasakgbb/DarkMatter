@@ -43,9 +43,30 @@ describe('flow signal', () => {
     expect(decayed).toBe(0);
   });
 
+  it('racing-line streaks also contribute to mastery flow', () => {
+    const withoutLine = flowTarget({
+      phaseStreak: 0,
+      lineStreak: 0,
+      cleanRunTime: 0,
+      timeSincePhase: 0,
+      energyRatio: 0.5,
+      boosting: false,
+    });
+    const withLine = flowTarget({
+      phaseStreak: 0,
+      lineStreak: DEFAULT_FLOW_PARAMS.lineSat,
+      cleanRunTime: 0,
+      timeSincePhase: 0,
+      energyRatio: 0.5,
+      boosting: false,
+    });
+    expect(withLine).toBeGreaterThan(withoutLine + 0.45);
+  });
+
   it('full inputs saturate the target at 1.0', () => {
     const target = flowTarget({
       phaseStreak: DEFAULT_FLOW_PARAMS.streakSat,
+      lineStreak: DEFAULT_FLOW_PARAMS.lineSat,
       cleanRunTime: DEFAULT_FLOW_PARAMS.cleanSat,
       timeSincePhase: 0,
       energyRatio: 1,

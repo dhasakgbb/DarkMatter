@@ -435,6 +435,15 @@ export function endRun() {
     d.innerHTML = `<span>${k}</span><span>${v}</span>`;
     stats.appendChild(d);
   }
+  const nextWrap = document.getElementById('death-next');
+  if (nextWrap) {
+    nextWrap.innerHTML = '';
+    const label = document.createElement('span');
+    const body = document.createElement('b');
+    label.textContent = 'Next signal';
+    body.textContent = nextRunSignal(reachedIdx, manualEnd);
+    nextWrap.append(label, body);
+  }
   const scienceTelemetry = scienceSnapshot(reachedIdx, game.epochTimer, e.duration);
   const wavelengthKey = WAVELENGTHS[photon.wavelength]?.key || 'visible';
   const photonEquation = photonEquationSnapshot(wavelengthKey, scienceTelemetry.redshiftZ, game.runDistance);
@@ -553,20 +562,32 @@ function setLineEvent(text: string, time = 1.0) {
   game.lineEventTime = time;
 }
 
+function nextRunSignal(reachedIdx: number, manualEnd: boolean) {
+  const bestLine = game.bestLineStreakThisRun || 0;
+  const phaseCount = game.phaseCount || 0;
+  const nextEpoch = EPOCHS[Math.min(reachedIdx + 1, EPOCHS.length - 1)];
+  if (bestLine < 3) return 'Thread 3 cyan gates in one run. The racing line now feeds flow, boost, and difficulty pacing.';
+  if (phaseCount < 5) return 'Match wavelength through 5 hazards. Resonance chains are the fastest way to turn danger into fuel.';
+  if (reachedIdx < EPOCHS.length - 1 && !manualEnd) return 'Push one era deeper into ' + nextEpoch.name + '. The next epoch changes the hazard contract.';
+  if ((meta.darkMatterDetections || 0) === 0 && reachedIdx >= 3) return 'Skim a dark-matter filament until MASS DETECTED appears. The invisible route pays off through lensing.';
+  if ((game.flowPeak || 0) < 0.65) return 'Keep boost, gates, and resonance alive together long enough to hold flow above 65%.';
+  return 'Replay this seed and beat one number: line streak, phase chain, or comoving path.';
+}
+
 function activateSpeedPad(pos: THREE.Vector3) {
-  const duration = 1.65;
+  const duration = 1.85;
   game.padBoostTime = duration;
   game.padBoostTotal = duration;
-  photon.boost = Math.min(BOOST_MAX, photon.boost + 24);
-  photon.energy = Math.min(photon.maxEnergy(), photon.energy + 6);
-  game.runEnergy += 10;
+  photon.boost = Math.min(BOOST_MAX, photon.boost + 30);
+  photon.energy = Math.min(photon.maxEnergy(), photon.energy + 8);
+  game.runEnergy += 14;
   funLab.record('speed-pad-hit', { epochIndex: game.epochIndex, epochName: EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)].name, distance: game.runDistance, value: game.padBoostTime });
   meta.speedPadsHit = (meta.speedPadsHit || 0) + 1;
   saveMeta(meta);
   checkMemoryTriggers();
-  setLineEvent('SPEED PAD', 1.15);
+  setLineEvent('SPEED PAD', 1.25);
   audio.speedPad();
-  particleManager.emitBurst(pos, 'pickup', 34, SPEED_PAD_COLOR);
+  particleManager.emitBurst(pos, 'pickup', 40, SPEED_PAD_COLOR);
 }
 
 function threadRacingGate(pos: THREE.Vector3) {
@@ -578,13 +599,18 @@ function threadRacingGate(pos: THREE.Vector3) {
   saveMeta(meta);
   checkMemoryTriggers();
 
-  const reward = Math.min(20, 6 + game.lineStreak * 1.6);
+  const reward = Math.min(28, 8 + game.lineStreak * 2.2);
   photon.boost = Math.min(BOOST_MAX, photon.boost + reward);
-  photon.energy = Math.min(photon.maxEnergy(), photon.energy + 4);
-  game.runEnergy += reward;
-  setLineEvent(`LINE ×${game.lineStreak}`, 1.2);
+  photon.energy = Math.min(photon.maxEnergy(), photon.energy + 5);
+  game.runEnergy += reward + Math.min(8, game.lineStreak);
+  if (game.lineStreak >= 3) {
+    const duration = Math.min(0.9, 0.36 + game.lineStreak * 0.06);
+    game.padBoostTime = Math.max(game.padBoostTime || 0, duration);
+    game.padBoostTotal = Math.max(game.padBoostTotal || 0, duration);
+  }
+  setLineEvent(`LINE ×${game.lineStreak}`, 1.28);
   audio.lineGate(game.lineStreak);
-  particleManager.emitBurst(pos, 'phase', 26, game.lineStreak >= 5 ? LINE_GATE_HOT_COLOR : LINE_GATE_COLOR);
+  particleManager.emitBurst(pos, 'phase', game.lineStreak >= 5 ? 36 : 30, game.lineStreak >= 5 ? LINE_GATE_HOT_COLOR : LINE_GATE_COLOR);
 }
 
 function missRacingGate() {
@@ -714,6 +740,7 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
       game.timeSincePhase = (game.timeSincePhase || 0) + dt;
       const target = flowTarget({
         phaseStreak: game.phaseStreak || 0,
+        lineStreak: game.lineStreak || 0,
         cleanRunTime: game.cleanRunTime,
         timeSincePhase: game.timeSincePhase,
         energyRatio: photon.energy / Math.max(1, photon.maxEnergy()),

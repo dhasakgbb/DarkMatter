@@ -19,9 +19,9 @@ function gameSeedPhase() {
   return ((game.runSeed || 0) % 997) * 0.0063;
 }
 
-const INITIAL_ROUTE_SCALE = 0.56;
-const ROUTE_MAX_LAT_STEP = 12.5;
-const ROUTE_MAX_VER_STEP = 8.0;
+const INITIAL_ROUTE_SCALE = 0.52;
+const ROUTE_MAX_LAT_STEP = 11.5;
+const ROUTE_MAX_VER_STEP = 7.4;
 
 export interface RacingEntity {
   kind: RacingKind;
@@ -70,12 +70,12 @@ class RacingLineManager {
     const horizon = photonDist + SEGMENT_LEN * SEGMENTS_AHEAD - 42;
     if (!epoch.isHeatDeath) {
       while (this.lastSpawnDist < horizon) {
-        const gap = 62 + runRng() * 38;
+        const gap = 56 + runRng() * 32;
         this.lastSpawnDist += gap / Math.max(0.75, epoch.speedMul);
         const line = this.smoothGateTarget(this.lastSpawnDist, this.racingLineAt(this.lastSpawnDist));
         this.spawnGate(this.lastSpawnDist, line.lateral, line.vertical);
 
-        if (runRng() < 0.86) {
+        if (runRng() < 0.92) {
           const padDist = this.lastSpawnDist + 16 + runRng() * 20;
           const padLine = this.racingLineAt(padDist);
           const padTarget = this.limitRouteStep({
@@ -105,7 +105,7 @@ class RacingLineManager {
     onGate: (pos: THREE.Vector3) => void,
     onMiss: () => void,
   ) {
-    const HIT_WINDOW = 4.1;
+    const HIT_WINDOW = 4.8;
     const t = performance.now() * 0.001;
     for (const e of this.list) {
       this.place(e);
@@ -228,7 +228,7 @@ class RacingLineManager {
       dist,
       lateral,
       vertical,
-      radius: 7.0,
+      radius: 7.4,
       object: group,
       materialLayers: [
         ...(outerMat ? [{ material: outerMat, opacityScale: 0.42 }] : []),
@@ -294,7 +294,7 @@ class RacingLineManager {
       dist,
       lateral,
       vertical,
-      radius: 4.6,
+      radius: 5.2,
       object: group,
       materialLayers: [
         ...(fieldMat ? [{ material: fieldMat, opacityScale: 0.42 }] : []),

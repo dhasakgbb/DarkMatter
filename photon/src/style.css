@@ -19,6 +19,9 @@ button.primary { background: linear-gradient(90deg, rgba(136,224,255,0.18), rgba
 .stats div { display: flex; justify-content: space-between; border-bottom: 1px dotted rgba(255,255,255,0.10); padding: 4px 0; }
 .stats div span:last-child { color: #88e0ff; }
 
+.next-signal { margin: 10px 0 12px; border-left: 2px solid #ff7ad9; background: rgba(255,122,217,0.055); padding: 10px 13px; font-size: 11px; line-height: 1.55; }
+.next-signal span { display: block; margin-bottom: 4px; color: #ff7ad9; font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.8; }
+.next-signal b { color: #dff8ff; font-weight: 400; }
 .path-analysis { margin: 12px 0 4px; border: 1px solid rgba(136,224,255,0.18); background: rgba(136,224,255,0.045); padding: 12px 14px; border-radius: 3px; }
 .path-analysis-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 8px; }
 .path-analysis-head span { font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: #88e0ff; opacity: 0.82; }
