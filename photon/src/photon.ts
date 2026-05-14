@@ -233,6 +233,7 @@ class Photon {
       this.energy = Math.max(0, this.energy - (5.5 + game._speed * 0.018) * dt);
       this.boost = Math.max(0, this.boost - 10 * dt);
       game.phaseStreak = 0;
+      audio.setResonanceStreak(0);
       game.lineStreak = 0;
       game.perfectEpochThisRun = false;
       if (game.railScrapeCooldown <= 0) {
@@ -336,6 +337,7 @@ class Photon {
     game.hitStopTime = 0.085;
     game.hitCount++;
     game.phaseStreak = 0;
+    audio.setResonanceStreak(0);
     game.cleanRunTime = 0;
     game.perfectEpochThisRun = false;
     if (this.energy <= 0) { this.energy = 0; this.alive = false; }
@@ -352,13 +354,15 @@ class Photon {
     game.phaseCount++;
     game.phaseStreak = (game.phaseStreak || 0) + 1;
     game.bestPhaseStreakThisRun = Math.max(game.bestPhaseStreakThisRun || 0, game.phaseStreak);
+    audio.setResonanceStreak(game.phaseStreak);
     game.timeSincePhase = 0;
     // Chain reward: longer flash + brighter audio cue every 3 phases.
     const streakBoost = Math.min(8, game.phaseStreak);
     this.phaseFlashTime = 0.45 * (1 + streakBoost * 0.08);
     if (game.phaseStreak >= 2) {
-      const lobeCount = settings.reducedMotion ? 2 : (game.phaseStreak % 3 === 0 ? 7 : 4);
-      const spread = Math.min(1.3, 0.45 + game.phaseStreak * 0.08);
+      const streakAmp = game.scienceMode && game.phaseStreak >= 5 ? 1 + Math.min(0.5, (game.phaseStreak - 5) * 0.06) : 1;
+      const lobeCount = settings.reducedMotion ? 2 : Math.round((game.phaseStreak % 3 === 0 ? 7 : 4) * streakAmp);
+      const spread = Math.min(1.6, (0.45 + game.phaseStreak * 0.08) * streakAmp);
       interferenceLeft.set(-spread, 0.16, -0.35);
       interferenceRight.set(spread, -0.16, -0.35);
       particleManager.emit(this.group.position, WAVELENGTHS[this.wavelength].color, lobeCount, { speed: 8, life: settings.reducedMotion ? 0.22 : 0.38, drag: 0.93, dirBias: interferenceLeft });
