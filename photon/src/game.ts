@@ -4,7 +4,7 @@ import { BASE_SPEED, BOOST_MAX, IS_MOBILE, SEGMENT_LEN } from './constants';
 import { game, type GameStateName } from './state';
 import { meta, saveMeta, saveCheckpoint, clearCheckpoint, type Checkpoint } from './meta';
 import { settings, applySettings } from './settings';
-import { newSeed, setRunSeed, computeEpochParams, computeCosmicConstants, seedToLabel, parseSeedLabel } from './seed';
+import { newSeed, runRng, setRunSeed, computeEpochParams, computeCosmicConstants, seedToLabel, parseSeedLabel } from './seed';
 import { audio } from './audio';
 import { flowTarget, stepFlow } from './flow';
 import { formatComovingDistance, formatPhotonEnergy, formatScienceValue, formatWavelength, photonEquationSnapshot, scienceSnapshot } from './science';
@@ -488,6 +488,9 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
               : newSeed();
   game.epochParams = {};
   setRunSeed(game.runSeed);
+  game.seedFloorRoll = runRng();
+  game.lensingEventsThisRun = 0;
+  game.floorLensingPending = false;
   // MULTIVERSE: derive physical constants from the seed (identity until first witness)
   game.cosmicConstants = computeCosmicConstants(game.runSeed, meta.witnessedHeatDeath);
   game.coherenceTime = 0;
@@ -972,6 +975,16 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
         missRacingGate,
       );
       game.epochTimer += dt;
+      if (
+        game.scienceMode &&
+        !game.floorLensingPending &&
+        game.lensingEventsThisRun === 0 &&
+        game.seedFloorRoll < 0.85 &&
+        EPOCHS[game.epochIndex]?.name === 'Stellar' &&
+        game.epochTimer >= 0.8 * (EPOCHS[game.epochIndex]?.duration ?? 0)
+      ) {
+        game.floorLensingPending = true;
+      }
       updateEpochFeel(realDt);
       game.runDistance = photon.distance;
       // Flow signal: streak × clean-dwell (gated by recent engagement) × activity.
