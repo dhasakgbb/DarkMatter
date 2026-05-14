@@ -103,6 +103,35 @@ describe('physics insight analysis', () => {
       bookmarkHint: expect.any(String),
     });
   });
+
+  it('exposes addictionScore alongside the existing insight.score', () => {
+    const report = analyzePhysicsRun(input());
+    expect(report.addictionScore).toBeDefined();
+    expect(report.addictionScore.value).toBeGreaterThanOrEqual(0);
+    expect(report.addictionScore.value).toBeLessThanOrEqual(100);
+    expect(report.addictionScore.cosmologyMatch).toBeGreaterThanOrEqual(0);
+    expect(report.addictionScore.eventsSignal).toBeGreaterThanOrEqual(0);
+  });
+
+  it('addictionScore rewards lensing events more than the legacy insight score does in low-streak runs', () => {
+    const baseline = analyzePhysicsRun(input({ phaseStreak: 0, bestLineStreak: 0, darkMatterDetections: 0 }));
+    const withTwoEvents = analyzePhysicsRun(input({ phaseStreak: 0, bestLineStreak: 0, darkMatterDetections: 2 }));
+    expect(withTwoEvents.addictionScore.value).toBeGreaterThan(baseline.addictionScore.value);
+    expect(withTwoEvents.addictionScore.eventsSignal).toBeGreaterThanOrEqual(60);
+  });
+
+  it('does not mutate the existing 6-component insight formula or label set', () => {
+    const report = analyzePhysicsRun(input());
+    expect(report.insight.components).toEqual({
+      cosmology: expect.any(Number),
+      resonance: expect.any(Number),
+      flow: expect.any(Number),
+      discovery: expect.any(Number),
+      confidence: expect.any(Number),
+      penalty: expect.any(Number),
+    });
+    expect(report.insight.label).toBe('Textbook run');
+  });
 });
 
 describe('physics seed bookmarks', () => {

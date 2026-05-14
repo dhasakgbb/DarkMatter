@@ -2,6 +2,8 @@ import { photonEquationSnapshot, scienceSnapshot } from './science';
 import { readJsonStorage, writeStorage } from './storage';
 import { waveDualityFrame } from './waveDuality';
 
+const ADDICTION_SCALE_Z = 12;
+
 export const PHYSICS_SEED_BOOKMARKS_KEY = 'photon-seed-bookmarks-v1';
 const MAX_BOOKMARKS = 8;
 
@@ -71,6 +73,11 @@ export interface PhysicsInsightReport {
   discovery: {
     darkMatterObserved: boolean;
     note: string;
+  };
+  addictionScore: {
+    value: number;
+    cosmologyMatch: number;
+    eventsSignal: number;
   };
   bookmarkHint: string;
 }
@@ -153,6 +160,12 @@ export function analyzePhysicsRun(input: PhysicsInsightInput): PhysicsInsightRep
     ? `Replay ${input.seedLabel} to test the same universe against one changed timing hypothesis.`
     : `Collect a longer trace before treating ${input.seedLabel} as a physics replay seed.`;
 
+  const idealZ = science.redshiftZ;
+  const observedZ = science.redshiftZ;
+  const cosmologyMatch = clamp(100 - Math.abs(observedZ - idealZ) * ADDICTION_SCALE_Z, 0, 100);
+  const eventsSignal = clamp(input.darkMatterDetections * 33 + input.phaseStreak * 4, 0, 100);
+  const addictionScoreValue = clamp(cosmologyMatch * 0.6 + eventsSignal * 0.4, 0, 100);
+
   return {
     seed: { value: input.seed >>> 0, label: input.seedLabel },
     epoch: { index: input.epochIndex, name: input.epochName, timer: Math.round(input.epochTimer * 10) / 10 },
@@ -200,6 +213,11 @@ export function analyzePhysicsRun(input: PhysicsInsightInput): PhysicsInsightRep
       analysisCoherence: wave.analysisCoherence,
     },
     discovery: { darkMatterObserved, note },
+    addictionScore: {
+      value: Math.round(addictionScoreValue),
+      cosmologyMatch: Math.round(cosmologyMatch),
+      eventsSignal: Math.round(eventsSignal),
+    },
     bookmarkHint,
   };
 }
