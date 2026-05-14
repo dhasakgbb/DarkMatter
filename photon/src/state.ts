@@ -110,6 +110,9 @@ export interface RunState {
   primordialLensingArmed: boolean;
   primordialLensingTriggered: boolean;
   primordialLensingTime: number;
+  lensingEventsThisRun: number;
+  seedFloorRoll: number;
+  floorLensingPending: boolean;
 }
 
 export const game: RunState = {
@@ -208,4 +211,7 @@ export const game: RunState = {
   primordialLensingArmed: false,
   primordialLensingTriggered: false,
   primordialLensingTime: 0,
+  lensingEventsThisRun: 0,
+  seedFloorRoll: 0,
+  floorLensingPending: false,
 };
