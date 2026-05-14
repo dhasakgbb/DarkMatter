@@ -6,7 +6,7 @@ import { EPOCHS, WAVELENGTHS, TUTORIAL_STEPS } from './cosmology';
 import { photon } from './photon';
 import { BASE_SPEED, BOOST_MAX, IS_MOBILE, PLAYFIELD_HALF_HEIGHT, PLAYFIELD_HALF_WIDTH } from './constants';
 import { cosmicTimeLabel, comboMultiplier } from './utils';
-import { formatScienceValue, formatTemperature, scienceSnapshot } from './science';
+import { formatComovingDistance, formatPhotonEnergy, formatScienceValue, formatTemperature, photonEquationSnapshot, scienceSnapshot } from './science';
 import { seedToLabel } from './seed';
 import { WAVELENGTH_SEGMENT_GAP, WAVELENGTH_SEGMENT_HEIGHT, WAVELENGTH_SEGMENT_WIDTH, wavelengthStartX, wavelengthTotalWidth } from './hudLayout';
 import { renderPixelRatio } from './renderProfile';
@@ -179,8 +179,9 @@ export function drawHud() {
   hud.font = 'bold 12px ui-monospace, monospace';
   hud.fillStyle = '#ff7ad9';
   hud.fillText(cosmicTimeLabel(), w - 20, 100);
-  const scienceLineY = 164;
+  const scienceLineY = 178;
   const science = scienceSnapshot(game.epochIndex, game.epochTimer, e.duration);
+  const photonEquation = photonEquationSnapshot(WAVELENGTHS[photon.wavelength]?.key || 'visible', science.redshiftZ, game.runDistance);
   hud.font = '10px ui-monospace, monospace';
   hud.fillStyle = 'rgba(136,224,255,0.62)';
   hud.fillText(`z ${formatScienceValue(science.redshiftZ)}  ·  a ${formatScienceValue(science.scaleFactor)}`, w - 20, 120);
@@ -188,6 +189,8 @@ export function drawHud() {
   hud.fillText(`Tcmb ${formatTemperature(science.cmbKelvin)}  ·  Om ${science.matterOmega.toFixed(2)}  OL ${science.darkEnergyOmega.toFixed(2)}`, w - 20, 134);
   hud.fillStyle = 'rgba(255,122,217,0.50)';
   hud.fillText(`drift ${Math.round(science.expansionDrift * 100)}%`, w - 20, 148);
+  hud.fillStyle = 'rgba(136,224,255,0.54)';
+  hud.fillText(`E=hc/λ ${formatPhotonEnergy(photonEquation.energyEv)}  ·  Dc ${formatComovingDistance(photonEquation.comovingDistanceGpc)}`, w - 20, 162);
   if (e.isHeatDeath) {
     const micro = HEAT_DEATH_MICRO_LINES.find(line => game.epochTimer >= line.at && game.epochTimer < line.at + 8);
     if (micro) {

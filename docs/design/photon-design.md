@@ -83,7 +83,7 @@ Specification:
 - Hazard count drops to ~1 every 30 seconds
 - Pickup count drops to one total, placed at minute 5
 - Visuals: nebula shader fades to near-black over the first 90 seconds. Stars dim to 30% then 15% then 5% then off. The tunnel rings dim and slow their shimmer rate.
-- Audio: drone fades to a single low sine wave at 40 Hz, then fades that over the final two minutes. Engine hum stays on but softens. No SFX except the player's own boost.
+- Audio: authored Heat Death low-tone and vanishing texture collapse toward near-silence over the final third of the epoch. Engine hum stays on but softens. No SFX except the player's own boost and witness-critical cues.
 - The HUD shrinks during this epoch. Distance counter and combo display fade out. Only the wavelength selector and energy bar remain.
 - The cosmic time overlay accelerates dramatically: "T + 100 quintillion years," "T + 10^100 years," and so on. The numbers stop meaning anything and that's the point.
 - The final pickup at minute 5 grants a memory called "The last photon." That memory unlocks the credits and the achievement.
@@ -104,7 +104,7 @@ This is the only ending. There is no boss. There is no explosion. There is no wi
 | Upgrades | Stays mechanically. Copy gets reframed in second person. |
 | Variants | Each variant gets a Memory-themed unlock condition and lore. |
 | Dark matter filaments | A rare invisible-mass route event. The player detects it by lensing/shear before seeing a reward label, reinforcing that unseen mass is known by gravitational effect, not by glow. |
-| Science Mode | Baseline quantitative HUD: redshift, scale factor, CMB temperature, matter/dark-energy fractions, and expansion drift are always part of the run. The science layer is the game, not a side mode. |
+| Science Mode | Baseline quantitative HUD, sonification, and post-run path analysis: redshift, flow, dark-matter signal, E=hc/lambda, wavelength stretch, proper vs comoving distance, scale factor, CMB temperature, matter/dark-energy fractions, and expansion drift are always part of the run. Phase chains show a small which-path interference cue that resolves on resonance. The science layer is the game, not a side mode. |
 | Endless mode | Removed. Replaced with the actual remaining epochs ending in Heat Death. |
 
 That last one is important: **endless mode is incompatible with Pillar 1.** If the universe can be looped, it isn't really the universe. Endless was a useful scaffolding while we had only three epochs. Once Stellar through Heat Death exist, endless gets cut. Players who want to play "again" do so by starting a new run, which is again the entire universe, with new memories carried.

@@ -148,6 +148,15 @@ export function bindUI() {
   }
   document.getElementById('btn-again')!.addEventListener('click', () => startRun());
   document.getElementById('btn-menu')!.addEventListener('click', () => { refreshTitleStats(); setState('title'); });
+  document.getElementById('btn-copy-analysis')!.addEventListener('click', async () => {
+    const payload = window.__PHOTON_PATH_ANALYSIS_JSON || '{}';
+    try {
+      await navigator.clipboard?.writeText(payload);
+      showToast('◇ Path JSON copied');
+    } catch {
+      showToast('◇ Path JSON ready in diagnostics');
+    }
+  });
   document.getElementById('btn-codex')!.addEventListener('click', () => { refreshCodex(); setState('codex'); });
   document.getElementById('btn-codex-back')!.addEventListener('click', () => { refreshTitleStats(); setState('title'); });
   document.getElementById('btn-memories')!.addEventListener('click', () => { refreshMemories(); setState('memories'); });

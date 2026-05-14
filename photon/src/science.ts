@@ -49,6 +49,61 @@ export function scienceSnapshot(epochIndex: number, epochTimer: number, epochDur
   return { scaleFactor, redshiftZ, cmbKelvin, matterOmega, darkEnergyOmega, expansionDrift };
 }
 
+export interface PhotonEquationSnapshot {
+  emittedWavelengthM: number;
+  observedWavelengthM: number;
+  energyEv: number;
+  comovingDistanceGpc: number;
+}
+
+const REPRESENTATIVE_WAVELENGTH_M: Record<string, number> = {
+  gamma: 1e-12,
+  visible: 550e-9,
+  radio: 0.21,
+};
+
+const HC_EV_M = 1.239841984e-6;
+const FULL_RUN_DISTANCE_UNITS = 108000;
+const OBSERVABLE_RADIUS_GPC = 14.26;
+
+export function photonEquationSnapshot(wavelengthKey: string, redshiftZ: number, runDistance: number): PhotonEquationSnapshot {
+  const emittedWavelengthM = REPRESENTATIVE_WAVELENGTH_M[wavelengthKey] || REPRESENTATIVE_WAVELENGTH_M.visible;
+  const redshiftFactor = Math.max(1, 1 + (Number.isFinite(redshiftZ) ? redshiftZ : 0));
+  const observedWavelengthM = emittedWavelengthM * redshiftFactor;
+  const energyEv = HC_EV_M / observedWavelengthM;
+  const comovingDistanceGpc = Math.max(0, runDistance) / FULL_RUN_DISTANCE_UNITS * OBSERVABLE_RADIUS_GPC;
+  return { emittedWavelengthM, observedWavelengthM, energyEv, comovingDistanceGpc };
+}
+
+export function formatPhotonEnergy(ev: number) {
+  if (!Number.isFinite(ev)) return 'inf eV';
+  const abs = Math.abs(ev);
+  if (abs >= 1e9) return `${formatScienceValue(ev / 1e9)} GeV`;
+  if (abs >= 1e6) return `${formatScienceValue(ev / 1e6)} MeV`;
+  if (abs >= 1e3) return `${formatScienceValue(ev / 1e3)} keV`;
+  if (abs >= 1) return `${formatScienceValue(ev)} eV`;
+  if (abs >= 1e-3) return `${formatScienceValue(ev * 1e3)} meV`;
+  return `${formatScienceValue(ev)} eV`;
+}
+
+export function formatWavelength(meters: number) {
+  if (!Number.isFinite(meters)) return 'inf m';
+  const abs = Math.abs(meters);
+  if (abs >= 1e9) return `${formatScienceValue(meters / 9.4607e15)} ly`;
+  if (abs >= 1) return `${formatScienceValue(meters)} m`;
+  if (abs >= 1e-3) return `${formatScienceValue(meters * 1000)} mm`;
+  if (abs >= 1e-6) return `${formatScienceValue(meters * 1e6)} um`;
+  if (abs >= 1e-9) return `${formatScienceValue(meters * 1e9)} nm`;
+  if (abs >= 1e-12) return `${formatScienceValue(meters * 1e12)} pm`;
+  return `${formatScienceValue(meters)} m`;
+}
+
+export function formatComovingDistance(gpc: number) {
+  if (!Number.isFinite(gpc)) return 'inf Gpc';
+  if (gpc < 0.01) return `${formatScienceValue(gpc * 1000)} Mpc`;
+  return `${formatScienceValue(gpc)} Gpc`;
+}
+
 export function formatScienceValue(value: number) {
   if (!Number.isFinite(value)) return 'inf';
   const abs = Math.abs(value);

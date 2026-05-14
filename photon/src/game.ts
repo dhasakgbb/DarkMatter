@@ -7,6 +7,7 @@ import { settings, applySettings } from './settings';
 import { newSeed, setRunSeed, computeEpochParams, computeCosmicConstants, seedToLabel, parseSeedLabel } from './seed';
 import { audio } from './audio';
 import { flowTarget, stepFlow } from './flow';
+import { formatComovingDistance, formatPhotonEnergy, formatScienceValue, formatWavelength, photonEquationSnapshot, scienceSnapshot } from './science';
 import { scene, camera, composer, lensingPass, skyMat, stars, starMat, parallaxStarMat, starShells, nebulaDust, nebulaDustMat, cosmicWeb, cosmicWebMat, bloom } from './scene';
 import { getActiveRenderProfile, renderPixelRatio } from './renderProfile';
 import { track } from './track';
@@ -45,7 +46,7 @@ const lensProjectPoint = new THREE.Vector3();
 const MAX_ACTIVE_HAZARD_LENSES = 4;
 const HAZARD_LENS_BACK_DISTANCE = 22;
 const HAZARD_LENS_FORWARD_DISTANCE = 132;
-const GRAVITY_LENSING_ENABLED = false;
+const GRAVITY_LENSING_ENABLED = true;
 
 interface HazardLensCandidate {
   score: number;
@@ -63,6 +64,7 @@ declare global {
     render_game_to_text?: () => string;
     advanceTime?: (ms: number) => string;
     startSeededRun?: (seed: number | string) => string;
+    __PHOTON_PATH_ANALYSIS_JSON?: string;
   }
 }
 
@@ -238,6 +240,7 @@ function heatDeathTick(dt: number, photonDist: number) {
   const t = game.epochTimer;
   const total = e.duration;
   updateLateEpochRedshift(dt, e);
+  audio.setHeatDeathProgress(t / Math.max(1, total));
   const visFade = THREE.MathUtils.clamp(1 - (t / 90), 0.05, 1);
   game.heatDeathFade = 1 - visFade;
   if (stars && stars.material) {
@@ -431,6 +434,42 @@ export function endRun() {
     const d = document.createElement('div');
     d.innerHTML = `<span>${k}</span><span>${v}</span>`;
     stats.appendChild(d);
+  }
+  const scienceTelemetry = scienceSnapshot(reachedIdx, game.epochTimer, e.duration);
+  const wavelengthKey = WAVELENGTHS[photon.wavelength]?.key || 'visible';
+  const photonEquation = photonEquationSnapshot(wavelengthKey, scienceTelemetry.redshiftZ, game.runDistance);
+  const emittedEnergyEv = photonEquation.energyEv * Math.max(1, 1 + scienceTelemetry.redshiftZ);
+  const energyLostPercent = Math.max(0, Math.min(100, (1 - photonEquation.energyEv / Math.max(emittedEnergyEv, Number.EPSILON)) * 100));
+  const analysis = {
+    seed: { value: game.runSeed >>> 0, label: seedToLabel(game.runSeed) },
+    epoch: { index: reachedIdx, name: e.name, timer: Math.round(game.epochTimer * 10) / 10 },
+    photon: { wavelength: wavelengthKey, emittedWavelengthM: photonEquation.emittedWavelengthM, observedWavelengthM: photonEquation.observedWavelengthM, energyEv: photonEquation.energyEv },
+    path: { properDistanceUnits: Math.round(game.runDistance), comovingDistanceGpc: photonEquation.comovingDistanceGpc, redshiftZ: scienceTelemetry.redshiftZ, energyLostPercent },
+    run: { flowPeak: game.flowPeak, bestLineStreak: game.bestLineStreakThisRun || 0, phaseStreak: game.phaseStreak || 0, darkMatterDetections: meta.darkMatterDetections || 0 },
+  };
+  window.__PHOTON_PATH_ANALYSIS_JSON = JSON.stringify(analysis, null, 2);
+  const analysisWrap = document.getElementById('death-analysis');
+  if (analysisWrap) {
+    const rows: Array<[string, string]> = [
+      ['Universe seed', analysis.seed.label],
+      ['Observed energy', formatPhotonEnergy(photonEquation.energyEv)],
+      ['lambda emitted to observed', formatWavelength(photonEquation.emittedWavelengthM) + ' -> ' + formatWavelength(photonEquation.observedWavelengthM)],
+      ['Redshift energy loss', formatScienceValue(energyLostPercent) + '%'],
+      ['Proper track', fmt(game.runDistance) + ' units'],
+      ['Comoving path', formatComovingDistance(photonEquation.comovingDistanceGpc)],
+      ['Peak flow', Math.round((game.flowPeak || 0) * 100) + '%'],
+    ];
+    analysisWrap.innerHTML = '<div class="path-analysis-head"><span>Photon path analysis</span><b>' + e.name + '</b></div><div class="path-analysis-grid"></div><div class="path-analysis-note">Seeded run record: proper track distance, cosmological redshift, wavelength stretch, and energy loss are exported as JSON.</div>';
+    const grid = analysisWrap.querySelector('.path-analysis-grid') as HTMLElement;
+    for (const [label, value] of rows) {
+      const row = document.createElement('div');
+      const labelEl = document.createElement('span');
+      const valueEl = document.createElement('b');
+      labelEl.textContent = label;
+      valueEl.textContent = value;
+      row.append(labelEl, valueEl);
+      grid.appendChild(row);
+    }
   }
   const memWrap = document.getElementById('death-memories')!;
   memWrap.innerHTML = '';
@@ -634,6 +673,7 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
       if (game.railScrapeCooldown > 0) game.railScrapeCooldown = Math.max(0, game.railScrapeCooldown - realDt);
       if (game.darkMatterSignalTime > 0) game.darkMatterSignalTime = Math.max(0, game.darkMatterSignalTime - realDt);
       if (game.darkMatterSignalTime <= 0) game.darkMatterSignal = Math.max(0, (game.darkMatterSignal || 0) - realDt * 1.4);
+      audio.setDarkMatterSignal(game.darkMatterSignal || 0);
       const photonSegIdx = Math.floor(photon.distance / SEGMENT_LEN);
       track.ensureAhead(photonSegIdx);
       const e = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
@@ -769,8 +809,7 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
   camera.fov += (fovTarget - camera.fov) * Math.min(1, realDt * 8);
   camera.updateProjectionMatrix();
   const renderProfile = getActiveRenderProfile();
-  // Gravity lensing disabled — was overwhelming gameplay. Re-enable by
-  // flipping GRAVITY_LENSING_ENABLED and restoring nonzero shader defaults / profile multipliers.
+  // Visual lensing is intentionally sparse: only high-signal dark-matter/event-horizon surfaces feed the shader.
   const lensMul = GRAVITY_LENSING_ENABLED ? renderProfile.lensingMul : 0;
   lensingPass.uniforms.uIntensity.value = 0;
   lensingPass.uniforms.uBarrel.value    = 0;
@@ -813,7 +852,7 @@ function updateHazardLensing(visualMul: number) {
   const epochLensMul = epoch.isHeatDeath ? 2.2 : epoch.name === 'Black Hole' ? 1.6 : 1;
 
   for (const hazard of hazards.list) {
-    if (hazard.hit || (hazard.type !== 'well' && hazard.type !== 'eventHorizon')) continue;
+    if (hazard.hit || (hazard.type !== 'dmFilament' && hazard.type !== 'eventHorizon')) continue;
     const dz = hazard.dist - photon.distance;
     if (dz < -HAZARD_LENS_BACK_DISTANCE || dz > HAZARD_LENS_FORWARD_DISTANCE) continue;
 
@@ -825,14 +864,15 @@ function updateHazardLensing(visualMul: number) {
     const screenY = 0.5 - lensProjectPoint.y * 0.5;
     const depthProximity = 1 - THREE.MathUtils.clamp(Math.max(0, dz) / HAZARD_LENS_FORWARD_DISTANCE, 0, 1);
     const edgeFade = 1 - THREE.MathUtils.clamp(Math.max(Math.abs(lensProjectPoint.x), Math.abs(lensProjectPoint.y)) - 0.82, 0, 0.34) / 0.34;
-    const baseStrength = hazard.type === 'eventHorizon' ? 0.009 : 0.0035;
+    const isHorizon = hazard.type === 'eventHorizon';
+    const baseStrength = isHorizon ? 0.009 : 0.0048;
     const strength = baseStrength * (0.58 + depthProximity * 0.42) * edgeFade * epochLensMul * visualMul;
     const radius = THREE.MathUtils.clamp(
-      (hazard.type === 'eventHorizon' ? 0.35 : 0.25) + depthProximity * (hazard.type === 'eventHorizon' ? 0.12 : 0.09),
-      hazard.type === 'eventHorizon' ? 0.30 : 0.20,
-      hazard.type === 'eventHorizon' ? 0.52 : 0.40,
+      (isHorizon ? 0.35 : 0.31) + depthProximity * (isHorizon ? 0.12 : 0.11),
+      isHorizon ? 0.30 : 0.24,
+      isHorizon ? 0.52 : 0.46,
     );
-    const score = strength * (hazard.type === 'eventHorizon' ? 1.45 : 1) * (0.72 + depthProximity * 0.46);
+    const score = strength * (isHorizon ? 1.45 : 1.18) * (0.72 + depthProximity * 0.46);
 
     hazardLensCandidates.push({ score, x: screenX, y: screenY, strength, radius });
   }
@@ -865,6 +905,8 @@ export function startSeededRun(seed: number | string) {
 
 export function renderGameToText() {
   const epoch = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
+  const scienceTelemetry = scienceSnapshot(game.epochIndex, game.epochTimer, epoch.duration);
+  const photonEquation = photonEquationSnapshot(WAVELENGTHS[photon.wavelength]?.key || 'visible', scienceTelemetry.redshiftZ, game.runDistance);
   const nearHazards = hazards.list
     .filter((h) => !h.hit && h.dist >= photon.distance - 8 && h.dist <= photon.distance + 130)
     .sort((a, b) => a.dist - b.dist)
@@ -926,6 +968,12 @@ export function renderGameToText() {
       assetsReady: audio.assetsReady,
       engineActive: !!audio.engineNodes,
       droneActive: !!audio.studioMusicNodes,
+      scienceAutomation: {
+        redshift: Math.round(audio.scienceRedshift * 1000) / 1000,
+        flow: Math.round(audio.scienceFlow * 1000) / 1000,
+        darkMatter: Math.round(audio.scienceDarkMatter * 1000) / 1000,
+        heatDeathProgress: Math.round(audio.heatDeathProgress * 1000) / 1000,
+      },
     },
     science: {
       mode: game.scienceMode,
@@ -934,6 +982,11 @@ export function renderGameToText() {
       darkMatterSignalTime: Math.round((game.darkMatterSignalTime || 0) * 10) / 10,
       darkMatterMassSolar: Math.round(game.darkMatterMassSolar || 0),
       darkMatterDeflectionArcsec: Math.round((game.darkMatterDeflectionArcsec || 0) * 100) / 100,
+      photonEquation: {
+        energyEv: Number(photonEquation.energyEv.toPrecision(4)),
+        observedWavelengthM: Number(photonEquation.observedWavelengthM.toPrecision(4)),
+        comovingDistanceGpc: Math.round(photonEquation.comovingDistanceGpc * 1000) / 1000,
+      },
     },
     counts: {
       activeHazards: hazards.list.filter((h) => !h.hit).length,

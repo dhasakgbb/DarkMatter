@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatScienceValue, formatTemperature, scienceSnapshot } from './science';
+import { formatComovingDistance, formatPhotonEnergy, formatScienceValue, formatTemperature, formatWavelength, photonEquationSnapshot, scienceSnapshot } from './science';
 
 describe('science telemetry', () => {
   it('maps recombination near the observed CMB release redshift', () => {
@@ -22,5 +22,19 @@ describe('science telemetry', () => {
     expect(formatScienceValue(1089)).toBe('1089');
     expect(formatScienceValue(1e-5)).toBe('1.0e-5');
     expect(formatTemperature(2.725)).toBe('2.73 K');
+  });
+
+  it('computes live photon equation telemetry', () => {
+    const visible = photonEquationSnapshot('visible', 0, 54000);
+    expect(visible.energyEv).toBeGreaterThan(2.2);
+    expect(visible.energyEv).toBeLessThan(2.3);
+    expect(visible.comovingDistanceGpc).toBeGreaterThan(7.1);
+    expect(visible.comovingDistanceGpc).toBeLessThan(7.2);
+
+    const redshifted = photonEquationSnapshot('visible', 1, 0);
+    expect(redshifted.energyEv).toBeCloseTo(visible.energyEv / 2, 4);
+    expect(formatPhotonEnergy(visible.energyEv)).toBe('2.25 eV');
+    expect(formatComovingDistance(0.004)).toBe('4.00 Mpc');
+    expect(formatWavelength(550e-9)).toBe('550 nm');
   });
 });

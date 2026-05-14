@@ -50,9 +50,21 @@ interface DecodedStem {
   stem: string;
 }
 
+interface StudioStemNode {
+  stem: string;
+  gain: GainNode;
+  baseGain: number;
+}
+
 interface StudioMusicNodes {
   sources: AudioBufferSourceNode[];
+  stemGains: StudioStemNode[];
   out: GainNode;
+  scienceGain: GainNode;
+  filter: BiquadFilterNode;
+  delay: DelayNode;
+  delayReturn: GainNode;
+  heatDeath: boolean;
 }
 
 interface AssetEngineNodes {
@@ -100,6 +112,14 @@ function disconnectAudioNode(node: AudioNode) {
   }
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function clamp01(value: number) {
+  return clamp(Number.isFinite(value) ? value : 0, 0, 1);
+}
+
 class AudioEngine {
   ctx: AudioContext | null = null;
   master: GainNode | null = null;
@@ -112,6 +132,10 @@ class AudioEngine {
   pendingMusicKey: string | null = null;
   pendingEngine = false;
   assetsReady = false;
+  scienceRedshift = 0;
+  scienceFlow = 0;
+  scienceDarkMatter = 0;
+  heatDeathProgress = 0;
   _boostCurrent = 0;
 
   readonly mode = 'asset' as const;
@@ -127,11 +151,25 @@ class AudioEngine {
     this.manifestPromise = this.loadStudioAssets();
   }
 
-  /** Reserved for future manifest-stem automation. No generated Web Audio fallback is invoked. */
-  setRedshift(_amount: number) {}
+  setRedshift(amount: number) {
+    this.scienceRedshift = clamp01(amount);
+    this.applyScienceAutomation();
+  }
 
-  /** Reserved for future manifest-stem automation. No generated Web Audio fallback is invoked. */
-  setFlow(_amount: number) {}
+  setFlow(amount: number) {
+    this.scienceFlow = clamp01(amount);
+    this.applyScienceAutomation();
+  }
+
+  setDarkMatterSignal(amount: number) {
+    this.scienceDarkMatter = clamp01(amount);
+    this.applyScienceAutomation();
+  }
+
+  setHeatDeathProgress(progress: number) {
+    this.heatDeathProgress = clamp01(progress);
+    this.applyScienceAutomation();
+  }
 
   resume() {
     if (this.ctx && this.ctx.state === 'suspended') void this.ctx.resume().catch(() => {});
@@ -251,10 +289,24 @@ class AudioEngine {
     this.stopStudioMusic(0.2);
     const ctx = this.ctx;
     const out = ctx.createGain();
+    const scienceGain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    const delay = ctx.createDelay(0.9);
+    const delayReturn = ctx.createGain();
+
     out.gain.value = 0;
-    out.connect(this.master!);
+    scienceGain.gain.value = 1;
+    filter.type = 'lowpass';
+    filter.frequency.value = 6200;
+    filter.Q.value = 0.7;
+    delay.delayTime.value = 0.08;
+    delayReturn.gain.value = 0.035;
+    out.connect(scienceGain);
+    scienceGain.connect(filter).connect(this.master!);
+    scienceGain.connect(delay).connect(delayReturn).connect(this.master!);
 
     const startAt = ctx.currentTime + 0.04;
+    const stemGains: StudioStemNode[] = [];
     const sources = stems.map((stem) => {
       const source = ctx.createBufferSource();
       const gain = ctx.createGain();
@@ -263,12 +315,14 @@ class AudioEngine {
       gain.gain.value = stem.gain;
       source.connect(gain).connect(out);
       source.start(startAt);
+      stemGains.push({ stem: stem.stem, gain, baseGain: stem.gain });
       return source;
     });
 
     out.gain.setValueAtTime(0, ctx.currentTime);
     out.gain.linearRampToValueAtTime(1, ctx.currentTime + fadeIn);
-    this.studioMusicNodes = { sources, out };
+    this.studioMusicNodes = { sources, stemGains, out, scienceGain, filter, delay, delayReturn, heatDeath: epochName === 'Heat Death' };
+    this.applyScienceAutomation();
     traceAudio(epochName, 'music', `${stems.length} stems`);
     return true;
   }
@@ -283,6 +337,10 @@ class AudioEngine {
     setTimeout(() => {
       for (const source of nodes.sources) stopAudioSource(source);
       disconnectAudioNode(nodes.out);
+      disconnectAudioNode(nodes.scienceGain);
+      disconnectAudioNode(nodes.filter);
+      disconnectAudioNode(nodes.delay);
+      disconnectAudioNode(nodes.delayReturn);
     }, Math.ceil((fadeOut + 0.1) * 1000));
     this.studioMusicNodes = null;
   }
@@ -290,6 +348,7 @@ class AudioEngine {
   startDrone(epoch: Epoch) {
     this.ensure();
     if (!this.ctx) return;
+    this.heatDeathProgress = 0;
     this.stopStudioMusic(0.2);
     this.pendingMusicKey = epoch.name;
     if (this.startStudioMusic(epoch.name)) return;
@@ -306,6 +365,7 @@ class AudioEngine {
   startHeatDeath() {
     this.ensure();
     if (!this.ctx) return;
+    this.heatDeathProgress = 0;
     this.stopStudioMusic(0.4);
     this.pendingMusicKey = 'Heat Death';
     if (this.startStudioMusic('Heat Death', 8)) return;
@@ -412,12 +472,50 @@ class AudioEngine {
   updateEngine(speedFactor: number, boosting: boolean) {
     if (!this.engineNodes || !this.ctx) return;
     const nodes = this.engineNodes;
-    const rate = Math.min(1.45, Math.max(0.76, 0.84 + (speedFactor - 1) * 0.34 + (boosting ? 0.16 : 0)));
+    const redshift = this.scienceRedshift;
+    const flow = this.scienceFlow;
+    const darkMatter = this.scienceDarkMatter;
+    const heatFade = this.heatDeathFadeAmount();
+    const rate = Math.min(1.5, Math.max(0.68, 0.84 + (speedFactor - 1) * 0.34 + (boosting ? 0.16 : 0) + flow * 0.045 - redshift * 0.11 - heatFade * 0.12));
     nodes.source.playbackRate.setTargetAtTime(rate, this.ctx.currentTime, 0.09);
-    const cutoff = 620 + (speedFactor - 1) * 1450 + (boosting ? 900 : 0);
-    nodes.filter.frequency.setTargetAtTime(Math.max(420, cutoff), this.ctx.currentTime, 0.06);
-    const gain = nodes.baseGain * (0.82 + (speedFactor - 1) * 0.34 + (boosting ? 0.18 : 0));
+    const cutoff = 620 + (speedFactor - 1) * 1450 + (boosting ? 900 : 0) + flow * 520 + darkMatter * 260 - redshift * 360 - heatFade * 480;
+    nodes.filter.frequency.setTargetAtTime(Math.max(260, cutoff), this.ctx.currentTime, 0.06);
+    const gain = nodes.baseGain * Math.max(0.08, 0.82 + (speedFactor - 1) * 0.34 + (boosting ? 0.18 : 0) + flow * 0.10 + darkMatter * 0.08 - redshift * 0.12 - heatFade * 0.42);
     nodes.hum.gain.setTargetAtTime(gain, this.ctx.currentTime, 0.08);
+  }
+
+  heatDeathFadeAmount() {
+    return this.heatDeathProgress <= 2 / 3 ? 0 : clamp01((this.heatDeathProgress - 2 / 3) * 3);
+  }
+
+  applyScienceAutomation() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const redshift = this.scienceRedshift;
+    const flow = this.scienceFlow;
+    const darkMatter = this.scienceDarkMatter;
+    const heatFade = this.heatDeathFadeAmount();
+
+    if (this.studioMusicNodes) {
+      const nodes = this.studioMusicNodes;
+      const heatMul = nodes.heatDeath ? 1 - heatFade * 0.9 : 1;
+      const cutoff = clamp(6200 - redshift * 4300 + flow * 1800 + darkMatter * 700 - heatFade * 1100, 520, 8800);
+      nodes.filter.frequency.setTargetAtTime(cutoff, t, 0.18);
+      nodes.filter.Q.setTargetAtTime(0.62 + flow * 0.36 + darkMatter * 0.24, t, 0.18);
+      nodes.delay.delayTime.setTargetAtTime(clamp(0.08 + redshift * 0.30 + flow * 0.06 + darkMatter * 0.11 + heatFade * 0.18, 0.04, 0.72), t, 0.24);
+      nodes.delayReturn.gain.setTargetAtTime(clamp(0.035 + redshift * 0.075 + flow * 0.05 + darkMatter * 0.06 - heatFade * 0.055, 0.008, 0.22), t, 0.24);
+      nodes.scienceGain.gain.setTargetAtTime(Math.max(0.08, heatMul), t, 0.35);
+
+      for (const stem of nodes.stemGains) {
+        const key = stem.stem.toLowerCase();
+        let multiplier = 1;
+        if (key.includes('texture') || key.includes('vanishing')) multiplier *= 0.86 + redshift * 0.28 + darkMatter * 0.12 - flow * 0.04;
+        if (key.includes('pulse') || key.includes('motion') || key.includes('reward')) multiplier *= 0.88 + flow * 0.30 - redshift * 0.08;
+        if (key.includes('bass') || key.includes('low-tone')) multiplier *= 0.96 + redshift * 0.16 - flow * 0.05 - heatFade * 0.18;
+        if (key.includes('danger')) multiplier *= 0.92 + flow * 0.18 + darkMatter * 0.34;
+        stem.gain.gain.setTargetAtTime(stem.baseGain * clamp(multiplier, 0.18, 1.42), t, 0.22);
+      }
+    }
   }
 
   setListenerPosition(p: THREE.Vector3) {

@@ -60,6 +60,9 @@ function installFakeAudio(counters: CallCounters) {
     createBiquadFilter() {
       return audioNode({ type: 'lowpass', frequency: audioParam(), Q: audioParam() });
     }
+    createDelay() {
+      return audioNode({ delayTime: audioParam() });
+    }
     createPanner() {
       return audioNode({
         panningModel: '', distanceModel: '', refDistance: 0, maxDistance: 0, rolloffFactor: 0,
@@ -118,6 +121,52 @@ function resetAudio() {
   audio.pendingMusicKey = null;
   audio.pendingEngine = false;
   audio.assetsReady = false;
+  audio.scienceRedshift = 0;
+  audio.scienceFlow = 0;
+  audio.scienceDarkMatter = 0;
+  audio.heatDeathProgress = 0;
+}
+
+
+type TestAudioParam = { setTargetAtTime: ReturnType<typeof vi.fn> };
+type TestStudioNodes = {
+  filter: { frequency: TestAudioParam; Q: TestAudioParam };
+  delay: { delayTime: TestAudioParam };
+  delayReturn: { gain: TestAudioParam };
+  scienceGain: { gain: TestAudioParam };
+  stemGains: Array<{ stem: string; gain: { gain: TestAudioParam }; baseGain: number }>;
+};
+type TestEngineNodes = {
+  source: { playbackRate: TestAudioParam };
+  filter: { frequency: TestAudioParam };
+  hum: { gain: TestAudioParam };
+};
+
+function lastTarget(param: TestAudioParam) {
+  const calls = param.setTargetAtTime.mock.calls;
+  const call = calls[calls.length - 1];
+  if (!call) throw new Error('Expected setTargetAtTime to be called');
+  return call[0] as number;
+}
+
+function startFakeMusic(epochName = 'Inflationary') {
+  audio.ensure();
+  audio.assetsReady = true;
+  audio.musicBuffers.set(epochName, [
+    { buffer: {} as AudioBuffer, gain: 0.5, loop: true, stem: 'texture' },
+    { buffer: {} as AudioBuffer, gain: 0.4, loop: true, stem: 'pulse' },
+    { buffer: {} as AudioBuffer, gain: 0.3, loop: true, stem: 'danger' },
+  ]);
+  expect(audio.startStudioMusic(epochName, 0)).toBe(true);
+  return audio.studioMusicNodes as unknown as TestStudioNodes;
+}
+
+function startFakeEngine() {
+  audio.ensure();
+  audio.assetsReady = true;
+  audio.sfxBuffers.set('engineLoop', [{ buffer: {} as AudioBuffer, gain: 0.5, rate: 1, spatial: false, loop: true }]);
+  expect(audio.startAssetEngineLoop(0)).toBe(true);
+  return audio.engineNodes as unknown as TestEngineNodes;
 }
 
 function fireAllCues() {
@@ -180,5 +229,63 @@ describe('audio runtime contracts', () => {
     audio.phaseChime(0);
 
     expect(playSpy).toHaveBeenCalledWith('wavelengthShift', { rate: 1.12, gain: 0.45, cooldownMs: 80 });
+  });
+
+  it('maps science signals onto asset music filters, delay, and stem gains', () => {
+    const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
+    installFakeAudio(counters);
+    const nodes = startFakeMusic();
+
+    audio.setRedshift(0.75);
+    audio.setFlow(0.5);
+    audio.setDarkMatterSignal(0.6);
+
+    expect(audio.scienceRedshift).toBe(0.75);
+    expect(audio.scienceFlow).toBe(0.5);
+    expect(audio.scienceDarkMatter).toBe(0.6);
+    expect(lastTarget(nodes.filter.frequency)).toBeGreaterThan(3500);
+    expect(lastTarget(nodes.filter.frequency)).toBeLessThan(4700);
+    expect(lastTarget(nodes.delay.delayTime)).toBeGreaterThan(0.35);
+    const textureGain = nodes.stemGains.find((stem) => stem.stem === 'texture')!;
+    const dangerGain = nodes.stemGains.find((stem) => stem.stem === 'danger')!;
+    expect(lastTarget(textureGain.gain.gain)).toBeGreaterThan(textureGain.baseGain);
+    expect(lastTarget(dangerGain.gain.gain)).toBeGreaterThan(dangerGain.baseGain);
+    expect(counters.oscillator).toBe(0);
+    expect(counters.buffer).toBe(0);
+    expect(counters.convolver).toBe(0);
+  });
+
+  it('uses Heat Death progress to fade asset music toward near-silence', () => {
+    const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
+    installFakeAudio(counters);
+    const nodes = startFakeMusic('Heat Death');
+
+    audio.setHeatDeathProgress(0.9);
+
+    expect(audio.heatDeathProgress).toBe(0.9);
+    expect(lastTarget(nodes.scienceGain.gain)).toBeLessThan(0.4);
+    expect(lastTarget(nodes.delayReturn.gain)).toBeLessThan(0.04);
+    expect(counters.oscillator).toBe(0);
+    expect(counters.buffer).toBe(0);
+    expect(counters.convolver).toBe(0);
+  });
+
+  it('layers science signals into the asset engine loop automation', () => {
+    const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
+    installFakeAudio(counters);
+    const nodes = startFakeEngine();
+
+    audio.setRedshift(0.7);
+    audio.setFlow(0.8);
+    audio.setDarkMatterSignal(0.4);
+    audio.setHeatDeathProgress(0.9);
+    audio.updateEngine(1.2, true);
+
+    expect(lastTarget(nodes.source.playbackRate)).toBeLessThan(1.05);
+    expect(lastTarget(nodes.filter.frequency)).toBeGreaterThan(1100);
+    expect(lastTarget(nodes.hum.gain)).toBeGreaterThan(0.2);
+    expect(counters.oscillator).toBe(0);
+    expect(counters.buffer).toBe(0);
+    expect(counters.convolver).toBe(0);
   });
 });

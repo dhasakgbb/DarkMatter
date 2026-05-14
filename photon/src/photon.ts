@@ -9,6 +9,10 @@ import { audio } from './audio';
 import { settings } from './settings';
 import { checkMemoryTriggers } from './memories';
 import { funLab } from './funlab/runtime';
+import { particleManager } from './particles';
+
+const interferenceLeft = new THREE.Vector3();
+const interferenceRight = new THREE.Vector3();
 
 export interface InputState {
   left: boolean;
@@ -338,7 +342,16 @@ class Photon {
     // Chain reward: longer flash + brighter audio cue every 3 phases.
     const streakBoost = Math.min(8, game.phaseStreak);
     this.phaseFlashTime = 0.45 * (1 + streakBoost * 0.08);
+    if (game.phaseStreak >= 2) {
+      const lobeCount = settings.reducedMotion ? 2 : (game.phaseStreak % 3 === 0 ? 7 : 4);
+      const spread = Math.min(1.3, 0.45 + game.phaseStreak * 0.08);
+      interferenceLeft.set(-spread, 0.16, -0.35);
+      interferenceRight.set(spread, -0.16, -0.35);
+      particleManager.emit(this.group.position, WAVELENGTHS[this.wavelength].color, lobeCount, { speed: 8, life: settings.reducedMotion ? 0.22 : 0.38, drag: 0.93, dirBias: interferenceLeft });
+      particleManager.emit(this.group.position, WAVELENGTHS[this.wavelength].color, lobeCount, { speed: 8, life: settings.reducedMotion ? 0.22 : 0.38, drag: 0.93, dirBias: interferenceRight });
+    }
     if (game.phaseStreak >= 3 && game.phaseStreak % 3 === 0) {
+      particleManager.emitBurst(this.group.position, 'phase', settings.reducedMotion ? 4 : 12, WAVELENGTHS[this.wavelength].color);
       audio.lineGate(game.phaseStreak);
     }
     meta.phasesLifetime = (meta.phasesLifetime || 0) + 1;

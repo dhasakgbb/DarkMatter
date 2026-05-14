@@ -50,17 +50,19 @@ Important runtime rules:
 - Missing or undecodable files stay silent and are recorded in `window.__PHOTON_AUDIO_TRACE` with `source: 'missing'`.
 - Successful SFX and music starts are traced with `source: 'asset'` or `source: 'music'`.
 - `window.__PHOTON_AUDIO_TRACE` keeps the latest 400 trace entries.
-- `render_game_to_text()` reports `audio.mode`, `audio.assetsReady`, `audio.engineActive`, and `audio.droneActive` for automated playtests.
+- `render_game_to_text()` reports `audio.mode`, `audio.assetsReady`, `audio.engineActive`, `audio.droneActive`, and `audio.scienceAutomation` for automated playtests.
+- Redshift, flow, dark-matter signal, and Heat Death progress modulate only decoded asset playback: music filter cutoff, delay return, stem gains, engine-loop playback rate, engine filter cutoff, and engine gain. No generated oscillator/audio-buffer fallback is invoked.
 
 ## Cue Map
 
 | Cue or Signal | Trigger Surface | Manifest Path | Notes |
 |---|---|---|---|
-| Engine loop | `startRun()`, `audio.startEngine()`, `audio.updateEngine()` | `sfx.engineLoop` | Speed and boost continuously modulate playback/filter/gain. |
-| Epoch music | `setEpoch()` for non-Heat Death epochs | `music.<epoch>` stems | Starts all enabled stems for the epoch and fades them in. |
-| Heat Death | `setEpoch()` when `epoch.isHeatDeath` | `music.Heat Death` stems | Current generated material includes 360-second reference beds; final Heat Death assets still need commissioned production delivery. |
-| Redshift | `setSkyRedshift()` and late-epoch ticks | Reserved for future manifest-stem automation | Currently no audible automation. |
-| Flow intensity | Main loop `audio.setFlow(game.flowLevel)` | Reserved for future manifest-stem automation | Currently no audible automation. |
+| Engine loop | `startRun()`, `audio.startEngine()`, `audio.updateEngine()` | `sfx.engineLoop` | Speed, boost, redshift, flow, dark-matter signal, and Heat Death progress continuously modulate playback/filter/gain. |
+| Epoch music | `setEpoch()` for non-Heat Death epochs | `music.<epoch>` stems | Starts all enabled stems for the epoch, fades them in, then routes them through science-controlled filter/delay/stem-gain automation. |
+| Heat Death | `setEpoch()` when `epoch.isHeatDeath` | `music.Heat Death` stems | Current generated material includes 360-second reference beds; final-third epoch progress fades the asset mix toward near-silence while preserving the low-tone/texture shape. |
+| Redshift | `setSkyRedshift()` and late-epoch ticks | Active music and engine loop | Cools/darkens the asset mix by lowering music and engine cutoff, widening delay, reshaping texture/bass stems, and slightly lowering engine playback rate. |
+| Flow intensity | Main loop `audio.setFlow(game.flowLevel)` | Active music and engine loop | Brightens motion/pulse/danger layers, raises engine energy, and tightens responsive play feedback. |
+| Dark-matter signal | Dark-matter filament detection and decay | Active music and engine loop plus `sfx.gravityWellWhoosh` | Adds lensing pressure through filter/delay/stem weighting and the existing spatial whoosh cue. |
 | Pickup | `Photon.collect()` and pickup hazards | `sfx.pickup` | Common cue, 4 asset variants. |
 | Speed pad | Racing line speed pads and gravity sling rewards | `sfx.speedPad` | Also used by gravity-well near-miss rewards. |
 | Line gate | Racing gate hits and every third phase streak | `sfx.lineGate` | Runtime lifts rate/gain with streak. |

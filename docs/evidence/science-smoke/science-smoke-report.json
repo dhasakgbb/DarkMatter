@@ -1,25 +1,69 @@
 {
-  "generatedAt": "2026-05-13T23:38:40.221Z",
+  "generatedAt": "2026-05-14T00:14:32.593Z",
   "checks": {
     "scienceToggleExists": false,
     "scienceModeSettingsCopyExists": false,
     "scienceModeIsBaseline": true,
+    "scienceAudioAutomationExists": true,
+    "photonEquationExists": true,
+    "sparseDarkMatterLensingEnabled": true,
     "standaloneStartsRun": true,
+    "standaloneAssetsReady": true,
+    "standaloneEngineActive": true,
+    "standaloneMusicActive": true,
     "renderDiagnosticsIncludeScience": true,
-    "browserErrors": 0
+    "browserErrors": 0,
+    "pathAnalysisPanelExists": true,
+    "pathAnalysisJsonExportExists": true,
+    "phaseInterferenceParticlesLive": true
   },
   "diagnosticsSample": {
     "state": "run",
+    "audio": {
+      "mode": "asset",
+      "assetsReady": true,
+      "engineActive": true,
+      "droneActive": true,
+      "scienceAutomation": {
+        "redshift": 0,
+        "flow": 0.246,
+        "darkMatter": 0,
+        "heatDeathProgress": 0
+      }
+    },
     "science": {
       "mode": true,
       "redshift": 0,
       "darkMatterSignal": 0,
       "darkMatterSignalTime": 0,
       "darkMatterMassSolar": 0,
-      "darkMatterDeflectionArcsec": 0
+      "darkMatterDeflectionArcsec": 0,
+      "photonEquation": {
+        "energyEv": 5.217e-32,
+        "observedWavelengthM": 2.377e+25,
+        "comovingDistanceGpc": 0.056
+      }
     },
     "canvasCount": 2
   },
-  "command": "headless Chrome CDP smoke against photon-racer-v2.html standalone artifact",
-  "verdict": "pass"
+  "command": "npm test; npm run typecheck; npm run build; npm run sync:standalone; cmp -s photon/dist/index.html photon-racer-v2.html; headless Chrome CDP smoke for path analysis/export and phase-chain interference particles",
+  "verdict": "pass",
+  "pathAnalysisSample": {
+    "activeLayer": "death",
+    "textIncludes": [
+      "Photon path analysis",
+      "Universe seed",
+      "Observed energy",
+      "Proper track",
+      "Comoving path"
+    ],
+    "payload": {
+      "seedLabel": "Z5RKFA",
+      "properDistanceUnits": 54000,
+      "comovingDistanceGpc": 7.13,
+      "wavelength": "visible",
+      "phaseStreak": 3
+    },
+    "liveParticlesAfterPhaseChain": 34
+  }
 }
