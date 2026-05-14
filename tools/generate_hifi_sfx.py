@@ -225,8 +225,9 @@ def wavelength_asset(name: str, rate: float) -> tuple[str, float, StereoFn, floa
         prism = 0.20 * chirp(base, dest, t, dur) * body
         lock = 0.09 * sine(math.sqrt(base * dest), t, 0.2) * exp_tail(t, 7.0)
         shimmer = 0.045 * sine(base * 2.02, t, 1.2) * exp_tail(t, 12.0)
+        width = 0.035 * sine(base * 1.018, t, 0.55) * body
         l, r = pan(prism + shimmer, {"gamma": -0.25, "visible": 0.0, "radio": 0.25}[name])
-        return l + lock, r + lock * 0.96
+        return l + lock + width, r + lock * 0.96 - width
 
     return f"sfx/wavelength-shift/{name}.ogg", dur, fn, 0.60
 

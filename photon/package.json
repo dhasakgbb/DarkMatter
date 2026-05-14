@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "qa:fast": "npm test && npm run typecheck && npm run build",
-    "precommit": "npm test && npm run typecheck && npm run build:standalone"
+    "precommit": "npm test && npm run typecheck && npm run build:standalone",
+    "qa:audio": "node ../tools/audit_audio_manifest.mjs && node ../tools/audit_sfx_quality.mjs"
   },
   "devDependencies": {
     "typescript": "^5.4.5",
