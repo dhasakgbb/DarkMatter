@@ -67,6 +67,22 @@ function hazardUserData(mesh: THREE.Mesh): HazardUserData {
   return mesh.userData as HazardUserData;
 }
 
+export function tierForStrength(strength: number): 0 | 1 | 2 | 3 {
+  if (!Number.isFinite(strength) || strength < 0.35) return 0;
+  if (strength >= 0.88) return 3;
+  if (strength >= 0.65) return 2;
+  return 1;
+}
+
+export function applyFloorIfPending(
+  state: { floorLensingPending: boolean },
+  strength: number,
+): { strength: number; consumed: boolean } {
+  if (!state.floorLensingPending) return { strength, consumed: false };
+  state.floorLensingPending = false;
+  return { strength: Math.max(0.35, strength), consumed: true };
+}
+
 class HazardManager {
   list: Hazard[] = [];
   group = new THREE.Group();
