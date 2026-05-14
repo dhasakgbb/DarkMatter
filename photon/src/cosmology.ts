@@ -181,6 +181,7 @@ export interface MemoryCondition {
   flowPeakDwell?: number;
   flowDwellLifetime?: number;
   darkMatterDetections?: number;
+  previousSeedBookmark?: boolean;
 }
 export interface MemoryResonance {
   startEnergyBonus?: number;
@@ -291,6 +292,10 @@ export const MEMORIES: Memory[] = [
   { id: 'flow-absorbed',   type: 'threshold', when: { flowDwellLifetime: 120 },
     body: 'You remember being so much in the moving that the moving became you. You were not the photon. You were the wave the photon kept catching.',
     threshold: { unlockVariant: 'gamma' } },
+  { id: 'bullet-cluster-confirmed', type: 'narrative', when: { darkMatterDetections: 3 },
+    body: 'You remember threading a filament where the visible matter and the gravitational center did not agree. Twenty-seven percent of the mass was elsewhere. You felt it pull anyway.' },
+  { id: 'seed-echo', type: 'narrative', when: { previousSeedBookmark: true },
+    body: 'You remember this universe. The filaments you threaded last time still hum here. Your past self left a hypothesis; you are the experiment.' },
 ];
 
 // ============================================================================

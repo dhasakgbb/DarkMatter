@@ -1,5 +1,6 @@
 import { MEMORIES, VARIANTS, type Memory } from './cosmology';
 import { meta, saveMeta } from './meta';
+import { loadSeedBookmarks } from './physicsInsight';
 import { game } from './state';
 import { showToast } from './utils';
 import { audio } from './audio';
@@ -54,6 +55,11 @@ export function checkMemoryTriggers() {
     if (w.flowPeakDwell != null && (game.flowPeakDwell || 0) < w.flowPeakDwell) ok = false;
     if (w.flowDwellLifetime != null && (meta.flowDwellLifetime || 0) < w.flowDwellLifetime) ok = false;
     if (w.darkMatterDetections != null && (meta.darkMatterDetections || 0) < w.darkMatterDetections) ok = false;
+    if (w.previousSeedBookmark) {
+      const bookmarks = loadSeedBookmarks();
+      const match = bookmarks.find((b) => b.seed === (game.runSeed >>> 0) && b.insightScore >= 45);
+      if (!match) ok = false;
+    }
     if (ok) unlockMemory(m.id);
   }
 }
