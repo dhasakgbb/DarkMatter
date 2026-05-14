@@ -112,6 +112,8 @@ function installFakeAudio(counters: CallCounters) {
 function resetAudio() {
   audio.ctx = null;
   audio.master = null;
+  audio.synthMusicNodes = null;
+  audio.synthEngineNodes = null;
   audio.studioMusicNodes = null;
   audio.engineNodes = null;
   audio.manifestPromise = null;
@@ -127,6 +129,7 @@ function resetAudio() {
   audio.heatDeathProgress = 0;
   audio.scienceResonanceStreak = 0;
   audio.scienceModeAutomation = false;
+  audio.effectsMuted = true;
 }
 
 
@@ -200,7 +203,7 @@ describe('audio runtime contracts', () => {
     resetAudio();
   });
 
-  it('uses manifest assets only and never constructs generated Web Audio nodes', () => {
+  it('keeps effects muted while preserving the new asset music path', () => {
     const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
     installFakeAudio(counters);
 
@@ -212,7 +215,7 @@ describe('audio runtime contracts', () => {
     expect(counters.convolver).toBe(0);
   });
 
-  it('keeps missing asset cues silent instead of falling back to generated Web Audio', () => {
+  it('keeps missing or legacy effect cues silent', () => {
     const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
     installFakeAudio(counters);
 
@@ -225,12 +228,12 @@ describe('audio runtime contracts', () => {
     expect(counters.convolver).toBe(0);
   });
 
-  it('routes phase feedback through the current wavelength asset cue', () => {
+  it('routes phase feedback through a dedicated procedural phase chime cue', () => {
     const playSpy = vi.spyOn(audio, 'playSfx').mockReturnValue(false);
 
     audio.phaseChime(0);
 
-    expect(playSpy).toHaveBeenCalledWith('wavelengthShift', { rate: 1.12, gain: 0.45, cooldownMs: 80 });
+    expect(playSpy).toHaveBeenCalledWith('phaseChime', { rate: 1.12, gain: 0.55, cooldownMs: 70 });
   });
 
   it('maps science signals onto asset music filters, delay, and stem gains', () => {

@@ -15,6 +15,7 @@
         },
         {
           "stem": "texture",
+          "enabled": false,
           "path": "music/inflationary/texture.ogg",
           "gain": 0.45,
           "loop": true
@@ -105,18 +106,21 @@
         },
         {
           "stem": "bass",
+          "enabled": false,
           "path": "music/stellar/bass.ogg",
           "gain": 0.48,
           "loop": true
         },
         {
           "stem": "motion",
+          "enabled": false,
           "path": "music/stellar/motion.ogg",
           "gain": 0.44,
           "loop": true
         },
         {
           "stem": "danger",
+          "enabled": false,
           "path": "music/stellar/danger.ogg",
           "gain": 0.32,
           "loop": true

@@ -28,3 +28,10 @@ Original prompt: Implement an epic Big Bang / cosmic inflation opening for Photo
 - Deferred polarization entirely: no new buttons, touch gestures, keyboard controls, settings, localStorage keys, or asset manifest changes.
 - Validation completed: focused wave/physics insight tests, full `npm test`, `npm run typecheck`, `npm run build`, `npm run precommit`, and standalone sync comparison all passed.
 - Browser smoke captured Big Bang, Recombination, dark-matter diffraction, desktop HUD, and mobile-landscape wave states in `photon/output/wave-duality/` with no page/console errors.
+
+## 2026-05-14 Gemini/Lyria Audio Direction
+
+- User rejected the live sound quality and asked whether Photon can make its own sound.
+- Audited the runtime path and reversed the bad direction: Photon now prefers asset-backed cues, with procedural Web Audio only as fallback before assets decode.
+- Replaced the opening/Stellar music bed and gravity-well whoosh variants with Gemini/Lyria candidates, while muting older layered stems that made the mix feel corny or cluttered.
+- After playtest feedback, muted effect and engine playback entirely so the current build exposes only the new music until a higher-end SFX pass is ready.
