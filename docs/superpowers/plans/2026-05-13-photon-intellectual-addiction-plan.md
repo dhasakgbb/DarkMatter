@@ -82,9 +82,17 @@ npm run qa:fast        # test + typecheck + build
 
     expect(audio.scienceModeAutomation).toBe(false);
     audio.setRedshift(0.75);
+    audio.setFlow(0.5);
+    audio.setDarkMatterSignal(0.6);
     expect(lastTarget(nodes.filter.frequency)).toBeGreaterThan(3500);
     expect(lastTarget(nodes.filter.frequency)).toBeLessThan(4700);
   });
+
+  // NOTE: this test mirrors the existing "maps science signals onto asset music filters"
+  // test's parameter set (z=0.75, flow=0.5, dm=0.6 → linear cutoff 4295) so that with the
+  // new flag at its default false, the formula produces the same well-known value the
+  // existing regression test already asserts. Without flow/dm contributions, redshift
+  // alone yields cutoff=2975 which fails the (3500, 4700) window.
 
   it('applies the exponential redshift curve when science-mode automation is enabled', () => {
     const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
