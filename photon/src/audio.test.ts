@@ -323,4 +323,41 @@ describe('audio runtime contracts', () => {
     expect(cutoffAtOne).toBeLessThan(cutoffAtZero);
     audio.setScienceModeAutomation(false); // reset for other tests
   });
+
+  it('boosts scienceGain proportionally to resonance streak when science automation is on', () => {
+    const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
+    installFakeAudio(counters);
+    const nodes = startFakeMusic();
+
+    audio.setScienceModeAutomation(true);
+    audio.setHeatDeathProgress(0);
+    audio.setResonanceStreak(0);
+    const gainAtZero = lastTarget(nodes.scienceGain.gain);
+    audio.setResonanceStreak(5);
+    const gainAtFive = lastTarget(nodes.scienceGain.gain);
+    audio.setResonanceStreak(20);
+    const gainAtMaxed = lastTarget(nodes.scienceGain.gain);
+
+    expect(gainAtFive).toBeGreaterThan(gainAtZero);
+    // Boost caps at 0.25 (streak * 0.05, min(0.25, ...)).
+    expect(gainAtMaxed - gainAtZero).toBeLessThanOrEqual(0.26);
+    audio.setScienceModeAutomation(false);
+  });
+
+  it('fades the resonance boost as Heat Death progresses', () => {
+    const counters: CallCounters = { oscillator: 0, buffer: 0, convolver: 0 };
+    installFakeAudio(counters);
+    const nodes = startFakeMusic();
+
+    audio.setScienceModeAutomation(true);
+    audio.setResonanceStreak(20);
+    audio.setHeatDeathProgress(0);
+    const gainBeforeFade = lastTarget(nodes.scienceGain.gain);
+    audio.setHeatDeathProgress(1);
+    const gainAfterFade = lastTarget(nodes.scienceGain.gain);
+
+    expect(gainAfterFade).toBeLessThan(gainBeforeFade);
+    audio.setScienceModeAutomation(false);
+    audio.setResonanceStreak(0);
+  });
 });

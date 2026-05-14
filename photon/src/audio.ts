@@ -181,6 +181,11 @@ class AudioEngine {
     this.applyScienceAutomation();
   }
 
+  setResonanceStreak(n: number) {
+    this.scienceResonanceStreak = Math.max(0, Math.floor(Number.isFinite(n) ? n : 0));
+    this.applyScienceAutomation();
+  }
+
   resume() {
     if (this.ctx && this.ctx.state === 'suspended') void this.ctx.resume().catch(() => {});
   }
@@ -517,7 +522,10 @@ class AudioEngine {
       nodes.filter.Q.setTargetAtTime(0.62 + flow * 0.36 + darkMatter * 0.24, t, 0.18);
       nodes.delay.delayTime.setTargetAtTime(clamp(0.08 + redshift * 0.30 + flow * 0.06 + darkMatter * 0.11 + heatFade * 0.18, 0.04, 0.72), t, 0.24);
       nodes.delayReturn.gain.setTargetAtTime(clamp(0.035 + redshift * 0.075 + flow * 0.05 + darkMatter * 0.06 - heatFade * 0.055, 0.008, 0.22), t, 0.24);
-      nodes.scienceGain.gain.setTargetAtTime(Math.max(0.08, heatMul), t, 0.35);
+      const streakBoost = this.scienceModeAutomation
+        ? Math.min(0.25, this.scienceResonanceStreak * 0.05) * (1 - heatFade)
+        : 0;
+      nodes.scienceGain.gain.setTargetAtTime(Math.max(0.08, heatMul + streakBoost), t, 0.35);
 
       for (const stem of nodes.stemGains) {
         const key = stem.stem.toLowerCase();
