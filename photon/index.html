@@ -58,6 +58,7 @@
         <div style="font-size:11px;opacity:0.7;line-height:1.7;margin-bottom:10px">Replay a universe whose constants have already been measured. Paste a seed and run those laws again.</div>
         <input id="seed-input" type="text" maxlength="6" placeholder="K7M4Z2" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,122,217,0.25);color:#ff7ad9;padding:8px 12px;font-family:inherit;font-size:13px;letter-spacing:0.4em;text-transform:uppercase;text-align:center;width:160px;border-radius:2px;outline:none" />
         <button id="btn-start-seed" style="margin-left:8px;border-color:rgba(255,122,217,0.4);color:#ff7ad9">▶ Run this universe</button>
+        <div class="seed-bookmarks" id="seed-bookmarks"></div>
       </div>
     </div>
   </div>
@@ -71,7 +72,7 @@
       <div class="run-feel" id="death-feel"></div>
       <div class="next-signal" id="death-next"></div>
       <div class="path-analysis" id="death-analysis"></div>
-      <div class="row path-analysis-actions"><button id="btn-copy-analysis">Copy run JSON</button></div>
+      <div class="row path-analysis-actions"><button id="btn-copy-analysis">Copy run JSON</button><button id="btn-bookmark-seed">Bookmark seed</button></div>
       <div id="death-memories" style="margin-top:14px"></div>
       <p id="death-codex" style="display:none;border-left:2px solid #88e0ff;padding-left:12px;font-size:12px"></p>
       <div class="row">

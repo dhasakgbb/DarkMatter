@@ -136,13 +136,16 @@ export const skyMat = new THREE.ShaderMaterial({
     uMix:    { value: 0.6 },
     uRedshift: { value: 0.0 },
     uQuality: { value: profile.skyDetail },
+    uBirthFlash: { value: 0.0 },
+    uBirthNoiseAmp: { value: 1.0 },
+    uBirthNoiseFreq: { value: 1.0 },
   },
   vertexShader: `
     varying vec3 vWorld;
     void main(){ vWorld = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }
   `,
   fragmentShader: `
-    uniform float uTime, uMix, uRedshift, uQuality;
+    uniform float uTime, uMix, uRedshift, uQuality, uBirthFlash, uBirthNoiseAmp, uBirthNoiseFreq;
     uniform vec3 uColorA, uColorB, uPoint;
     varying vec3 vWorld;
     float hash(vec3 p){ p = fract(p*0.3183099+vec3(0.71,0.113,0.419)); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
@@ -173,10 +176,12 @@ export const skyMat = new THREE.ShaderMaterial({
         vec3 stretchedD = normalize(vec3(d.xy * (1.0 + red * (0.10 + radial * 0.30)), d.z));
         float detailDesat = smoothstep(0.12, 0.88, red);
         float t = uTime * 0.012;
-        float n1 = fbm(mix(d, stretchedD, red * 0.35) * 1.45 + vec3(t, t*0.7, -t*0.5));
-        float n2 = fbm(stretchedD * mix(4.6, 3.45, red) + vec3(-t*1.3, t*0.9, t*0.4));
-        float n3 = fbm(stretchedD * mix(9.0, 5.85, red) + vec3(t*0.35, -t*0.6, t*0.25));
-        float n4 = fbm(stretchedD * mix(16.0, 8.0, red) + vec3(-t*0.20, t*0.45, -t*0.32));
+        float birthFreq = max(1.0, uBirthNoiseFreq);
+        float birthAmp = max(1.0, uBirthNoiseAmp);
+        float n1 = fbm(mix(d, stretchedD, red * 0.35) * 1.45 * birthFreq + vec3(t * birthFreq, t*0.7, -t*0.5));
+        float n2 = fbm(stretchedD * mix(4.6, 3.45, red) * birthFreq + vec3(-t*1.3, t*0.9 * birthFreq, t*0.4));
+        float n3 = fbm(stretchedD * mix(9.0, 5.85, red) * (1.0 + (birthFreq - 1.0) * 0.7) + vec3(t*0.35, -t*0.6 * birthFreq, t*0.25));
+        float n4 = fbm(stretchedD * mix(16.0, 8.0, red) * (1.0 + (birthFreq - 1.0) * 0.45) + vec3(-t*0.20, t*0.45, -t*0.32 * birthFreq));
         float nebula = smoothstep(0.38, 0.86, n1);
         float wisps  = smoothstep(0.50, 0.95, n2);
         float filament = pow(max(0.0, 1.0 - abs(n2 - 0.56) * 4.2), 2.2);
@@ -184,8 +189,8 @@ export const skyMat = new THREE.ShaderMaterial({
         float fineDust = smoothstep(0.54, 0.97, n4) * uQuality;
         vec3 deep = mix(vec3(0.006, 0.009, 0.025), uColorA * 0.18, 0.42 + n1 * 0.28);
         vec3 col = mix(deep, mix(uColorA, uColorB, n1), nebula * (0.65 + uMix * 0.35));
-        vec3 wispColor = uPoint * wisps * (0.32 + 0.34 * uMix);
-        vec3 filamentColor = mix(uColorB, uPoint, 0.55) * filament * (0.18 + 0.08 * uQuality);
+        vec3 wispColor = uPoint * wisps * (0.32 + 0.34 * uMix) * birthAmp;
+        vec3 filamentColor = mix(uColorB, uPoint, 0.55) * filament * (0.18 + 0.08 * uQuality) * (0.86 + birthAmp * 0.14);
         vec3 dustColor = vec3(0.04, 0.055, 0.095) * (coldDust * 0.35 + fineDust * 0.10);
         col += desaturate(wispColor, detailDesat * 0.72);
         col += desaturate(filamentColor, detailDesat * 0.82);
@@ -200,6 +205,7 @@ export const skyMat = new THREE.ShaderMaterial({
         col.b *= 1.0 - red * 0.42;
         col.g *= 1.0 - red * 0.16;
         col *= 0.48 + uMix * (0.20 + 0.04 * uQuality);
+        col = mix(col, vec3(1.0, 0.96, 0.86), smoothstep(0.02, 0.92, uBirthFlash));
       gl_FragColor = vec4(col, 1.0);
     }
   `,

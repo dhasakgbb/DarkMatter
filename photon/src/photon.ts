@@ -288,9 +288,10 @@ class Photon {
     const pulse = 1 + Math.sin(performance.now() * 0.012) * 0.05 + (this.boosting ? 0.18 : 0) + flashBoost * 0.35;
     this.halo.scale.setScalar(pulse);
     this.corona.scale.setScalar(1.02 + (pulse - 1) * 0.48 + flashBoost * 0.22);
-    const rawHalo = 0.14 + (this.boosting ? 0.07 : 0) + (this.phaseTimer > 0 ? 0.10 : 0) + flashBoost * 0.12;
+    const coherenceGlow = game.feelCoherence || 0;
+    const rawHalo = 0.14 + (this.boosting ? 0.07 : 0) + (this.phaseTimer > 0 ? 0.10 : 0) + flashBoost * 0.12 + coherenceGlow * 0.08;
     this.haloMat.opacity = Math.min(0.34, rawHalo);
-    this.coronaMat.opacity = Math.min(0.14, 0.045 + (this.boosting ? 0.03 : 0) + flashBoost * 0.05 + (this.phaseTimer > 0 ? 0.025 : 0));
+    this.coronaMat.opacity = Math.min(0.16, 0.045 + (this.boosting ? 0.03 : 0) + flashBoost * 0.05 + coherenceGlow * 0.04 + (this.phaseTimer > 0 ? 0.025 : 0));
 
     this.trailCursor = (this.trailCursor + this.trailLen - 1) % this.trailLen;
     this.trailHistory[this.trailCursor].copy(this.group.position);
@@ -300,11 +301,15 @@ class Photon {
     const baseColor = WAVELENGTHS[this.wavelength].color;
     for (let i = 0; i < this.trailLen; i++) {
       const h = i < this.trailCount ? this.trailHistory[(this.trailCursor + i) % this.trailLen] : this.group.position;
-      posArr[i*3+0] = h.x; posArr[i*3+1] = h.y; posArr[i*3+2] = h.z;
+      const wave = coherenceGlow > 0 ? Math.sin(performance.now() * 0.012 + i * 0.62) * coherenceGlow * (1 - i / this.trailLen) : 0;
+      posArr[i*3+0] = h.x + wave * 0.22;
+      posArr[i*3+1] = h.y - wave * 0.14;
+      posArr[i*3+2] = h.z;
       const fade = 1 - i / this.trailLen;
-      colArr[i*3+0] = baseColor.r * fade;
-      colArr[i*3+1] = baseColor.g * fade;
-      colArr[i*3+2] = baseColor.b * fade;
+      const coherenceBright = 1 + coherenceGlow * 0.55;
+      colArr[i*3+0] = Math.min(1, baseColor.r * fade * coherenceBright);
+      colArr[i*3+1] = Math.min(1, baseColor.g * fade * coherenceBright);
+      colArr[i*3+2] = Math.min(1, baseColor.b * fade * coherenceBright);
     }
     this.trail.geometry.attributes.position.needsUpdate = true;
     this.trail.geometry.attributes.color.needsUpdate = true;
@@ -338,6 +343,7 @@ class Photon {
   phaseFlash() {
     game.phaseCount++;
     game.phaseStreak = (game.phaseStreak || 0) + 1;
+    game.bestPhaseStreakThisRun = Math.max(game.bestPhaseStreakThisRun || 0, game.phaseStreak);
     game.timeSincePhase = 0;
     // Chain reward: longer flash + brighter audio cue every 3 phases.
     const streakBoost = Math.min(8, game.phaseStreak);

@@ -105,6 +105,35 @@ class ParticleSystem {
     this.emit(pos, color, count, opts[typeKey] || { speed: 14, life: 0.6, drag: 0.95 });
   }
 
+  emitBirthRings(pos: THREE.Vector3, color: THREE.Color, count = IS_MOBILE ? 38 : 72) {
+    const emitCount = IS_MOBILE ? Math.max(20, Math.ceil(count * 0.62)) : count;
+    for (let i = 0; i < emitCount; i++) {
+      const idx = this.cursor; this.cursor = (this.cursor + 1) % this.max;
+      const angle = (i / emitCount) * Math.PI * 2;
+      const ring = i % 3;
+      const verticalTilt = ring === 0 ? 0 : ring === 1 ? 0.24 : -0.24;
+      const speed = (ring === 0 ? 30 : 22) * (0.86 + Math.random() * 0.22);
+      this.positions[idx*3+0] = pos.x;
+      this.positions[idx*3+1] = pos.y;
+      this.positions[idx*3+2] = pos.z;
+      this.velocities[idx*3+0] = Math.cos(angle) * speed;
+      this.velocities[idx*3+1] = Math.sin(angle) * speed * (0.64 + Math.abs(verticalTilt));
+      this.velocities[idx*3+2] = verticalTilt * speed + (Math.random() - 0.5) * 6;
+      const heat = ring === 0 ? 1 : 0.72;
+      this.colors[idx*3+0] = color.r * heat;
+      this.colors[idx*3+1] = color.g * heat;
+      this.colors[idx*3+2] = color.b * heat;
+      this.baseColors[idx*3+0] = color.r * heat;
+      this.baseColors[idx*3+1] = color.g * heat;
+      this.baseColors[idx*3+2] = color.b * heat;
+      this.lives[idx] = 1.8 + ring * 0.28 + Math.random() * 0.35;
+      this.maxLives[idx] = this.lives[idx];
+      this._drag = 0.90;
+    }
+    this.points.geometry.attributes.position.needsUpdate = true;
+    this.points.geometry.attributes.color.needsUpdate = true;
+  }
+
   update(dt: number) {
     const drag = Math.pow(this._drag, dt * 60);
     for (let i = 0; i < this.max; i++) {

@@ -399,16 +399,18 @@ export function drawHud() {
       hud.font = 'bold 22px ui-monospace, monospace';
       const color = streak >= 8 ? '#ff7ad9' : streak >= 5 ? '#ffc850' : '#88e0ff';
       hud.fillStyle = color;
-      hud.fillText(`×${mult.toFixed(mult % 1 ? 1 : 0)}`, 0, 0);
+      const highScienceChain = game.scienceMode && streak >= 5;
+      hud.fillText(highScienceChain ? `PHASE CHAIN ×${streak}` : `×${mult.toFixed(mult % 1 ? 1 : 0)}`, 0, 0);
       hud.font = '9px ui-monospace, monospace';
       hud.fillStyle = `rgba(255,255,255,0.7)`;
-      hud.fillText(`RESONANCE`, 0, 16);
+      hud.fillText(highScienceChain ? `COHERENT SUPERPOSITION` : `RESONANCE`, 0, 16);
       hud.restore();
       hud.textAlign = 'left'; hud.textBaseline = 'top';
     }
   }
   // Tutorial overlay
-  if (game.tutorialActive && game.tutorialStep < TUTORIAL_STEPS.length) {
+  const suppressTutorialForBirth = game.epochIndex === 0 && game.epochTimer < 3.4 && (game.birthFlash || 0) > 0.18;
+  if (!suppressTutorialForBirth && game.tutorialActive && game.tutorialStep < TUTORIAL_STEPS.length) {
     const step = tutorialCopy(TUTORIAL_STEPS[game.tutorialStep]);
     const fadeIn = Math.min(1, game.tutorialTime / 0.35);
     const lifeLeft = step.max - game.tutorialTime;

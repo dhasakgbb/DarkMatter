@@ -8,7 +8,7 @@ import { newSeed, setRunSeed, computeEpochParams, computeCosmicConstants, seedTo
 import { audio } from './audio';
 import { flowTarget, stepFlow } from './flow';
 import { formatComovingDistance, formatPhotonEnergy, formatScienceValue, formatWavelength, photonEquationSnapshot, scienceSnapshot } from './science';
-import { scene, camera, composer, lensingPass, skyMat, stars, starMat, parallaxStarMat, starShells, nebulaDust, nebulaDustMat, cosmicWeb, cosmicWebMat, bloom } from './scene';
+import { scene, camera, composer, renderer, lensingPass, skyMat, stars, starMat, parallaxStarMat, starShells, nebulaDust, nebulaDustMat, cosmicWeb, cosmicWebMat, bloom } from './scene';
 import { getActiveRenderProfile, renderPixelRatio } from './renderProfile';
 import { track } from './track';
 import { particleManager } from './particles';
@@ -24,6 +24,9 @@ import { comboMultiplier, showToast } from './utils';
 import { refreshTitleStats, refreshSettingsUI } from './ui';
 import { funLab } from './funlab/runtime';
 import { runFeelExport, runFeelNudge, runFeelRows, runFeelStateLabel } from './funlab/runReport';
+import { analyzePhysicsRun, type PhysicsInsightReport } from './physicsInsight';
+import { birthSequenceFrame, shouldTriggerPrimordialLensing } from './birthSequence';
+import { epochFeelFrame, type EpochFeelFrame } from './epochFeel';
 
 const FOAM_COLOR = new THREE.Color(0x99ddff);
 const BACKGROUND_COLOR = new THREE.Color();
@@ -31,6 +34,7 @@ const DEATH_CORE_COLOR = new THREE.Color(0xff5566);
 const SPEED_PAD_COLOR = new THREE.Color(0xff7ad9);
 const LINE_GATE_COLOR = new THREE.Color(0x88e0ff);
 const LINE_GATE_HOT_COLOR = new THREE.Color(0xff7ad9);
+const BIRTH_RING_COLOR = new THREE.Color(0xfff7d0);
 const foamPoint = new THREE.Vector3();
 const foamOffset = new THREE.Vector3();
 const deathPoint = new THREE.Vector3();
@@ -60,12 +64,34 @@ interface HazardLensCandidate {
 const hazardLensCandidates: HazardLensCandidate[] = [];
 type UpgradeOption = (typeof UPGRADES)[number];
 
+function resetFeelState() {
+  game.birthFlash = 0;
+  game.birthNoiseAmp = 1;
+  game.birthBloom = 1;
+  game.birthJitter = 0;
+  game.birthLensing = 0;
+  game.feelPhase = 'cruise';
+  game.feelFluctuationNoise = 0;
+  game.feelClarity = 0;
+  game.feelStructureTension = 0;
+  game.feelGravityDread = 0;
+  game.feelEntropyFade = 0;
+  game.feelCoherence = 0;
+  game.feelBloom = 1;
+  game.feelExposure = 0;
+  game.feelLensing = 0;
+  game.feelAudio = 0;
+  game.feelDensity = 1;
+  game.feelClearAnnounced = false;
+}
+
 declare global {
   interface Window {
     render_game_to_text?: () => string;
     advanceTime?: (ms: number) => string;
     startSeededRun?: (seed: number | string) => string;
     __PHOTON_PATH_ANALYSIS_JSON?: string;
+    __PHOTON_LAST_PHYSICS_REPORT?: PhysicsInsightReport;
   }
 }
 
@@ -122,6 +148,10 @@ function clearRunFieldForHeatDeath() {
   game.darkMatterSignalTime = 0;
   game.darkMatterMassSolar = 0;
   game.darkMatterDeflectionArcsec = 0;
+  resetFeelState();
+  game.primordialLensingArmed = false;
+  game.primordialLensingTriggered = false;
+  game.primordialLensingTime = 0;
 }
 
 export function setEpoch(idx: number) {
@@ -135,6 +165,7 @@ export function setEpoch(idx: number) {
   game.epochIndex = idx;
   game.epochTimer = 0;
   game.epochCleared = false;
+  game.feelClearAnnounced = false;
   computeEpochParams(idx);
   const e = EPOCHS[Math.min(idx, EPOCHS.length - 1)];
   funLab.record('epoch-enter', { epochIndex: idx, epochName: e.name, distance: game.runDistance });
@@ -159,6 +190,12 @@ export function setEpoch(idx: number) {
     game.heatDeathFinalSpawned = false;
   } else {
     audio.startDrone(e);
+  }
+  if (idx === 0 && !isTransition) {
+    game.primordialLensingArmed = shouldTriggerPrimordialLensing(game.runSeed, 3, game.scienceMode);
+    particleManager.emitBirthRings(photon.group.position, BIRTH_RING_COLOR);
+    game.lineEventText = 'SPACETIME IGNITION';
+    game.lineEventTime = 1.45;
   }
   // Cinematic epoch riser plays only on transitions (not the first epoch / not on resume's first epoch)
   if (isTransition) audio.epochRiser();
@@ -241,8 +278,9 @@ function heatDeathTick(dt: number, photonDist: number) {
   const t = game.epochTimer;
   const total = e.duration;
   updateLateEpochRedshift(dt, e);
-  audio.setHeatDeathProgress(t / Math.max(1, total));
-  const visFade = THREE.MathUtils.clamp(1 - (t / 90), 0.05, 1);
+  const entropy = Math.max(THREE.MathUtils.clamp(t / Math.max(1, total), 0, 1), game.feelEntropyFade || 0);
+  audio.setHeatDeathProgress(entropy);
+  const visFade = THREE.MathUtils.clamp(1 - entropy * 0.96, 0.04, 1);
   game.heatDeathFade = 1 - visFade;
   if (stars && stars.material) {
     starMat.uniforms.uOpacity.value = 0.9 * visFade;
@@ -260,6 +298,113 @@ function heatDeathTick(dt: number, photonDist: number) {
     spawnFinalPickup(photonDist + 60);
   }
   if (t >= total && !game.witnessing && photon.alive) photon.alive = false;
+}
+
+function applyFeelFrame(frame: EpochFeelFrame) {
+  game.feelPhase = frame.phase;
+  game.feelFluctuationNoise = frame.fluctuationNoise;
+  game.feelClarity = frame.clarity;
+  game.feelStructureTension = frame.structureTension;
+  game.feelGravityDread = frame.gravityDread;
+  game.feelEntropyFade = frame.entropyFade;
+  game.feelCoherence = frame.coherence;
+  game.feelBloom = frame.bloomMul;
+  game.feelExposure = frame.exposureAdd;
+  game.feelLensing = frame.lensingPulse;
+  game.feelAudio = frame.audioIntensity;
+  game.feelDensity = frame.densityMul;
+}
+
+function updateEpochFeel(realDt: number) {
+  const active = game.state === 'run' && !game.dying && !game.witnessing;
+  const e = EPOCHS[Math.min(game.epochIndex, EPOCHS.length - 1)];
+  const feel = active
+    ? epochFeelFrame({
+        epochIndex: game.epochIndex,
+        epochName: e.name,
+        epochTimer: game.epochTimer,
+        epochDuration: e.duration,
+        scienceMode: game.scienceMode,
+        mobile: IS_MOBILE,
+        reducedMotion: !!settings.reducedMotion || !!game.reducedMotion,
+        shiftedThisRun: !!game._shiftedThisRun,
+        phaseStreak: game.phaseStreak || 0,
+        darkMatterSignal: game.darkMatterSignal || 0,
+      })
+    : epochFeelFrame({
+        epochIndex: game.epochIndex,
+        epochName: e.name,
+        epochTimer: e.duration,
+        epochDuration: e.duration,
+        scienceMode: false,
+        mobile: IS_MOBILE,
+        reducedMotion: true,
+        shiftedThisRun: false,
+        phaseStreak: 0,
+        darkMatterSignal: 0,
+      });
+  const birth = active && game.epochIndex === 0
+    ? birthSequenceFrame(game.epochTimer, { scienceMode: game.scienceMode, mobile: IS_MOBILE || !!settings.reducedMotion || !!game.reducedMotion })
+    : birthSequenceFrame(15, { scienceMode: false, mobile: IS_MOBILE });
+  applyFeelFrame(feel);
+  game.birthFlash = birth.flash;
+  game.birthNoiseAmp = birth.noiseAmp;
+  game.birthBloom = birth.bloomMul;
+  game.birthJitter = birth.jitter;
+  game.birthLensing = birth.lensing;
+  skyMat.uniforms.uBirthFlash.value = birth.flash;
+  skyMat.uniforms.uBirthNoiseAmp.value = birth.noiseAmp;
+  skyMat.uniforms.uBirthNoiseFreq.value = birth.noiseFreq;
+
+  const renderProfile = getActiveRenderProfile();
+  const baseNebulaOpacity = e.isHeatDeath ? 0.06 : 0.18 + renderProfile.skyDetail * 0.08;
+  const baseWebOpacity = e.isHeatDeath ? 0.035 : 0.10 + Math.min(0.05, game.epochIndex * 0.006);
+  const dreadDim = 1 - Math.min(0.46, feel.gravityDread * 0.32 + feel.entropyFade * 0.62);
+  if (!e.isHeatDeath) {
+    starMat.uniforms.uOpacity.value = 0.9 * dreadDim;
+    parallaxStarMat.uniforms.uOpacity.value = 0.68 * dreadDim;
+    nebulaDustMat.uniforms.uOpacity.value = baseNebulaOpacity * feel.densityMul;
+    cosmicWebMat.opacity = THREE.MathUtils.clamp(
+      baseWebOpacity * (0.78 + feel.clarity * 0.28 + feel.structureTension * 0.30 - feel.gravityDread * 0.25),
+      0.025,
+      0.18,
+    );
+    skyMat.uniforms.uMix.value = THREE.MathUtils.clamp(
+      0.58 + feel.clarity * 0.10 + feel.structureTension * 0.04 - feel.gravityDread * 0.20,
+      0.18,
+      0.78,
+    );
+  }
+  if (!active) return;
+
+  const jitter = birth.jitter + feel.fluctuationNoise * 0.09;
+  starShells[0].rotation.z += realDt * jitter * 0.34;
+  starShells[1].rotation.z -= realDt * jitter * 0.55;
+  nebulaDust.rotation.x += realDt * jitter * 0.13;
+  cosmicWeb.rotation.z += realDt * jitter * 0.18;
+
+  if (e.name === 'Recombination' && !game.feelClearAnnounced && feel.clarity >= 0.72) {
+    game.feelClearAnnounced = true;
+    game.lineEventText = 'PLASMA CLEARED';
+    game.lineEventTime = 1.2;
+    audio.phaseChime(1);
+  }
+
+  if (game.primordialLensingArmed && !game.primordialLensingTriggered && game.epochTimer >= 2.6) {
+    game.primordialLensingTriggered = true;
+    game.primordialLensingTime = 0.6;
+    game.darkMatterSignal = Math.max(game.darkMatterSignal || 0, 0.72);
+    game.darkMatterSignalTime = Math.max(game.darkMatterSignalTime || 0, 1.15);
+    game.darkMatterMassSolar = 9.4e11;
+    game.darkMatterDeflectionArcsec = 1.08;
+    game.lineEventText = 'PRIMORDIAL LENSING';
+    game.lineEventTime = 1.1;
+    meta.darkMatterDetections = (meta.darkMatterDetections || 0) + 1;
+    saveMeta(meta);
+    checkMemoryTriggers();
+    funLab.record('dark-matter-detection', { epochIndex: game.epochIndex, epochName: EPOCHS[0].name, distance: game.runDistance, value: 0.72, note: 'primordial birth flash' });
+  }
+  if (game.primordialLensingTime > 0) game.primordialLensingTime = Math.max(0, game.primordialLensingTime - realDt);
 }
 
 export function pause() {
@@ -309,6 +454,7 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   game.perfectEpochThisRun = true;
   game.lastRunWasPerfect = false;
   game.phaseStreak = 0;
+  game.bestPhaseStreakThisRun = 0;
   game.witnessing = false;
   game.heatDeathFade = 0;
   game.redshiftAmount = 0;
@@ -332,6 +478,10 @@ export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
   game.darkMatterSignalTime = 0;
   game.darkMatterMassSolar = 0;
   game.darkMatterDeflectionArcsec = 0;
+  resetFeelState();
+  game.primordialLensingArmed = false;
+  game.primordialLensingTriggered = false;
+  game.primordialLensingTime = 0;
   game._anyEpochSetThisRun = false;
   game.runDistance = 0;
   game.runEnergy = (resumeSnapshot && resumeSnapshot.runEnergy) || 0;
@@ -468,32 +618,45 @@ export function endRun() {
     body.textContent = nextRunSignal(reachedIdx, manualEnd);
     nextWrap.append(label, body);
   }
-  const scienceTelemetry = scienceSnapshot(reachedIdx, game.epochTimer, e.duration);
   const wavelengthKey = WAVELENGTHS[photon.wavelength]?.key || 'visible';
-  const photonEquation = photonEquationSnapshot(wavelengthKey, scienceTelemetry.redshiftZ, game.runDistance);
-  const emittedEnergyEv = photonEquation.energyEv * Math.max(1, 1 + scienceTelemetry.redshiftZ);
-  const energyLostPercent = Math.max(0, Math.min(100, (1 - photonEquation.energyEv / Math.max(emittedEnergyEv, Number.EPSILON)) * 100));
   const analysis = {
-    seed: { value: game.runSeed >>> 0, label: seedToLabel(game.runSeed) },
-    epoch: { index: reachedIdx, name: e.name, timer: Math.round(game.epochTimer * 10) / 10 },
-    photon: { wavelength: wavelengthKey, emittedWavelengthM: photonEquation.emittedWavelengthM, observedWavelengthM: photonEquation.observedWavelengthM, energyEv: photonEquation.energyEv },
-    path: { properDistanceUnits: Math.round(game.runDistance), comovingDistanceGpc: photonEquation.comovingDistanceGpc, redshiftZ: scienceTelemetry.redshiftZ, energyLostPercent },
-    run: { flowPeak: game.flowPeak, bestLineStreak: game.bestLineStreakThisRun || 0, phaseStreak: game.phaseStreak || 0, darkMatterDetections: meta.darkMatterDetections || 0 },
+    ...analyzePhysicsRun({
+      seed: game.runSeed >>> 0,
+      seedLabel: seedToLabel(game.runSeed),
+      epochIndex: reachedIdx,
+      epochName: e.name,
+      epochTimer: game.epochTimer,
+      epochDuration: e.duration,
+      wavelengthKey,
+      runDistance: game.runDistance,
+      flowPeak: game.flowPeak,
+      bestLineStreak: game.bestLineStreakThisRun || 0,
+      phaseStreak: game.bestPhaseStreakThisRun || game.phaseStreak || 0,
+      darkMatterDetections: meta.darkMatterDetections || 0,
+      manualEnd,
+      scienceMode: game.scienceMode,
+    }),
     feel: runFeelExport(funRecord),
   };
+  window.__PHOTON_LAST_PHYSICS_REPORT = analysis;
   window.__PHOTON_PATH_ANALYSIS_JSON = JSON.stringify(analysis, null, 2);
   const analysisWrap = document.getElementById('death-analysis');
   if (analysisWrap) {
     const rows: Array<[string, string]> = [
       ['Universe seed', analysis.seed.label],
-      ['Observed energy', formatPhotonEnergy(photonEquation.energyEv)],
-      ['lambda emitted to observed', formatWavelength(photonEquation.emittedWavelengthM) + ' -> ' + formatWavelength(photonEquation.observedWavelengthM)],
-      ['Redshift energy loss', formatScienceValue(energyLostPercent) + '%'],
+      ['Observed energy', formatPhotonEnergy(analysis.photon.energyEv)],
+      ['lambda emitted to observed', formatWavelength(analysis.photon.emittedWavelengthM) + ' -> ' + formatWavelength(analysis.photon.observedWavelengthM)],
+      ['Redshift energy loss', formatScienceValue(analysis.path.energyLostPercent) + '%'],
       ['Proper track', fmt(game.runDistance) + ' units'],
-      ['Comoving path', formatComovingDistance(photonEquation.comovingDistanceGpc)],
+      ['Comoving path', formatComovingDistance(analysis.path.comovingDistanceGpc)],
       ['Peak flow', Math.round((game.flowPeak || 0) * 100) + '%'],
     ];
-    analysisWrap.innerHTML = '<div class="path-analysis-head"><span>Photon path analysis</span><b>' + e.name + '</b></div><div class="path-analysis-grid"></div><div class="path-analysis-note">Seeded run record: proper track distance, cosmological redshift, wavelength stretch, energy loss, and run-feel telemetry are exported as JSON.</div>';
+    if (game.scienceMode) {
+      rows.splice(1, 0, ['Insight score', `${analysis.insight.score} · ${analysis.insight.label}`]);
+      rows.push(['Resonance state', `${analysis.resonance.label} ×${analysis.resonance.phaseChain}`]);
+      rows.push(['Dark matter', analysis.discovery.darkMatterObserved ? 'Confirmed lensing' : 'No confirmed lensing']);
+    }
+    analysisWrap.innerHTML = '<div class="path-analysis-head"><span>Photon path analysis</span><b>' + e.name + '</b></div><div class="path-analysis-grid"></div><div class="path-analysis-note"></div>';
     const grid = analysisWrap.querySelector('.path-analysis-grid') as HTMLElement;
     for (const [label, value] of rows) {
       const row = document.createElement('div');
@@ -504,6 +667,10 @@ export function endRun() {
       row.append(labelEl, valueEl);
       grid.appendChild(row);
     }
+    const note = analysisWrap.querySelector('.path-analysis-note') as HTMLElement;
+    note.textContent = game.scienceMode
+      ? `${analysis.discovery.note} ${analysis.bookmarkHint} Seeded run record includes insight components, resonance, path distance, cosmological redshift, wavelength stretch, energy loss, and run-feel telemetry.`
+      : 'Seeded run record: proper track distance, cosmological redshift, wavelength stretch, energy loss, and run-feel telemetry are exported as JSON.';
   }
   const memWrap = document.getElementById('death-memories')!;
   memWrap.innerHTML = '';
@@ -757,6 +924,7 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
         missRacingGate,
       );
       game.epochTimer += dt;
+      updateEpochFeel(realDt);
       game.runDistance = photon.distance;
       // Flow signal: streak × clean-dwell (gated by recent engagement) × activity.
       // Smoothed so a single hit's streak reset doesn't snap the meter to zero.
@@ -774,7 +942,16 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
       game.flowLevel = stepFlow(game.flowLevel, target, dt);
       if (game.flowLevel > game.flowPeak) game.flowPeak = game.flowLevel;
       if (game.flowLevel >= 0.85) game.flowPeakDwell += dt;
-      audio.setFlow(game.flowLevel);
+      const feltFlow = THREE.MathUtils.clamp(
+        game.flowLevel
+          + (game.feelAudio || 0) * 0.12
+          + (game.feelStructureTension || 0) * 0.14
+          + (game.feelCoherence || 0) * 0.18
+          - (game.feelEntropyFade || 0) * 0.16,
+        0,
+        1,
+      );
+      audio.setFlow(feltFlow);
       if (e.isHeatDeath) heatDeathTick(dt, photon.distance);
       else if (e.name === 'Black Hole') blackHoleTick(dt, e);
       if (e.isHeatDeath || e.name === 'Black Hole') {
@@ -815,6 +992,7 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
       updateCamera(dt, realDt, speed);
     }
   } else {
+    updateEpochFeel(realDt);
     if (track.points.length === 0) {
       track.ensureAhead(0);
       track.updateRings(0);
@@ -865,17 +1043,27 @@ function updateCamera(_dt: number, realDt: number, currentSpeed: number) {
   const lensMul = GRAVITY_LENSING_ENABLED ? renderProfile.lensingMul : 0;
   lensingPass.uniforms.uIntensity.value = 0;
   lensingPass.uniforms.uBarrel.value    = 0;
-  lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0)) * renderProfile.glowMul;
-  updateHazardLensing(lensMul);
+  const birthLens = Math.max(game.birthLensing || 0, game.feelLensing || 0);
+  const primordialPulse = game.primordialLensingTime > 0 ? game.primordialLensingTime / 0.6 : 0;
+  lensingPass.uniforms.uIntensity.value = Math.max(0, birthLens * 0.006 + primordialPulse * 0.028);
+  lensingPass.uniforms.uBarrel.value = Math.max(0, birthLens * 0.014 + primordialPulse * 0.024);
+  lensingPass.uniforms.uGlow.value = (0.13 + Math.min(0.08, speedFactor * 0.035) + (photon.boosting ? 0.04 : 0) + birthLens * 0.16 + primordialPulse * 0.20) * renderProfile.glowMul;
+  updateHazardLensing(lensMul + birthLens * 0.16 + primordialPulse * 0.44);
   const bloomTarget = renderProfile.bloomBase
     + Math.min(0.16, speedFactor * renderProfile.bloomSpeedAdd)
     + (photon.boosting ? renderProfile.bloomBoostAdd : 0)
     + game.trauma * (IS_MOBILE ? 0.04 : 0.07);
+  const birthBloomTarget = bloomTarget * Math.max(0.55, game.feelBloom || game.birthBloom || 1);
   const bloomRadiusTarget = renderProfile.bloomRadius
     + Math.min(IS_MOBILE ? 0.09 : 0.14, speedFactor * (IS_MOBILE ? 0.05 : 0.08))
-    + (photon.boosting ? (IS_MOBILE ? 0.04 : 0.07) : 0);
-  bloom.strength += (bloomTarget - bloom.strength) * Math.min(1, realDt * 3.5);
+    + (photon.boosting ? (IS_MOBILE ? 0.04 : 0.07) : 0)
+    + Math.min(IS_MOBILE ? 0.11 : 0.18, (game.birthFlash || 0) * 0.18);
+  bloom.strength += (birthBloomTarget - bloom.strength) * Math.min(1, realDt * 3.5);
   bloom.radius += (bloomRadiusTarget - bloom.radius) * Math.min(1, realDt * 2.8);
+  const exposureTarget = renderProfile.exposure
+    + Math.min(IS_MOBILE ? 0.26 : 0.48, (game.birthFlash || 0) * (IS_MOBILE ? 0.28 : 0.52))
+    + (game.feelExposure || 0);
+  renderer.toneMappingExposure += (exposureTarget - renderer.toneMappingExposure) * Math.min(1, realDt * 4.2);
   if (game.trauma > 0 && !settings.reducedMotion) {
     const t2 = game.trauma * game.trauma;
     const time = performance.now() * 0.06;
@@ -1034,6 +1222,28 @@ export function renderGameToText() {
       darkMatterSignalTime: Math.round((game.darkMatterSignalTime || 0) * 10) / 10,
       darkMatterMassSolar: Math.round(game.darkMatterMassSolar || 0),
       darkMatterDeflectionArcsec: Math.round((game.darkMatterDeflectionArcsec || 0) * 100) / 100,
+      birth: {
+        flash: Math.round((game.birthFlash || 0) * 1000) / 1000,
+        noiseAmp: Math.round((game.birthNoiseAmp || 1) * 1000) / 1000,
+        bloom: Math.round((game.birthBloom || 1) * 1000) / 1000,
+        jitter: Math.round((game.birthJitter || 0) * 1000) / 1000,
+        primordialLensing: !!game.primordialLensingTriggered,
+      },
+      feel: {
+        phase: game.feelPhase,
+        birthIntensity: Math.round((game.birthFlash || 0) * 1000) / 1000,
+        fluctuationNoise: Math.round((game.feelFluctuationNoise || 0) * 1000) / 1000,
+        clarity: Math.round((game.feelClarity || 0) * 1000) / 1000,
+        structureTension: Math.round((game.feelStructureTension || 0) * 1000) / 1000,
+        gravityDread: Math.round((game.feelGravityDread || 0) * 1000) / 1000,
+        entropyFade: Math.round((game.feelEntropyFade || 0) * 1000) / 1000,
+        coherence: Math.round((game.feelCoherence || 0) * 1000) / 1000,
+        bloom: Math.round((game.feelBloom || 1) * 1000) / 1000,
+        exposure: Math.round((game.feelExposure || 0) * 1000) / 1000,
+        lensing: Math.round((game.feelLensing || 0) * 1000) / 1000,
+        audioIntensity: Math.round((game.feelAudio || 0) * 1000) / 1000,
+        density: Math.round((game.feelDensity || 1) * 1000) / 1000,
+      },
       photonEquation: {
         energyEv: Number(photonEquation.energyEv.toPrecision(4)),
         observedWavelengthM: Number(photonEquation.observedWavelengthM.toPrecision(4)),

@@ -274,6 +274,8 @@ export const MEMORIES: Memory[] = [
   { id: 'dark-matter-bones', type: 'threshold', when: { darkMatterDetections: 1 },
     body: 'You remember something unseen drawing the road through places that never shone. The course has bones.',
     threshold: { unlockVariant: 'xray' } },
+  { id: 'filament-echo',   type: 'narrative', when: { peakStreak: 8, darkMatterDetections: 1 },
+    body: 'You remember a previous universe by its curve: the ignition flash, a long phase chain, an invisible filament, and the strange certainty that the same seed would answer differently if you asked a better question.' },
   { id: 'the-pause',       type: 'narrative', when: { pausedOnce: true },
     body: 'You remember stopping. The universe did not stop. Then it did.' },
   { id: 'the-mute',        type: 'narrative', when: { mutedOnce: true },

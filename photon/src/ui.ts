@@ -8,6 +8,7 @@ import { applyMetaUpgrades, setState, startRun, resume, beginDeath, checkVariant
 import { audio } from './audio';
 import { parseSeedLabel } from './seed';
 import { removeStorage } from './storage';
+import { loadSeedBookmarks, saveSeedBookmark } from './physicsInsight';
 
 function eventInput(e: Event): HTMLInputElement {
   return e.currentTarget as HTMLInputElement;
@@ -40,6 +41,23 @@ export function refreshTitleStats() {
   // MULTIVERSE row only appears once the player has witnessed the heat death at least once.
   const mv = document.getElementById('multiverse-row');
   if (mv) mv.style.display = (meta.witnessedHeatDeath || 0) >= 1 ? '' : 'none';
+  const bookmarks = document.getElementById('seed-bookmarks');
+  if (bookmarks) {
+    bookmarks.innerHTML = '';
+    if ((meta.witnessedHeatDeath || 0) >= 1) {
+      for (const bookmark of loadSeedBookmarks().slice(0, 4)) {
+        const btn = document.createElement('button');
+        btn.className = 'seed-bookmark';
+        btn.type = 'button';
+        btn.innerHTML = `<b>${bookmark.label}</b><span>${bookmark.insightScore} insight · ${bookmark.epochName}<br>${bookmark.note}</span>`;
+        btn.addEventListener('click', () => {
+          const inp = document.getElementById('seed-input') as HTMLInputElement | null;
+          if (inp) inp.value = bookmark.label;
+        });
+        bookmarks.appendChild(btn);
+      }
+    }
+  }
 }
 
 export function refreshCodex() {
@@ -156,6 +174,20 @@ export function bindUI() {
     } catch {
       showToast('◇ Run JSON ready in diagnostics');
     }
+  });
+  document.getElementById('btn-bookmark-seed')!.addEventListener('click', () => {
+    const report = window.__PHOTON_LAST_PHYSICS_REPORT;
+    if (!report) { showToast('◇ Finish a run before bookmarking'); return; }
+    saveSeedBookmark({
+      seed: report.seed.value,
+      label: report.seed.label,
+      createdAt: Date.now(),
+      insightScore: report.insight.score,
+      epochName: report.epoch.name,
+      note: report.insight.score >= 45 ? report.bookmarkHint : `${report.epoch.name}: collect a longer signal before replaying.`,
+    });
+    refreshTitleStats();
+    showToast(`◇ Seed ${report.seed.label} bookmarked`);
   });
   document.getElementById('btn-codex')!.addEventListener('click', () => { refreshCodex(); setState('codex'); });
   document.getElementById('btn-codex-back')!.addEventListener('click', () => { refreshTitleStats(); setState('title'); });

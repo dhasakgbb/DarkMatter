@@ -3,6 +3,7 @@
 
 import { VARIANTS, type Variant } from './cosmology';
 import { meta } from './meta';
+import type { EpochFeelPhase } from './epochFeel';
 import type { RacingCue } from './racingCue';
 
 export type GameStateName = 'title' | 'run' | 'upgrade' | 'death' | 'codex' | 'pause' | 'memories' | 'form';
@@ -32,6 +33,7 @@ export interface RunState {
   phaseCount: number;
   hitCount: number;
   phaseStreak: number;
+  bestPhaseStreakThisRun: number;
   // Flow-state signal (Csikszentmihalyi-style hidden meter): smoothed 0..1
   // derived from streak + clean time + activity. Drives adaptive difficulty,
   // chain-reward amplification, audio intensity, and memory unlocks.
@@ -85,6 +87,27 @@ export interface RunState {
   darkMatterSignalTime: number;
   darkMatterMassSolar: number;
   darkMatterDeflectionArcsec: number;
+  birthFlash: number;
+  birthNoiseAmp: number;
+  birthBloom: number;
+  birthJitter: number;
+  birthLensing: number;
+  feelPhase: EpochFeelPhase;
+  feelFluctuationNoise: number;
+  feelClarity: number;
+  feelStructureTension: number;
+  feelGravityDread: number;
+  feelEntropyFade: number;
+  feelCoherence: number;
+  feelBloom: number;
+  feelExposure: number;
+  feelLensing: number;
+  feelAudio: number;
+  feelDensity: number;
+  feelClearAnnounced: boolean;
+  primordialLensingArmed: boolean;
+  primordialLensingTriggered: boolean;
+  primordialLensingTime: number;
 }
 
 export const game: RunState = {
@@ -109,6 +132,7 @@ export const game: RunState = {
   phaseCount: 0,
   hitCount: 0,
   phaseStreak: 0,
+  bestPhaseStreakThisRun: 0,
   flowLevel: 0,
   flowPeak: 0,
   flowPeakDwell: 0,
@@ -148,4 +172,25 @@ export const game: RunState = {
   darkMatterSignalTime: 0,
   darkMatterMassSolar: 0,
   darkMatterDeflectionArcsec: 0,
+  birthFlash: 0,
+  birthNoiseAmp: 1,
+  birthBloom: 1,
+  birthJitter: 0,
+  birthLensing: 0,
+  feelPhase: 'cruise',
+  feelFluctuationNoise: 0,
+  feelClarity: 0,
+  feelStructureTension: 0,
+  feelGravityDread: 0,
+  feelEntropyFade: 0,
+  feelCoherence: 0,
+  feelBloom: 1,
+  feelExposure: 0,
+  feelLensing: 0,
+  feelAudio: 0,
+  feelDensity: 1,
+  feelClearAnnounced: false,
+  primordialLensingArmed: false,
+  primordialLensingTriggered: false,
+  primordialLensingTime: 0,
 };
