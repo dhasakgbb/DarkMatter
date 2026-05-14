@@ -1,0 +1,90 @@
+{
+  "batch": "gemini-lyria-001",
+  "count": 4,
+  "results": [
+    {
+      "schema": "photon-audio-candidate.v1",
+      "batch": "gemini-lyria-001",
+      "id": "music-stellar-main-lyria",
+      "targetPath": "music/stellar/main-lyria.mp3",
+      "runtimePath": "photon/output/audio-candidate-forge/gemini-lyria-001/runtime/music/stellar/main-lyria.ogg",
+      "sourcePath": "photon/output/audio-candidate-forge/gemini-lyria-001/sources/music-stellar-main-lyria.mp3",
+      "model": "lyria-3-clip-preview",
+      "source": "google-gemini-lyria",
+      "licenseTag": "gemini-api-generated-candidate-review-required",
+      "reviewStatus": "candidate-only",
+      "prompt": "Create a 30-second instrumental-only game soundtrack clip for Photon, a high-speed cosmic racing game. High-end, dark, expensive, futuristic, clean, anti-corny. The player is a photon racing through deep space from the Big Bang toward heat death. Style: precision sci-fi racing, tight sub pulse, metallic transient rhythm, glassy spatial motion, restrained harmony, dangerous momentum. Avoid synthwave nostalgia, retro arcade sounds, happy melodies, heroic fanfare, EDM drops, vocals, lyrics, distorted harsh treble, and cheesy trailer risers. Mix target: polished AAA game soundtrack, fast but spacious, leaves room for gameplay SFX. Instrumental only, no vocals.",
+      "generatedText": [
+        "<instrumental>"
+      ],
+      "probe": {
+        "ok": true,
+        "durationSeconds": 30.772245,
+        "channels": 2
+      }
+    },
+    {
+      "schema": "photon-audio-candidate.v1",
+      "batch": "gemini-lyria-001",
+      "id": "music-heat-death-lyria",
+      "targetPath": "music/heat-death/ending-lyria.mp3",
+      "runtimePath": "photon/output/audio-candidate-forge/gemini-lyria-001/runtime/music/heat-death/ending-lyria.ogg",
+      "sourcePath": "photon/output/audio-candidate-forge/gemini-lyria-001/sources/music-heat-death-lyria.mp3",
+      "model": "lyria-3-clip-preview",
+      "source": "google-gemini-lyria",
+      "licenseTag": "gemini-api-generated-candidate-review-required",
+      "reviewStatus": "candidate-only",
+      "prompt": "Create a 30-second instrumental-only ambient ending cue for Photon, a cosmic racing game reaching heat death. High-end sparse sound design, vast cold space, fading energy, fragile low tone, vanishing high air, almost no rhythm. It should feel authored and emotionally difficult, not empty by accident. Avoid melody, vocals, lyrics, synthwave, horror stingers, cheesy sadness, orchestral melodrama, and harsh treble. Mix target: premium cinematic game ending texture with silence and restraint. Instrumental only, no vocals.",
+      "generatedText": [
+        "<instrumental>"
+      ],
+      "probe": {
+        "ok": true,
+        "durationSeconds": 29.44,
+        "channels": 2
+      }
+    },
+    {
+      "schema": "photon-audio-candidate.v1",
+      "batch": "gemini-lyria-001",
+      "id": "sfx-gravity-well-passby-lyria",
+      "targetPath": "sfx/gravity-well-whoosh/gravity-well-passby-lyria.mp3",
+      "runtimePath": "photon/output/audio-candidate-forge/gemini-lyria-001/runtime/sfx/gravity-well-whoosh/gravity-well-passby-lyria.ogg",
+      "sourcePath": "photon/output/audio-candidate-forge/gemini-lyria-001/sources/sfx-gravity-well-passby-lyria.mp3",
+      "model": "lyria-3-clip-preview",
+      "source": "google-gemini-lyria",
+      "licenseTag": "gemini-api-generated-candidate-review-required",
+      "reviewStatus": "candidate-only",
+      "prompt": "Create a 30-second instrumental-only non-melodic sound design study for a game SFX cue. Subject: massive gravity well pass-by at extreme speed. Use deep pressure waves, clean Doppler bends, sub impacts, polished sci-fi air movement, and short separated pass-by events. No beat, no melody, no vocals, no lyrics, no retro arcade, no siren, no alarm, no harsh piercing treble, no clipping. This is source material for extracting short playable gravity whoosh sound effects, not a song. Instrumental only, no vocals.",
+      "generatedText": [
+        "<instrumental>"
+      ],
+      "probe": {
+        "ok": true,
+        "durationSeconds": 30.772245,
+        "channels": 2
+      }
+    },
+    {
+      "schema": "photon-audio-candidate.v1",
+      "batch": "gemini-lyria-001",
+      "id": "sfx-speed-gate-source-lyria",
+      "targetPath": "sfx/source/speed-gate-source-lyria.mp3",
+      "runtimePath": "photon/output/audio-candidate-forge/gemini-lyria-001/runtime/sfx/source/speed-gate-source-lyria.ogg",
+      "sourcePath": "photon/output/audio-candidate-forge/gemini-lyria-001/sources/sfx-speed-gate-source-lyria.mp3",
+      "model": "lyria-3-clip-preview",
+      "source": "google-gemini-lyria",
+      "licenseTag": "gemini-api-generated-candidate-review-required",
+      "reviewStatus": "candidate-only",
+      "prompt": "Create a 30-second instrumental-only non-melodic game sound design source track. Subject: clean futuristic racing confirmations, speed-pad accelerations, line-gate hits, and missed-gate negative cues. Use crisp polished transients, short bright confirmations, controlled low acceleration shoves, and dry negative bends. Leave silence between events so short SFX can be cut out. No melody, no vocals, no lyrics, no retro arcade beeps, no chiptune, no harsh piercing treble, no clipping, no comedy. Instrumental only, no vocals.",
+      "generatedText": [
+        "<instrumental>"
+      ],
+      "probe": {
+        "ok": true,
+        "durationSeconds": 30.563265,
+        "channels": 2
+      }
+    }
+  ]
+}
