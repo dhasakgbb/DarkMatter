@@ -468,6 +468,12 @@ export function resume() {
 }
 
 export function startRun(resumeSnapshot?: Checkpoint, overrideSeed?: number) {
+  const nowMs = Date.now();
+  if (!meta.sessionStartedAt || nowMs - meta.sessionStartedAt > 30 * 60_000) {
+    meta.runsThisSession = 0;
+  }
+  meta.sessionStartedAt = nowMs;
+  meta.runsThisSession += 1;
   input.left = input.right = input.up = input.down = input.boost = false;
   input.touchTracking = false;
   input.touchTargetLateral = 0;
@@ -689,6 +695,9 @@ export function endRun() {
     }),
     feel: runFeelExport(funRecord),
   };
+  meta.addictionScoreHistory.push(analysis.addictionScore.value);
+  if (meta.addictionScoreHistory.length > 50) meta.addictionScoreHistory.shift();
+  saveMeta(meta);
   window.__PHOTON_LAST_PHYSICS_REPORT = analysis;
   window.__PHOTON_PATH_ANALYSIS_JSON = JSON.stringify(analysis, null, 2);
   const analysisWrap = document.getElementById('death-analysis');
@@ -1053,6 +1062,9 @@ function stepFrame(realDt: number, scheduleNext: boolean) {
       updateCamera(dt, realDt, speed);
     }
   } else {
+    if (game.state === 'death') {
+      meta.analysisDwellMs += realDt * 1000;
+    }
     updateEpochFeel(realDt);
     if (track.points.length === 0) {
       track.ensureAhead(0);

@@ -27,6 +27,10 @@ export interface MetaState {
   gatesThreaded: number;
   flowDwellLifetime: number;
   darkMatterDetections: number;
+  runsThisSession: number;
+  sessionStartedAt: number;
+  analysisDwellMs: number;
+  addictionScoreHistory: number[];
 }
 
 export const defaultMeta = (): MetaState => ({
@@ -55,10 +59,17 @@ export const defaultMeta = (): MetaState => ({
   gatesThreaded: 0,
   flowDwellLifetime: 0,
   darkMatterDetections: 0,
+  runsThisSession: 0,
+  sessionStartedAt: 0,
+  analysisDwellMs: 0,
+  addictionScoreHistory: [],
 });
 
 export function loadMeta(): MetaState {
-  return Object.assign(defaultMeta(), readJsonStorage<Partial<MetaState>>(META_KEY, {}));
+  const merged = Object.assign(defaultMeta(), readJsonStorage<Partial<MetaState>>(META_KEY, {}));
+  if (!Array.isArray(merged.addictionScoreHistory)) merged.addictionScoreHistory = [];
+  merged.addictionScoreHistory = merged.addictionScoreHistory.slice(-50);
+  return merged;
 }
 export function saveMeta(m: MetaState) {
   writeStorage(META_KEY, JSON.stringify(m));
